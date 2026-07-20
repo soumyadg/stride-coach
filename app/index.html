@@ -26,7 +26,20 @@
     --display:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
     --body:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
-  /* run-safety theme — 5 weather buckets retint the whole app based on the area's conditions */
+  /* weather-of-the-day mood — retints the whole app by today's actual conditions */
+  :root[data-weather="sunny"]{--accent:#ffb545;--accent-2:#ff8a2e;--bg:#120d08;--surface:#1c150c;--surface2:#261d10;--surface3:#332813;--line:#3a2e17;}
+  :root[data-weather="cloudy"]{--accent:#9fb0c4;--accent-2:#7288a3;--bg:#0c0e13;--surface:#151922;--surface2:#1d222e;--surface3:#272e3d;--line:#323a4a;}
+  :root[data-weather="fog"]{--accent:#c3ccd1;--accent-2:#98a7ad;--bg:#0e1011;--surface:#181b1d;--surface2:#212528;--surface3:#2b3033;--line:#363c3f;}
+  :root[data-weather="rain"]{--accent:#4fa3ff;--accent-2:#2f6fe0;--bg:#070c15;--surface:#0f1522;--surface2:#161e2f;--surface3:#1f2a3f;--line:#28344a;}
+  :root[data-weather="snow"]{--accent:#8ad9ff;--accent-2:#c8f0ff;--bg:#080d14;--surface:#101823;--surface2:#17212f;--surface3:#202c3d;--line:#2a394d;}
+  :root[data-weather="storm"]{--accent:#b07bff;--accent-2:#7c4dff;--bg:#0b0812;--surface:#15101f;--surface2:#1e1729;--surface3:#291f37;--line:#332845;}
+  :root[data-weather="sunny"] .btn.p{background:linear-gradient(135deg,#ffc966,#ff8a2e)}
+  :root[data-weather="cloudy"] .btn.p{background:linear-gradient(135deg,#b3c2d4,#7288a3)}
+  :root[data-weather="fog"] .btn.p{background:linear-gradient(135deg,#d5dcdf,#98a7ad)}
+  :root[data-weather="rain"] .btn.p{background:linear-gradient(135deg,#6bb3ff,#2f6fe0)}
+  :root[data-weather="snow"] .btn.p{background:linear-gradient(135deg,#a6e6ff,#c8f0ff)}
+  :root[data-weather="storm"] .btn.p{background:linear-gradient(135deg,#c199ff,#7c4dff)}
+  /* run-safety theme — high/danger heat-stress overrides the weather mood with an alert palette */
   :root[data-safety="ideal"]{--accent:#22d3c4;--accent-2:#18b8ff;--bg:#070f10;--surface:#0f1a1b;--surface2:#142324;--surface3:#1c3234;--line:#234042;}
   :root[data-safety="good"]{--accent:#ff6a3d;--accent-2:#ff4d6b;} /* = default tangerine */
   :root[data-safety="caution"]{--accent:#ffab3d;--accent-2:#ff8a2e;--bg:#100d0a;--surface:#191410;--surface2:#221a12;--surface3:#2c220f;--line:#38301f;}
@@ -801,8 +814,9 @@ function bestWindow(h){
 }
 function renderWeather(j,loc){
   const c=j.current,[cd,ce]=wmo(c.weather_code),cwb=wetBulb(c.temperature_2m,c.relative_humidity_2m),[crisk,crc]=heatRisk(cwb);
-  window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc};
+  window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc,code:c.weather_code};
   applySafetyTheme();
+  applyWeatherMood();
   if(typeof checkHeat==='function')checkHeat();
   const b=bestWindow(j.hourly);window._weatherBest=b;
   let bestHtml;
@@ -832,12 +846,27 @@ async function notifyBestRun(){
   }
 }
 // retint the whole app by how safe it is to run right now
-// 5 weather buckets → whole-app theme, based on wet-bulb heat stress
+// only steps in for genuine heat-stress danger — otherwise today's weather mood shows through
 function safetyBucket(wb){return wb>=27?'danger':wb>=23?'high':wb>=18?'caution':wb>=10?'good':'ideal';}
 function applySafetyTheme(){
   const w=window._weatherNow,r=document.documentElement;
-  if(!w){r.removeAttribute('data-safety');return;}
-  r.setAttribute('data-safety',safetyBucket(w.wb));
+  const bucket=w?safetyBucket(w.wb):null;
+  if(bucket==='high'||bucket==='danger')r.setAttribute('data-safety',bucket);
+  else r.removeAttribute('data-safety');
+}
+// weather-of-the-day mood — retints the whole app by today's actual conditions (WMO weather_code)
+function weatherMood(code){
+  if([95,96,99].includes(code))return'storm';
+  if([71,73,75].includes(code))return'snow';
+  if([51,53,55,61,63,65,80,81,82].includes(code))return'rain';
+  if([45,48].includes(code))return'fog';
+  if([2,3].includes(code))return'cloudy';
+  return'sunny'; // 0, 1 — clear / mainly clear
+}
+function applyWeatherMood(){
+  const w=window._weatherNow,r=document.documentElement;
+  if(!w){r.removeAttribute('data-weather');return;}
+  r.setAttribute('data-weather',weatherMood(w.code));
 }
 // hydration prompts during long runs (more often in heat)
 function hydrationCheck(){

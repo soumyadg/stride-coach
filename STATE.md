@@ -60,6 +60,11 @@ REDEPLOY after changes: run `./deploy.sh` (subtree-splits app/ → gh-pages, for
 - **Run-screen heat warning** amber/red from current wet-bulb, spoken on start.
 Next: keep improving app #1 (candidates: embed fonts offline, treadmill calibrate, workout-write to Health).
 
+## 🌤️ WEATHER-OF-THE-DAY MOOD THEME (2026-07-20)
+- **applySafetyTheme() narrowed to actual danger**: data-safety now only gets set for high/danger wet-bulb heat-stress (a genuine safety alert); ideal/good/caution no longer force the whole-app tint, so they don't fight with the new mood theme below.
+- **applyWeatherMood()** → weatherMood(weather_code) maps today's WMO code to data-weather = sunny(gold)/cloudy(grey-blue)/fog(silver)/rain(blue)/snow(icy blue)/storm(violet). Retints accent+bg+surfaces+primary-button gradient every day, not just on hot days. CSS block sits before the run-safety block so a real high/danger heat alert still overrides the day's mood (verified: clear+34°C/70%RH → data-safety=danger wins over data-weather=sunny; clear+mild → data-weather=sunny shows through).
+- Verified all 6 moods render correctly via mocked Open-Meteo responses (playwright, headless).
+
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.
 2. Owned by Strava (acq. Apr 2025); £119.99/yr Strava+the leading app bundle.
