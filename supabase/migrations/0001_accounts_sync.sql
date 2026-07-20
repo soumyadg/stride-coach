@@ -9,6 +9,8 @@ create table if not exists profiles (
   goal text, goal_name text, weeks int, days_per_week int,
   experience text, pref text,
   max_hr int default 190,
+  height_cm int,
+  weight_kg numeric,
   units text default 'metric',
   reminders_on boolean default false,
   current_week int default 1,

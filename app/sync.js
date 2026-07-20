@@ -44,13 +44,13 @@ window.StrideSync = (function () {
   };
 
   // ---- row mappers (local S <-> DB) ----
-  function profileRow(s) { return { id: user.id, email: user.email, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days_per_week: s.days, experience: s.exp, pref: s.pref, max_hr: s.maxHR || 190, reminders_on: !!(s.reminders && s.reminders.on), current_week: s.curWeek }; }
+  function profileRow(s) { return { id: user.id, email: user.email, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days_per_week: s.days, experience: s.exp, pref: s.pref, max_hr: s.maxHR || 190, height_cm: s.heightCm || null, weight_kg: s.weightKg || null, reminders_on: !!(s.reminders && s.reminders.on), current_week: s.curWeek }; }
   function planRow(s) { if (!s.planId) { s.planId = uuid(); saveS(s); } return { id: s.planId, user_id: user.id, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days: s.days, experience: s.exp, pref: s.pref, start_date: (s.created || '').slice(0, 10) || null, data: s.plan, cur_week: s.curWeek, is_active: true, updated_at: new Date(s._mut || Date.now()).toISOString() }; }
   function actRows(s) { return (s.activities || []).map(a => { if (!a.id) a.id = uuid(); return { id: a.id, user_id: user.id, name: a.name, started_at: new Date(a.startAt || a.at).toISOString(), duration_s: a.secs, distance_km: a.km, avg_pace: a.pace, avg_hr: a.hr || null, rpe: a.rpe, wet_bulb: a.wb || null, source: a.source || 'gps', route: a.pts && a.pts.length ? a.pts : null }; }); }
   function fromActRow(a) { const start = +new Date(a.started_at); return { id: a.id, name: a.name, km: +a.distance_km, secs: a.duration_s, pace: +a.avg_pace, hr: a.avg_hr, rpe: a.rpe, wb: a.wet_bulb, source: a.source, startAt: start, at: start + (a.duration_s * 1000 || 0), pts: a.route || [] }; }
   function rebuildLocal(prof, plan, acts) {
     const s = plan ? { goal: plan.goal, goalName: plan.goal_name, base: 0, days: plan.days, exp: plan.experience, pref: plan.pref, weeks: plan.weeks, plan: plan.data, created: (plan.start_date || '') + 'T00:00:00.000Z', curWeek: plan.cur_week || 1, planId: plan.id, readiness: null, history: [], activities: [] } : { activities: [] };
-    if (prof) { s.maxHR = prof.max_hr; s.reminders = { on: !!prof.reminders_on }; if (prof.current_week) s.curWeek = prof.current_week; }
+    if (prof) { s.maxHR = prof.max_hr; s.heightCm = prof.height_cm; s.weightKg = prof.weight_kg; s.reminders = { on: !!prof.reminders_on }; if (prof.current_week) s.curWeek = prof.current_week; }
     s.activities = (acts || []).map(fromActRow).sort((a, b) => b.at - a.at);
     return s;
   }
