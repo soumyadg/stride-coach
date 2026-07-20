@@ -366,7 +366,7 @@
     <div class="card" id="risk-card"></div>
     <div class="card glow">
       <div class="kicker">Daily readiness check</div>
-      <div class="sub" style="margin:4px 0 4px">The feedback loop Runna skips. 20 seconds → today adapts to your body.</div>
+      <div class="sub" style="margin:4px 0 4px">The feedback loop most apps skip. 20 seconds → today adapts to your body.</div>
       <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="2" class="on">Good</button><button data-v="1">OK</button><button data-v="0">Poor</button></div>
       <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="2" class="on">None</button><button data-v="1">Some</button><button data-v="0">High</button></div>
       <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="2" class="on">High</button><button data-v="1">Meh</button><button data-v="0">Low</button></div>
@@ -453,9 +453,9 @@
     <h1 style="padding-top:6px">Why Stride</h1>
     <div class="card" id="account-card"></div>
     <div class="card">
-      <div class="kicker">We fix what Runna gets wrong</div>
+      <div class="kicker">What makes Stride different</div>
       <table>
-        <tr><th>Runna complaint</th><th>Stride</th></tr>
+        <tr><th>What most running apps miss</th><th>Stride</th></tr>
         <tr><td>Ramps too fast → injuries (PTs report weekly cases)</td><td class="tick">SafeRamp ≤10%/wk + deloads</td></tr>
         <tr><td>“Takes you at your word”, no feedback loop</td><td class="tick">Daily readiness + post-run RPE</td></tr>
         <tr><td>GPS undercounts 100–200m</td><td class="tick">Smoothed, no undercount</td></tr>
@@ -501,7 +501,7 @@
       </div>
 
       <div class="banner g" style="margin-top:14px"><span class="tick">✓</span> The safety promise is <b>always free</b> — Pro never paywalls what keeps you injury-free.</div>
-      <div class="sub center" style="margin-top:8px">Runna: <b>£15.99/mo, no free tier</b>. Our Pro is less than half — and the core stays free.</div>
+      <div class="sub center" style="margin-top:8px">Typical coaching apps: <b>£15.99/mo, no free tier</b>. Our Pro is less than half — and the core stays free.</div>
     </div>
     <div class="sub center" style="padding:8px 0 4px">Prototype · app #1 of 30 🤖</div>
   </div>
@@ -658,7 +658,7 @@ function renderCurve(){
     const j=(S.plan[i].vol/S.plan[i-1].vol-1)*100; if(j>maxJump)maxJump=j; if(j>10.05)viol++;
   }
   const dl=S.plan.filter(x=>x.isDeload).length;
-  $('#safety-report').innerHTML=`<div class="banner ${viol?'a':'g'}">${viol?'⚠️':'<span class="tick">✓</span>'} Biggest weekly jump <b>${maxJump.toFixed(1)}%</b> (cap 10%) · <b>${dl}</b> deload weeks. <span style="color:var(--muted)">The guardrail Runna lacks.</span></div>`;
+  $('#safety-report').innerHTML=`<div class="banner ${viol?'a':'g'}">${viol?'⚠️':'<span class="tick">✓</span>'} Biggest weekly jump <b>${maxJump.toFixed(1)}%</b> (cap 10%) · <b>${dl}</b> deload weeks. <span style="color:var(--muted)">The guardrail most plans lack.</span></div>`;
 }
 function renderCalendar(){
   const out=S.plan.map((x,wi)=>{
@@ -707,7 +707,7 @@ function renderRisk(){
     </div>
     <div class="gauge"><div class="sweet"></div><div class="mk" style="left:calc(${pos}% - 2px)"></div></div>
     <div class="gscale"><span>0.5</span><span>0.8</span><span>1.3</span><span>1.5</span><span>2.0+</span></div>
-    <div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Across your whole plan, peak ACWR is <b>${peak.toFixed(2)}</b> — stays in the safe band every week. <span style="color:var(--muted)">Runna doesn't model this at all.</span></div>`;
+    <div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Across your whole plan, peak ACWR is <b>${peak.toFixed(2)}</b> — stays in the safe band every week. <span style="color:var(--muted)">Most apps don't model this at all.</span></div>`;
 }
 function renderToday(){
   const now=new Date();
@@ -716,7 +716,7 @@ function renderToday(){
   const wk=S.plan[(S.curWeek-1)%S.plan.length], sesh=wk.sessions[0], adj=S.readiness;
   let s=sesh;
   if(adj&&adj.level==='amber')s={...sesh,km:+(sesh.km*0.8).toFixed(1),note:'Trimmed 20% — you flagged fatigue.'};
-  if(adj&&adj.level==='red')s={t:'Rest / walk',km:0,kind:'rest',note:'Readiness low — recovery IS training. Runna would still push you.'};
+  if(adj&&adj.level==='red')s={t:'Rest / walk',km:0,kind:'rest',note:'Readiness low — recovery IS training. Most apps would still push you.'};
   $('#today-sesh').innerHTML=`<div class="kicker">Week ${wk.w} · today's session</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
       <div style="display:flex;gap:11px;align-items:center"><span class="dot ${s.kind||'easy'}" style="width:12px;height:12px"></span>
