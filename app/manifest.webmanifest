@@ -1,0 +1,15 @@
+{
+  "name": "Stride Coach",
+  "short_name": "Stride",
+  "description": "The running coach that won't get you injured.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0912",
+  "theme_color": "#0a0912",
+  "categories": ["health", "fitness", "sports"],
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

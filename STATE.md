@@ -31,7 +31,14 @@ Built ACWR (Acute:Chronic Workload Ratio) injury-risk gauge on the Today screen:
 Built & browser-verified 4 Runna-parity features: (1) Workout library modal (8 run + 3 cross-training tiles); (2) Stats screen — weekly summary, 6-week volume chart, Personal Records (1K/5K/10K), activity history (22 seeded acts); (3) Calendar editing — done-ticks, +Add to rest days, per-week Reset (via persisted plan[].days); (4) Real audio coaching — lap-based intervals (14-lap interval session), SpeechSynthesis TTS voice + mute, full 2-row lap/total stat grid, Next-Lap button. Guarded PR calc against implausible paces.
 NEW THEME "Neon Aurora": deep indigo bg, electric-tangerine brand accent, mint-green reserved for safety semantics only (ditched Runna's black+lime). Verified all screens.
 GITHUB: repo pushed → https://github.com/soumyadg/stride-coach (main + tag v0.1.0). README has 5 mermaid diagrams. Deferred (need backend): Community, 24/7 human support, native watch sync.
-Next: phase-2 native/watch-sync OR app #2.
+## 📲🗺️❤️ PWA + REAL MAP + BLUETOOTH HR (2026-07-20) — £0 on-device upgrades
+Soumya chose the £0 path (no backend). Built + browser-verified:
+- **PWA**: manifest.webmanifest + icon.svg + sw.js (offline shell + cache-first map tiles) + head meta + SW registration. Installable, standalone, works offline. Verified: manifest loads, SW registers.
+- **Real map**: replaced stylized canvas with a self-built slippy-map (web-mercator project(), CartoDB dark tiles, no JS lib/API key) + tangerine route overlay + center marker + OSM/CARTO attribution. Verified: 6 tiles render real streets, 60-pt route drawn.
+- **Bluetooth HR**: Web Bluetooth (heart_rate service/characteristic parse) + HR zones (Z1–5 vs maxHR 190) + zone-colored pill + simulated fallback when no device/BT. Verified: "142 Z3" pill renders.
+Backend cost discussion: £0 until real users; Apple Dev $99/yr is the first real spend (distribution, not backend). Matches Soumya's spend-gating.
+NOTE: app #2 is OFF the table until Soumya says app #1 is done — do NOT ask about app #2.
+Next: keep improving app #1 (candidates: GPX export, negative-split coaching, onboarding animations).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-07-20T10:04:22.967Z",
+  "projectRoot": "/Users/soumyadasgupta/Desktop/apps/stride-coach",
+  "structure": {
+    "hasPackageJson": false,
+    "hasTsConfig": false,
+    "hasClaudeConfig": false,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1784541862967
+}

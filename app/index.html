@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Stride Coach — the running coach that won't get you injured</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0912">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stride">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
   :root{
     /* "Neon Aurora" — deep indigo canvas, electric tangerine brand, mint = safety only */
@@ -161,8 +168,14 @@
   .stat{text-align:center;padding:8px 0}
   .stat .v{font-size:24px;font-weight:800;letter-spacing:-.5px}
   .stat .k{font-size:9.5px;font-weight:700;letter-spacing:.6px;color:var(--faint);text-transform:uppercase;margin-top:2px}
-  .map{flex:1;min-height:150px;background:radial-gradient(circle at 50% 40%,#12161c,#0a0c10);border-radius:20px;position:relative;overflow:hidden;margin:8px 0}
-  .map svg{position:absolute;inset:0;width:100%;height:100%}
+  .map{flex:1;min-height:150px;background:radial-gradient(circle at 50% 40%,#141020,#0a0912);border-radius:20px;position:relative;overflow:hidden;margin:8px 0}
+  #map-tiles{position:absolute;inset:0;z-index:1}
+  #map-tiles img{position:absolute;width:256px;height:256px}
+  .map svg{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+  #r-marker{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff;transform:translate(-50%,-50%);z-index:3;box-shadow:0 0 0 6px rgba(255,106,61,.25);display:none}
+  #r-marker.on{display:block}
+  .hrpill{position:absolute;right:12px;top:12px;z-index:4;background:rgba(20,18,26,.85);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 11px;font:inherit;font-weight:800;font-size:12px;cursor:pointer}
+  .attrib{position:absolute;right:8px;bottom:6px;z-index:4;font-size:8px;color:var(--muted);background:rgba(10,9,18,.55);padding:1px 5px;border-radius:4px}
   .coach{position:absolute;left:12px;bottom:12px;background:rgba(20,22,26,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:9px 12px;display:flex;align-items:center;gap:8px;max-width:70%}
   .coach .q{font-weight:700;font-size:13px}
   .wave{display:flex;align-items:center;gap:2px;height:16px}
@@ -304,9 +317,13 @@
         <div class="stat"><div class="v mono" id="r-tpace">--:--</div><div class="k">Avg pace</div></div>
       </div>
       <div class="map">
-        <svg id="r-route" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline id="r-line" fill="none" stroke="#ff6a3d" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points=""/></svg>
+        <div id="map-tiles"></div>
+        <svg id="r-route" preserveAspectRatio="none"><polyline id="r-line" fill="none" stroke="#ff6a3d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points=""/></svg>
+        <div id="r-marker"></div>
         <div class="gpspill" id="r-gps">GPS ●</div>
+        <button class="hrpill" id="hr-pill" onclick="connectHR()">❤️ Connect HR</button>
         <div class="coach" id="r-coach"><div class="wave"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:0s"></i></div><div class="q" id="r-coach-q">“Auto-pause is on — no nagging at red lights.”</div></div>
+        <div class="attrib">© OpenStreetMap © CARTO</div>
       </div>
       <div class="runbtns">
         <button class="btn" id="r-start" onclick="toggleRun()">Start run</button>
@@ -622,13 +639,30 @@ function render(){
   const pct=Math.min(1,run.lapDist/L.d);
   $('#r-segbar').innerHTML=Array.from({length:10},(_,i)=>`<i class="${i<pct*10?'on':''}"></i>`).join('');
 }
+// real slippy-map: CartoDB dark tiles + web-mercator projection
+const MAP_Z=16;
+function project(lat,lon,z){const s=256*Math.pow(2,z),x=(lon+180)/360*s,sl=Math.sin(lat*Math.PI/180),y=(0.5-Math.log((1+sl)/(1-sl))/(4*Math.PI))*s;return{x,y};}
 function drawRoute(){
-  if(run.pts.length<2)return;
-  const xs=run.pts.map(p=>p[1]),ys=run.pts.map(p=>p[0]);
-  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
-  const w=(maxx-minx)||1e-6,h=(maxy-miny)||1e-6,pad=12;
-  $('#r-line').setAttribute('points',run.pts.map(p=>`${(pad+(p[1]-minx)/w*(100-2*pad)).toFixed(1)},${(pad+(1-(p[0]-miny)/h)*(100-2*pad)).toFixed(1)}`).join(' '));
+  if(!run||!run.pts.length)return;
+  const el=$('#map-tiles'),svg=$('#r-route'),Z=MAP_Z,n=Math.pow(2,Z);
+  const W=el.clientWidth||360,H=el.clientHeight||220;
+  const ctr=run.pts[run.pts.length-1],c=project(ctr[0],ctr[1],Z);
+  const ox=c.x-W/2,oy=c.y-H/2;
+  const key=Math.floor(c.x/256)+'_'+Math.floor(c.y/256)+'_'+W+'x'+H;
+  if(run._tk!==key){run._tk=key;
+    const t0x=Math.floor(ox/256),t1x=Math.floor((ox+W)/256),t0y=Math.floor(oy/256),t1y=Math.floor((oy+H)/256);
+    let html='';
+    for(let tx=t0x;tx<=t1x;tx++)for(let ty=t0y;ty<=t1y;ty++){
+      if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n;
+      html+=`<img src="https://basemaps.cartocdn.com/dark_all/${Z}/${wx}/${ty}.png" style="left:${Math.round(tx*256-ox)}px;top:${Math.round(ty*256-oy)}px" onerror="this.style.visibility='hidden'">`;
+    }
+    el.innerHTML=html;
+  }
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  $('#r-line').setAttribute('points',run.pts.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' '));
+  $('#r-marker').classList.add('on');
 }
+function clearMap(){$('#map-tiles').innerHTML='';$('#r-marker').classList.remove('on');$('#r-line').setAttribute('points','');}
 function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);coach('Paused.');}
 function stopRun(){
   if(!run)return;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);
@@ -654,9 +688,42 @@ function saveRPE(){
   $('#r-lap').textContent='Session · not started';$('#r-target').textContent=curSession().t;$('#r-up').textContent='Pick a workout, then hit start';
   ['r-ldist','r-tdist'].forEach(id=>$('#'+id).textContent=id==='r-ldist'?'0m':'0.00');
   ['r-ltime','r-ttime'].forEach(id=>$('#'+id).textContent='0:00');['r-lpace','r-tpace'].forEach(id=>$('#'+id).textContent='--:--');
-  $('#r-line').setAttribute('points','');$('#r-segbar').innerHTML='';
+  $('#r-segbar').innerHTML='';clearMap();
 }
 function coach(t){$('#r-coach-q').textContent='“'+t+'”';}
+
+// ---- Bluetooth heart-rate (Web Bluetooth) + HR zones ----
+let hrDevice=null,hrSim=null;
+async function connectHR(){
+  if(!navigator.bluetooth){coach('No Bluetooth here — showing simulated HR.');startHRSim();return;}
+  try{
+    const dev=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});
+    hrDevice=dev;const server=await dev.gatt.connect();
+    const svc=await server.getPrimaryService('heart_rate');
+    const ch=await svc.getCharacteristic('heart_rate_measurement');
+    await ch.startNotifications();
+    ch.addEventListener('characteristicvaluechanged',e=>{const v=e.target.value,flags=v.getUint8(0);
+      const bpm=(flags&1)?v.getUint16(1,true):v.getUint8(1);setHR(bpm,false);});
+    dev.addEventListener('gattserverdisconnected',()=>{coach('HR strap disconnected.');});
+    coach(`HR connected: ${dev.name||'strap'}.`);
+  }catch(err){coach('HR pairing cancelled — showing simulated HR.');startHRSim();}
+}
+function hrZone(bpm){const max=(S&&S.maxHR)||190,p=bpm/max;return p>=.9?5:p>=.8?4:p>=.7?3:p>=.6?2:1;}
+function setHR(bpm,sim){
+  if(run)run.hr=bpm;
+  const z=hrZone(bpm),cols=['','#5b8cff','#2fe3a0','#ffb84d','#ff8a4c','#ff5d6b'];
+  const el=$('#hr-pill');el.innerHTML=`❤️ ${bpm||'--'} <b>Z${z}</b>${sim?' <span style="opacity:.55;font-weight:600">sim</span>':''}`;
+  el.style.color=bpm?cols[z]:'';el.style.borderColor=bpm?cols[z]:'';
+}
+function startHRSim(){if(hrSim)clearInterval(hrSim);let h=95;
+  hrSim=setInterval(()=>{const L=run&&run.laps?run.laps[run.lap]:null;
+    let tgt=100;if(run&&run.active){tgt=L&&L.pace==='hard'?176:L&&L.pace==='tempo'?163:L&&L.pace==='hill'?172:148;}else tgt=92;
+    h+=(tgt-h)*0.14+(Math.random()*4-2);setHR(Math.round(Math.max(70,h)),true);},1500);}
+function stopHR(){if(hrSim){clearInterval(hrSim);hrSim=null;}try{if(hrDevice&&hrDevice.gatt.connected)hrDevice.gatt.disconnect();}catch(e){}
+  $('#hr-pill').innerHTML='❤️ Connect HR';$('#hr-pill').style.color='';$('#hr-pill').style.borderColor='';}
+
+// ---- PWA: register service worker ----
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
 // ---- workout library ----
 const WORKOUTS_RUN=[

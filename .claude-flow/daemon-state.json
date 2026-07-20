@@ -1,56 +1,56 @@
 {
   "running": true,
-  "startedAt": "2026-07-20T07:21:15.112Z",
+  "startedAt": "2026-07-20T09:49:22.921Z",
   "workers": {
     "map": {
-      "runCount": 12,
-      "successCount": 12,
+      "runCount": 2,
+      "successCount": 2,
       "failureCount": 0,
-      "averageDurationMs": 2.4166666666666665,
+      "averageDurationMs": 2.5,
       "isRunning": false,
-      "nextRun": "2026-07-20T10:21:15.245Z",
-      "lastStartedAt": "2026-07-20T10:06:15.242Z",
-      "lastRun": "2026-07-20T10:06:15.244Z"
+      "nextRun": "2026-07-20T10:19:22.969Z",
+      "lastStartedAt": "2026-07-20T10:04:22.965Z",
+      "lastRun": "2026-07-20T10:04:22.967Z"
     },
     "audit": {
-      "runCount": 17,
-      "successCount": 17,
-      "failureCount": 0,
-      "averageDurationMs": 2.4705882352941178,
-      "isRunning": false,
-      "nextRun": "2026-07-20T10:13:15.270Z",
-      "lastStartedAt": "2026-07-20T10:03:15.266Z",
-      "lastRun": "2026-07-20T10:03:15.269Z"
-    },
-    "optimize": {
-      "runCount": 12,
-      "successCount": 12,
-      "failureCount": 0,
-      "averageDurationMs": 2.4166666666666665,
-      "isRunning": false,
-      "nextRun": "2026-07-20T10:10:15.241Z",
-      "lastStartedAt": "2026-07-20T10:10:15.260Z",
-      "lastRun": "2026-07-20T10:10:15.262Z"
-    },
-    "consolidate": {
-      "runCount": 6,
-      "successCount": 6,
+      "runCount": 2,
+      "successCount": 2,
       "failureCount": 0,
       "averageDurationMs": 2,
       "isRunning": false,
-      "nextRun": "2026-07-20T10:27:15.218Z",
-      "lastStartedAt": "2026-07-20T09:57:15.215Z",
-      "lastRun": "2026-07-20T09:57:15.217Z"
+      "nextRun": "2026-07-20T10:11:22.969Z",
+      "lastStartedAt": "2026-07-20T10:01:22.967Z",
+      "lastRun": "2026-07-20T10:01:22.968Z"
+    },
+    "optimize": {
+      "runCount": 2,
+      "successCount": 2,
+      "failureCount": 0,
+      "averageDurationMs": 2,
+      "isRunning": false,
+      "nextRun": "2026-07-20T10:08:22.931Z",
+      "lastStartedAt": "2026-07-20T10:08:22.966Z",
+      "lastRun": "2026-07-20T10:08:22.968Z"
+    },
+    "consolidate": {
+      "runCount": 1,
+      "successCount": 1,
+      "failureCount": 0,
+      "averageDurationMs": 2,
+      "isRunning": false,
+      "nextRun": "2026-07-20T10:25:22.949Z",
+      "lastStartedAt": "2026-07-20T09:55:22.946Z",
+      "lastRun": "2026-07-20T09:55:22.948Z"
     },
     "testgaps": {
-      "runCount": 9,
-      "successCount": 9,
+      "runCount": 1,
+      "successCount": 1,
       "failureCount": 0,
-      "averageDurationMs": 2.5555555555555554,
+      "averageDurationMs": 2,
       "isRunning": false,
-      "nextRun": "2026-07-20T10:29:15.245Z",
-      "lastStartedAt": "2026-07-20T10:09:15.241Z",
-      "lastRun": "2026-07-20T10:09:15.244Z"
+      "nextRun": "2026-07-20T10:17:22.950Z",
+      "lastStartedAt": "2026-07-20T09:57:22.947Z",
+      "lastRun": "2026-07-20T09:57:22.949Z"
     },
     "backup": {
       "runCount": 1,
@@ -58,19 +58,19 @@
       "failureCount": 0,
       "averageDurationMs": 2,
       "isRunning": false,
-      "nextRun": "2026-07-21T07:31:15.113Z",
-      "lastStartedAt": "2026-07-20T08:43:15.142Z",
-      "lastRun": "2026-07-20T08:43:15.144Z"
+      "nextRun": "2026-07-21T09:59:22.952Z",
+      "lastStartedAt": "2026-07-20T09:59:22.949Z",
+      "lastRun": "2026-07-20T09:59:22.951Z"
     },
     "harness": {
       "runCount": 1,
       "successCount": 1,
       "failureCount": 0,
-      "averageDurationMs": 28,
+      "averageDurationMs": 15,
       "isRunning": false,
-      "nextRun": "2026-07-20T13:33:15.115Z",
-      "lastStartedAt": "2026-07-20T08:43:15.145Z",
-      "lastRun": "2026-07-20T08:43:15.173Z"
+      "nextRun": "2026-07-20T16:01:22.967Z",
+      "lastStartedAt": "2026-07-20T10:01:22.952Z",
+      "lastRun": "2026-07-20T10:01:22.967Z"
     },
     "predict": {
       "runCount": 0,
@@ -89,8 +89,8 @@
   },
   "config": {
     "autoStart": false,
-    "logDir": "/Users/soumyadasgupta/Desktop/apps/stride-coach/app/.claude-flow/logs",
-    "stateFile": "/Users/soumyadasgupta/Desktop/apps/stride-coach/app/.claude-flow/daemon-state.json",
+    "logDir": "/Users/soumyadasgupta/Desktop/apps/stride-coach/.claude-flow/logs",
+    "stateFile": "/Users/soumyadasgupta/Desktop/apps/stride-coach/.claude-flow/daemon-state.json",
     "maxConcurrent": 2,
     "workerTimeoutMs": 960000,
     "resourceThresholds": {
@@ -175,5 +175,5 @@
       }
     ]
   },
-  "savedAt": "2026-07-20T10:10:15.262Z"
+  "savedAt": "2026-07-20T10:08:22.968Z"
 }
