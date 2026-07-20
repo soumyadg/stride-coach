@@ -62,6 +62,51 @@
       } catch (e) { return false; }
     },
 
+    // ---- Local notifications (on-device training reminders — no backend needed) ----
+    scheduleReminders: async function (list) {
+      var LN = P.LocalNotifications;
+      if (!isNative || !LN) return false;
+      try {
+        var perm = await LN.requestPermissions();
+        if (perm.display !== 'granted') return false;
+        var pending = await LN.getPending();
+        if (pending && pending.notifications && pending.notifications.length) {
+          await LN.cancel({ notifications: pending.notifications.map(function (n) { return { id: n.id }; }) }).catch(function () {});
+        }
+        await LN.schedule({
+          notifications: list.map(function (n) {
+            return { id: n.id, title: n.title, body: n.body, schedule: { at: new Date(n.at) }, smallIcon: 'ic_launcher' };
+          })
+        });
+        return true;
+      } catch (e) { return false; }
+    },
+    notify: async function (list) {
+      var LN = P.LocalNotifications;
+      if (!isNative || !LN) return false;
+      try {
+        var perm = await LN.requestPermissions();
+        if (perm.display !== 'granted') return false;
+        await LN.schedule({
+          notifications: list.map(function (n) {
+            return { id: n.id, title: n.title, body: n.body, schedule: { at: new Date(n.at) }, smallIcon: 'ic_launcher' };
+          })
+        });
+        return true;
+      } catch (e) { return false; }
+    },
+    cancelReminders: async function () {
+      var LN = P.LocalNotifications;
+      if (!isNative || !LN) return false;
+      try {
+        var pending = await LN.getPending();
+        if (pending && pending.notifications && pending.notifications.length) {
+          await LN.cancel({ notifications: pending.notifications.map(function (n) { return { id: n.id }; }) });
+        }
+        return true;
+      } catch (e) { return false; }
+    },
+
     // ---- Apple Health authorization (read side; workout-write is a follow-up plugin) ----
     requestHealth: async function () {
       var H = P.CapacitorHealthkit;

@@ -50,7 +50,10 @@ Added Outdoor/Treadmill toggle on the run screen. Treadmill mode: GPS off, map r
 ## 🚀 DEPLOYED LIVE (2026-07-20) — https://soumyadg.github.io/stride-coach/
 Deployed to GitHub Pages. GOTCHA: GitHub Actions is BILLING-LOCKED on soumyadg's account ("account is locked due to a billing issue") → the Actions-based Pages deploy fails. WORKAROUND: branch-based (legacy) Pages from `gh-pages` branch (app/ subfolder split to branch root). Pages build_type=legacy, source gh-pages:/. Verified live: index/manifest/sw/icon all HTTP 200, onboarding renders. HTTPS ✓ (so PWA/GPS/Bluetooth work).
 REDEPLOY after changes: run `./deploy.sh` (subtree-splits app/ → gh-pages, force-push, triggers build). Do NOT rely on the pages.yml Actions workflow until billing is unlocked.
-Next: keep improving app #1 (candidates: negative-split coaching, embed fonts for offline, calibrate-distance-to-treadmill-readout).
+## 🔔 PUSH/LOCAL NOTIFICATIONS + 🌡️ WEATHER WET-BULB (2026-07-20)
+- **Local notifications** (`@capacitor/local-notifications` v8, no backend): "Training reminders" toggle on Today schedules run-day nudges at 7:30am (next 14 days). Bridge: scheduleReminders/notify/cancelReminders; Android POST_NOTIFICATIONS+SCHEDULE_EXACT_ALARM. Honest: local only (remote push = FCM/APNs + backend, deferred).
+- **Local weather + best-time-to-run** via Open-Meteo (free, no key, CORS, works web+native): fetches current + today's hourly temp/humidity, computes **wet-bulb temp (Stull approx)** per hour → recommends coolest-heat-stress daylight window today. Shows current temp/humidity/wet-bulb + risk pill (Ideal/Comfortable/Caution/High/Dangerous). "🔔 Notify me at HH:00" schedules a local push at the best window; also folded into training reminders. Verified live: 24°C/37%→wet-bulb 14.7°C, best 14:00. Formula validated (30/70→25.6, 35/50→26.6). Screenshot g5-weather.png.
+Next: keep improving app #1 (candidates: embed fonts offline, treadmill calibrate, workout-write to Health).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.
