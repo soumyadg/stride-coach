@@ -395,7 +395,7 @@
     <div class="card" id="risk-card"></div>
     <div class="card glow">
       <div class="kicker">Daily readiness check</div>
-      <div class="sub" style="margin:4px 0 4px">The feedback loop most apps skip. 20 seconds → today adapts to your body.</div>
+      <div class="sub" style="margin:4px 0 4px">20 seconds — adapts today's run to how you feel.</div>
       <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="2" class="on">Good</button><button data-v="1">OK</button><button data-v="0">Poor</button></div>
       <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="2" class="on">None</button><button data-v="1">Some</button><button data-v="0">High</button></div>
       <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="2" class="on">High</button><button data-v="1">Meh</button><button data-v="0">Low</button></div>
@@ -727,11 +727,11 @@ function renderRisk(){
   // whole-plan proof: max ACWR across BUILD weeks (deloads dip low on purpose)
   let peak=0; S.plan.forEach((w,i)=>{ if(!w.isDeload&&!w.isTaper){const a=acwrFor(i); if(a>peak)peak=a;} });
   let band,cls,msg;
-  if(wk.isDeload){band='Recovery';cls='b';msg='Deload week — load intentionally low so your body absorbs the work.';}
-  else if(acwr<0.8){band='Detraining';cls='b';msg='Very light — fine for a taper/return week.';}
-  else if(acwr<=1.3){band='Optimal';cls='g';msg='Right in the sweet spot. This is where fitness builds without the injury spike.';}
-  else if(acwr<=1.5){band='Caution';cls='a';msg='Load climbing fast — we\'ll watch this and can trim.';}
-  else{band='High risk';cls='r';msg='Danger zone. This is the ramp that injures runners — SafeRamp blocks it.';}
+  if(wk.isDeload){band='Recovery';cls='b';msg='Deload week — recover and absorb the work.';}
+  else if(acwr<0.8){band='Detraining';cls='b';msg='Very light — fine for a taper week.';}
+  else if(acwr<=1.3){band='Optimal';cls='g';msg='In the sweet spot — fitness builds, no injury spike.';}
+  else if(acwr<=1.5){band='Caution';cls='a';msg='Load climbing — we\'ll watch it.';}
+  else{band='High risk';cls='r';msg='Danger zone — SafeRamp blocks this ramp.';}
   const pos=Math.max(2,Math.min(98,(Math.min(2,Math.max(0.5,acwr))-0.5)/1.5*100));
   $('#risk-card').innerHTML=`
     <div class="risk-hd"><div class="kicker">Injury-risk radar · ACWR</div><span class="pill ${cls}">${band}</span></div>
@@ -741,7 +741,7 @@ function renderRisk(){
     </div>
     <div class="gauge"><div class="sweet"></div><div class="mk" style="left:calc(${pos}% - 2px)"></div></div>
     <div class="gscale"><span>0.5</span><span>0.8</span><span>1.3</span><span>1.5</span><span>2.0+</span></div>
-    <div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Across your whole plan, peak ACWR is <b>${peak.toFixed(2)}</b> — stays in the safe band every week. <span style="color:var(--muted)">Most apps don't model this at all.</span></div>`;
+    <div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Peak ACWR <b>${peak.toFixed(2)}</b> — safe every week.</div>`;
 }
 function renderToday(){
   const now=new Date();
@@ -843,7 +843,7 @@ function renderWeather(j,loc){
   let bestHtml;
   if(b){const[bd,be]=wmo(b.code),[br,brc]=heatRisk(b.wb);
     window._weatherRec=`Best run ${b.t.getHours()}:00 — ${Math.round(b.T)}°C, ${b.RH}% RH, wet-bulb ${b.wb.toFixed(1)}°C (${br})`;
-    bestHtml=`<div class="banner ${brc}" style="margin-top:10px">🏃 <b>Best time to run today: ${b.t.getHours()}:00</b> — ${be} ${Math.round(b.T)}°C · ${b.RH}% humidity · <b>wet-bulb ${b.wb.toFixed(1)}°C</b> (${br})${b.pop?` · ${b.pop}% rain`:''}</div>
+    bestHtml=`<div class="banner ${brc}" style="margin-top:10px">🏃 <b>Best run ${b.t.getHours()}:00</b> · ${Math.round(b.T)}°C · wet-bulb ${b.wb.toFixed(1)}°C</div>
       <button class="btn ghost" style="margin-top:10px" onclick="notifyBestRun()">🔔 Notify me at ${b.t.getHours()}:00</button>`;
   }else{window._weatherRec=null;bestHtml=`<div class="banner a" style="margin-top:10px">No good run window left today — aim for early tomorrow.</div>`;}
   $('#weather-card').innerHTML=`
@@ -853,8 +853,7 @@ function renderWeather(j,loc){
         <div class="sub">${c.relative_humidity_2m}% humidity · wet-bulb ${cwb.toFixed(1)}°C</div></div>
       <span class="pill ${crc}">${crisk}</span>
     </div>${bestHtml}
-    <div id="weather-note"></div>
-    <div class="sub" style="margin-top:8px;font-size:11.5px">Wet-bulb combines heat + humidity — the true measure of running heat stress.</div>`;
+    <div id="weather-note"></div>`;
 }
 async function notifyBestRun(){
   const b=window._weatherBest;if(!b)return;
