@@ -5,11 +5,50 @@
 
 App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no build step, no backend.
 
+### 🔴 Live demo → **[soumyadg.github.io/stride-coach](https://soumyadg.github.io/stride-coach/)**  ·  installable PWA · works on mobile
+
 <p align="center">
-  <img src="app/screenshots/06-theme-today.png" width="30%" alt="Today — injury-risk radar">
-  <img src="app/screenshots/08-theme-run.png" width="30%" alt="Run — live audio coaching">
-  <img src="app/screenshots/07-theme-stats.png" width="30%" alt="Stats & PRs">
+  <img src="app/screenshots/g1-goal.png" width="30%" alt="Onboarding — pick your goal">
+  <img src="app/screenshots/12-font-today.png" width="30%" alt="Today — injury-risk radar">
+  <img src="app/screenshots/g3-run.png" width="30%" alt="Live run — real map + heart rate">
 </p>
+
+---
+
+## Screens
+
+<table>
+  <tr>
+    <td width="33%"><img src="app/screenshots/g1-goal.png" alt="Pick your goal"></td>
+    <td width="33%"><img src="app/screenshots/12-font-today.png" alt="Injury-risk radar"></td>
+    <td width="33%"><img src="app/screenshots/g2-calendar.png" alt="Training calendar"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Pick your goal</b><br><sub>Animated onboarding</sub></td>
+    <td align="center"><b>Injury-risk radar</b><br><sub>Live ACWR gauge Runna lacks</sub></td>
+    <td align="center"><b>Training calendar</b><br><sub>SafeRamp load + deloads</sub></td>
+  </tr>
+  <tr>
+    <td><img src="app/screenshots/g3-run.png" alt="Live run coaching"></td>
+    <td><img src="app/screenshots/14-treadmill.png" alt="Treadmill mode"></td>
+    <td><img src="app/screenshots/g4-stats.png" alt="Stats and records"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Live run coaching</b><br><sub>Real map · Bluetooth HR · voice</sub></td>
+    <td align="center"><b>Treadmill mode</b><br><sub>Speed-integrated distance</sub></td>
+    <td align="center"><b>Stats &amp; records</b><br><sub>PRs + one-tap GPX export</sub></td>
+  </tr>
+  <tr>
+    <td><img src="app/screenshots/11-pricing.png" alt="Free vs Pro pricing"></td>
+    <td><img src="app/screenshots/13-loader.png" alt="Building your safe plan loader"></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Honest free vs Pro</b><br><sub>Safety promise always free</sub></td>
+    <td align="center"><b>Plan-building animation</b><br><sub>Neon Aurora theme</sub></td>
+    <td></td>
+  </tr>
+</table>
 
 ---
 
