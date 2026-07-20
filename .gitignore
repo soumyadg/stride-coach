@@ -1,3 +1,24 @@
 .DS_Store
 *.log
 node_modules/
+
+# ruflo / claude-flow runtime junk (do not track)
+.claude-flow/
+.swarm/
+.agents/
+.claude/
+ruvector.db
+skills-lock.json
+config/mcporter.json
+
+# Capacitor / native build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+ios/App/build/
+ios/App/Pods/
+ios/App/DerivedData/
+**/xcuserdata/
+DerivedData/
