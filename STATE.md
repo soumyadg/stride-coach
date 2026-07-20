@@ -45,7 +45,9 @@ Wired the Why screen with the full Free-vs-Pro split (after a freemium-strategy 
 FONT: swapped to Space Grotesk (display/headings/big numbers) + Inter (body) via Google Fonts — "cooler & sexier" per Soumya. Verified both load.
 ## ✨ ONBOARDING ANIMATIONS (2026-07-20)
 Added: staggered fade-up entrance of each onboarding step's content (playStep() flattens .rows/.grid2 so goal rows & pref tiles cascade), floaty brand logo, "Building your safe plan…" LOADER between build→app (spinning tangerine ring + staged messages: load limits → deload weeks → paces → safety-checks-passed, ~1.9s), and a subtle fade on every screen/tab switch (go() adds .fx). Respects prefers-reduced-motion. Verified in browser.
-Next: keep improving app #1 (candidates: negative-split coaching, treadmill mode, embed fonts for offline).
+## 🏢 TREADMILL MODE (2026-07-20)
+Added Outdoor/Treadmill toggle on the run screen. Treadmill mode: GPS off, map replaced by a speed dial (−/+ 0.5 km/h, 0.5–25) + incline control (0–15%); distance integrates from speed (speed/3.6 m/s per tick), no auto-pause. Verified: 10 km/h × 60s = 167m, avg pace derives to exactly 6:00/km. Lap intervals still advance by distance. Attribution hidden in treadmill mode.
+Next: keep improving app #1 (candidates: negative-split coaching, embed fonts for offline, calibrate-distance-to-treadmill-readout).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.
