@@ -26,13 +26,38 @@
     --display:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
     --body:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
-  /* run-safety theme — retints the whole app based on how safe it is to run */
-  :root[data-safety="caution"]{--accent:#ffab3d;--accent-2:#ff8a2e;--bg:#100d0a;--surface:#191410;--surface2:#221a12;--line:#38301f;}
+  /* run-safety theme — 5 weather buckets retint the whole app based on the area's conditions */
+  :root[data-safety="ideal"]{--accent:#22d3c4;--accent-2:#18b8ff;--bg:#070f10;--surface:#0f1a1b;--surface2:#142324;--surface3:#1c3234;--line:#234042;}
+  :root[data-safety="good"]{--accent:#ff6a3d;--accent-2:#ff4d6b;} /* = default tangerine */
+  :root[data-safety="caution"]{--accent:#ffab3d;--accent-2:#ff8a2e;--bg:#100d0a;--surface:#191410;--surface2:#221a12;--surface3:#2c220f;--line:#38301f;}
+  :root[data-safety="high"]{--accent:#ff7a2e;--accent-2:#ff5a1e;--bg:#120c08;--surface:#1c130c;--surface2:#261810;--surface3:#33220f;--line:#3a2a1a;}
   :root[data-safety="danger"]{--accent:#ff5555;--accent-2:#ff3b46;--bg:#120a0c;--surface:#1c1216;--surface2:#26151a;--surface3:#331b22;--line:#3e2530;}
+  :root[data-safety="ideal"] .btn.p{background:linear-gradient(135deg,#2fe0c8,#18b8ff)}
   :root[data-safety="caution"] .btn.p{background:linear-gradient(135deg,#ffbb4d,#ff8a2e)}
+  :root[data-safety="high"] .btn.p{background:linear-gradient(135deg,#ff8a3d,#ff5a1e)}
   :root[data-safety="danger"] .btn.p{background:linear-gradient(135deg,#ff6a6a,#ff3b46)}
-  #app::before{content:"";position:absolute;top:0;left:0;right:0;height:0;background:var(--accent);z-index:200;transition:height .35s ease}
-  :root[data-safety="caution"] #app::before,:root[data-safety="danger"] #app::before{height:4px}
+  #app::before{content:"";position:absolute;top:0;left:0;right:0;height:0;background:var(--accent);z-index:200;transition:height .35s ease,background .35s ease}
+  :root[data-safety="ideal"] #app::before,:root[data-safety="caution"] #app::before,:root[data-safety="high"] #app::before,:root[data-safety="danger"] #app::before{height:4px}
+  /* welcome splash — a route draws itself, a runner-dot leads, wordmark reveals */
+  #splash{position:absolute;inset:0;z-index:300;background:radial-gradient(circle at 50% 40%,#1a1330,#08070e);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .55s ease}
+  #splash.gone{opacity:0;pointer-events:none}
+  .splash-art{width:min(76vw,300px);height:130px;position:relative}
+  .splash-art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .route-bg{fill:none;stroke:rgba(255,106,61,.13);stroke-width:3}
+  .route{fill:none;stroke:url(#sg);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:var(--L);stroke-dashoffset:var(--L);
+    filter:drop-shadow(0 0 5px rgba(255,106,61,.5));animation:draw 1.7s cubic-bezier(.65,0,.25,1) .25s forwards}
+  .lead{fill:#fff;offset-path:path("M12,96 C70,18 120,120 168,62 S262,14 292,74");offset-distance:0%;
+    animation:lead 1.7s cubic-bezier(.65,0,.25,1) .25s forwards, bob .5s ease-in-out infinite}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes lead{to{offset-distance:100%}}
+  @keyframes bob{0%,100%{filter:drop-shadow(0 0 6px #ff6a3d)}50%{filter:drop-shadow(0 0 13px #ff4d6b)}}
+  .splash-word{font-family:var(--display);font-size:36px;font-weight:800;letter-spacing:-1.2px;
+    opacity:0;transform:translateY(12px) scale(.95);animation:wordIn .7s cubic-bezier(.2,.7,.2,1) 1.35s forwards}
+  .splash-word .d{color:#ff6a3d}
+  .splash-tag{color:var(--muted);font-size:14px;text-align:center;max-width:80%;opacity:0;animation:fadeIn .6s ease 1.95s forwards}
+  @keyframes wordIn{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.route{animation:none;stroke-dashoffset:0}.lead{animation:none;offset-distance:100%}.splash-word,.splash-tag{animation:none;opacity:1;transform:none}}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
   html,body{height:100%}
   body{background:#000;color:var(--text);
@@ -257,6 +282,18 @@
 </head>
 <body>
 <div id="app">
+  <div id="splash">
+    <div class="splash-art">
+      <svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true">
+        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#ff4d6b"/></linearGradient></defs>
+        <path class="route-bg" d="M12,96 C70,18 120,120 168,62 S262,14 292,74"/>
+        <path class="route" style="--L:360" d="M12,96 C70,18 120,120 168,62 S262,14 292,74"/>
+        <circle class="lead" r="5.5"/>
+      </svg>
+    </div>
+    <div class="splash-word">Stride<span class="d">.</span>Coach</div>
+    <div class="splash-tag">The running coach that won't get you injured.</div>
+  </div>
   <div class="statusbar"><span>9:41</span><span class="ic">● ●●● ▮</span></div>
 
   <!-- ================= ONBOARDING ================= -->
@@ -790,12 +827,12 @@ async function notifyBestRun(){
   }
 }
 // retint the whole app by how safe it is to run right now
+// 5 weather buckets → whole-app theme, based on wet-bulb heat stress
+function safetyBucket(wb){return wb>=27?'danger':wb>=23?'high':wb>=18?'caution':wb>=10?'good':'ideal';}
 function applySafetyTheme(){
   const w=window._weatherNow,r=document.documentElement;
   if(!w){r.removeAttribute('data-safety');return;}
-  if(w.wb>=23)r.setAttribute('data-safety','danger');
-  else if(w.wb>=18)r.setAttribute('data-safety','caution');
-  else r.removeAttribute('data-safety');
+  r.setAttribute('data-safety',safetyBucket(w.wb));
 }
 // hydration prompts during long runs (more often in heat)
 function hydrationCheck(){
@@ -1113,9 +1150,16 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   if(v==='run'&&typeof checkHeat==='function')checkHeat(false);
   s.scrollTop=0;}
 
-// ---- boot ----
-if(S&&S.plan)enterApp();
-else playStep($('#ob1'));
+// ---- boot (welcome splash → app) ----
+function runBoot(){if(S&&S.plan)enterApp();else playStep($('#ob1'));}
+function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dataset.done='1';runBoot();s.classList.add('gone');setTimeout(()=>{s.style.display='none';},650);}
+(function(){
+  const s=$('#splash');if(!s){runBoot();return;}
+  try{const p=s.querySelector('.route');const L=p.getTotalLength();if(L)p.style.setProperty('--L',L);}catch(e){}
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  s.addEventListener('click',dismissSplash);
+  setTimeout(dismissSplash,reduce?600:2700);
+})();
 </script>
 </body>
 </html>

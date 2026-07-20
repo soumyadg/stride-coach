@@ -53,6 +53,11 @@ REDEPLOY after changes: run `./deploy.sh` (subtree-splits app/ → gh-pages, for
 ## 🔔 PUSH/LOCAL NOTIFICATIONS + 🌡️ WEATHER WET-BULB (2026-07-20)
 - **Local notifications** (`@capacitor/local-notifications` v8, no backend): "Training reminders" toggle on Today schedules run-day nudges at 7:30am (next 14 days). Bridge: scheduleReminders/notify/cancelReminders; Android POST_NOTIFICATIONS+SCHEDULE_EXACT_ALARM. Honest: local only (remote push = FCM/APNs + backend, deferred).
 - **Local weather + best-time-to-run** via Open-Meteo (free, no key, CORS, works web+native): fetches current + today's hourly temp/humidity, computes **wet-bulb temp (Stull approx)** per hour → recommends coolest-heat-stress daylight window today. Shows current temp/humidity/wet-bulb + risk pill (Ideal/Comfortable/Caution/High/Dangerous). "🔔 Notify me at HH:00" schedules a local push at the best window; also folded into training reminders. Verified live: 24°C/37%→wet-bulb 14.7°C, best 14:00. Formula validated (30/70→25.6, 35/50→26.6). Screenshot g5-weather.png.
+## ✨ WELCOME SPLASH + 🌈 5-BUCKET WEATHER THEME + 💧 HYDRATION + 🥵 HEAT WARN (2026-07-20)
+- **Welcome splash**: on app open, a glowing gradient route DRAWS itself (SVG stroke-dashoffset) with a bobbing runner-dot leading (CSS offset-path), then "Stride.Coach" wordmark + tagline reveal; auto-dismiss ~2.7s or tap-to-skip; reduced-motion safe. runBoot() runs under the fade → app appears. Screenshot s1-splash.png.
+- **5 weather buckets** (was 3): applySafetyTheme() → data-safety = ideal(teal #22d3c4, wb<10) / good(tangerine, <18) / caution(amber, <23) / high(orange, <27) / danger(red, >=27). Whole app retints (accent+bg+buttons+top strip). Verified all 5 accents. Driven by area's wet-bulb via Open-Meteo geolocation.
+- **Hydration** prompts on long runs (voice+bubble) every 20min / 15min in heat, no double-fire.
+- **Run-screen heat warning** amber/red from current wet-bulb, spoken on start.
 Next: keep improving app #1 (candidates: embed fonts offline, treadmill calibrate, workout-write to Health).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
