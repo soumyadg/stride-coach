@@ -681,7 +681,7 @@ function computeReadiness(){
 // ---- run tracker (lap-based + live audio coaching) ----
 let run=null,watchId=null,tick=null,muted=false;
 const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,race:4.4,cool:6.3};
-function paceStr(p){const m=Math.floor(p);return `${m}:${String(Math.round((p-m)*60)).padStart(2,'0')}`;}
+function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=0;}return `${m}:${String(s).padStart(2,'0')}`;}
 function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy run',km:5,kind:'easy',note:''};}
 function buildLaps(se){
   const t=se.t||'',km=se.km||5,kind=se.kind;
