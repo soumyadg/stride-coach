@@ -451,6 +451,7 @@
   <!-- ================= WHY ================= -->
   <div id="s-why" class="screen hide">
     <h1 style="padding-top:6px">Why Stride</h1>
+    <div class="card" id="account-card"></div>
     <div class="card">
       <div class="kicker">We fix what Runna gets wrong</div>
       <table>
@@ -556,13 +557,17 @@
   </nav>
 </div>
 
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="sync.js"></script>
 <script src="native-bridge.js"></script>
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const store={get:()=>JSON.parse(localStorage.getItem('stride')||'null'),set:d=>localStorage.setItem('stride',JSON.stringify(d))};
+const store={get:()=>JSON.parse(localStorage.getItem('stride')||'null'),set:d=>{try{d._mut=Date.now();}catch(e){}localStorage.setItem('stride',JSON.stringify(d));if(window.StrideSync)StrideSync.markDirty();}};
 let S=store.get();
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function uuid(){return crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}
 
 // ---- generic single-select wiring ----
 function wireSelect(sel){$$(sel+' > *').forEach(el=>el.onclick=()=>{el.parentElement.children&&[...el.parentElement.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');});}
@@ -626,7 +631,7 @@ function buildPlan(){
     const sessions=makeSessions(vol,days,goal,w,weeks);
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
-  S={goal,goalName,base,days,exp,pref,weeks,plan,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:seedActivities()};
+  S={goal,goalName,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:seedActivities()};
   store.set(S); runBuildLoader();
 }
 function makeSessions(vol,days,goal,w,total){
@@ -1003,7 +1008,7 @@ function saveRPE(){
   const rpe=$('#rpe-seg .on').dataset.v;
   const km=+(run.dist/1000).toFixed(2),secs=run.moving||run.elapsed,pace=km>0.02?Math.max(2.8,secs/60/km):6;
   S.history=S.history||[];S.history.push({km,rpe,at:Date.now()});
-  S.activities=S.activities||[];S.activities.unshift({km,secs,pace,name:run.name||'Run',at:Date.now(),rpe,hr:run.hr||null,startAt:run.startedAt||Date.now()-secs*1000,pts:(run.pts||[]).slice()});
+  S.activities=S.activities||[];S.activities.unshift({id:uuid(),km,secs,pace,name:run.name||'Run',at:Date.now(),rpe,hr:run.hr||null,startAt:run.startedAt||Date.now()-secs*1000,pts:(run.pts||[]).slice()});
   const factor=rpe==='painful'?0.82:rpe==='hard'?0.93:rpe==='easy'?1.05:1.0;
   const ni=S.curWeek%S.plan.length,nw=S.plan[ni];
   if(nw&&!nw.isDeload&&!nw.isTaper){const cap=S.plan[ni-1]?S.plan[ni-1].vol*1.10:nw.vol;
@@ -1108,7 +1113,7 @@ function seedActivities(){
     for(let r=0;r<nRuns;r++){const i=r%names.length;
       const km=+((4+(6-w)*0.4)+(i===3?4:i===2?1.5:0)+Math.random()).toFixed(1);
       const secs=Math.round(paces[i]*60*km),at=now-Math.round((w*7-r*1.7)*day);
-      acts.push({km,secs,pace:paces[i],name:names[i],at,rpe:'right',startAt:at-secs*1000,pts:synthRoute(km)});}}
+      acts.push({id:uuid(),km,secs,pace:paces[i],name:names[i],at,rpe:'right',startAt:at-secs*1000,pts:synthRoute(km)});}}
   return acts.sort((a,b)=>b.at-a.at);
 }
 function kindOf(n){return /interval|rep|tempo|hill|race|parkrun|trial/i.test(n)?'quality':/long/i.test(n)?'long':'easy';}
@@ -1148,7 +1153,46 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function')checkHeat(false);
+  if(v==='why'&&window.StrideSync)renderAccount(StrideSync.state());
   s.scrollTop=0;}
+
+// ---- account + cloud sync UI ----
+function timeAgo(iso){const s=(Date.now()-new Date(iso))/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function renderAccount(st){
+  const el=$('#account-card');if(!el)return;
+  if(!st||!st.configured){el.innerHTML=`<div class="kicker">☁️ Cloud sync</div><div class="sub" style="margin-top:4px">Runs fully offline. To back up &amp; sync across devices, add your Supabase keys in <b>config.js</b> (see BACKEND.md).</div>`;return;}
+  if(st.signedIn){
+    el.innerHTML=`<div class="kicker">☁️ Account</div>
+      <div style="margin-top:8px"><div style="font-weight:800">${st.email}</div><div class="sub">${st.lastSync?'Synced '+timeAgo(st.lastSync):'Not synced yet'}</div></div>
+      <div class="row" style="margin-top:12px"><button class="btn p" onclick="acctSync()">Sync now</button><button class="btn ghost" style="flex:.6" onclick="acctSignOut()">Sign out</button></div>
+      <div id="acct-msg"></div>`;
+  }else{
+    el.innerHTML=`<div class="kicker">☁️ Back up &amp; sync</div>
+      <div class="sub" style="margin-top:4px">Sign in to save your plan &amp; runs to the cloud and sync across devices.</div>
+      <label>Email</label><input id="acct-email" type="email" autocomplete="email" placeholder="you@email.com">
+      <label>Password</label><input id="acct-pw" type="password" autocomplete="current-password" placeholder="at least 6 characters">
+      <div class="row" style="margin-top:12px"><button class="btn p" onclick="acctAuth('in')">Sign in</button><button class="btn ghost" onclick="acctAuth('up')">Create account</button></div>
+      <div id="acct-msg"></div>`;
+  }
+}
+async function acctAuth(mode){
+  const email=($('#acct-email').value||'').trim(),pw=$('#acct-pw').value||'',m=$('#acct-msg');
+  if(!email||pw.length<6){m.innerHTML='<div class="banner a" style="margin-top:10px">Enter an email and a 6+ character password.</div>';return;}
+  m.innerHTML='<div class="sub" style="margin-top:10px">Working…</div>';
+  try{if(mode==='up'){await StrideSync.signUp(email,pw);m.innerHTML='<div class="banner g" style="margin-top:10px">Account created. If email confirmation is on, confirm then sign in.</div>';}
+      else await StrideSync.signIn(email,pw);}
+  catch(e){m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Sign-in failed.'}</div>`;}
+}
+async function acctSync(){const m=$('#acct-msg');m.innerHTML='<div class="sub" style="margin-top:10px">Syncing…</div>';try{await StrideSync.syncNow();m.innerHTML='<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Synced.</div>';}catch(e){m.innerHTML='<div class="banner r" style="margin-top:10px">Sync failed — check connection.</div>';}}
+async function acctSignOut(){await StrideSync.signOut();}
+document.addEventListener('stride-synced',()=>{
+  const fresh=store.get();
+  if(fresh){S=fresh;
+    if($('#nav').classList.contains('hide')&&S.plan){const sp=$('#splash');if(sp)sp.style.display='none';enterApp();}
+    else if(!$('#nav').classList.contains('hide')){renderAll();const on=$$('#nav button').find(b=>b.classList.contains('on'));if(on&&on.dataset.v==='stats')renderStats();}
+  }
+  if(window.StrideSync)renderAccount(StrideSync.state());
+});
 
 // ---- boot (welcome splash → app) ----
 function runBoot(){if(S&&S.plan)enterApp();else playStep($('#ob1'));}
@@ -1160,6 +1204,9 @@ function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dat
   s.addEventListener('click',dismissSplash);
   setTimeout(dismissSplash,reduce?600:2700);
 })();
+
+// ---- start cloud sync (completely inert without Supabase config) ----
+if(window.StrideSync)StrideSync.init(renderAccount);
 </script>
 </body>
 </html>
