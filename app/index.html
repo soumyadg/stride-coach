@@ -337,6 +337,7 @@
         <div class="opt" data-v="first5k"><div class="tile">🐣</div><div><div class="t">Run a first 5K</div><div class="d">Couch-to-5K, gently and safely.</div></div><div class="chev">›</div></div>
         <div class="opt" data-v="general"><div class="tile">❤️</div><div><div class="t">General training</div><div class="d">Stay fit, build a consistent habit.</div></div><div class="chev">›</div></div>
         <div class="opt" data-v="injury"><div class="tile">🩹</div><div><div class="t">Post-injury recovery</div><div class="d">Return-to-run with extra load caution.</div></div><div class="chev">›</div></div>
+        <div class="opt" data-v="walk"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Build a walking habit or walk to a 5K — gently &amp; safely.</div></div><div class="chev">›</div></div>
       </div>
       <div class="cta"><button class="btn p" onclick="obStep(2)">Continue</button></div>
     </div>
@@ -649,7 +650,8 @@ function buildPlan(){
   const exp=$('#o-exp .on').dataset.v;
   const pref=$('#pref-grid .on').dataset.v;
   const goalName=$('#goal-rows .on .t').textContent;
-  const peak={'5k':30,'10k':45,'half':65,'marathon':90}[goal];
+  const mode=$('#goal-rows .on').dataset.v==='walk'?'walk':'run';
+  const peak=(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
   let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
   if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
   const start=new Date(); start.setHours(0,0,0,0);
@@ -663,16 +665,23 @@ function buildPlan(){
       vol=Math.floor(Math.min(peak,avg*rampCap,last*1.10)*10)/10;}
     recent.push(vol);
     const wkStart=new Date(start); wkStart.setDate(start.getDate()+(w-1)*7);
-    const sessions=makeSessions(vol,days,goal,w,weeks);
+    const sessions=makeSessions(vol,days,goal,w,weeks,mode);
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
   const heightCm=+$('#o-height').value||null, weightKg=+$('#o-weight').value||null;
-  S={goal,goalName,base,days,exp,pref,weeks,plan,planId:uuid(),heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
+  S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:uuid(),heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
   store.set(S); runBuildLoader();
 }
-function makeSessions(vol,days,goal,w,total){
+function makeSessions(vol,days,goal,w,total,mode){
   const longFrac=goal==='marathon'?0.34:goal==='half'?0.32:0.30;
   const long=+(vol*longFrac).toFixed(1);
+  if(mode==='walk'){
+    let rest=vol-long, easyN=Math.max(1,days-1), easy=+(rest/easyN).toFixed(1), s=[];
+    s.push({t:'Long walk',km:long,kind:'long',note:'Steady, relaxed pace — enjoy the time out.'});
+    for(let i=0;i<easyN;i++)s.push(i===0?{t:'Brisk walk',km:easy,kind:'quality',note:'Pick up the pace — you can still hold a chat.'}
+                                        :{t:'Easy walk',km:easy,kind:'easy',note:'Comfortable, conversational walk.'});
+    return s;
+  }
   let rest=vol-long, easyN=Math.max(1,days-2), easy=+(rest*0.62/easyN).toFixed(1), quality=+(rest*0.38).toFixed(1);
   const taper=w>total-2, s=[];
   s.push({t:'Long run',km:long,kind:'long',note:'Conversational pace — time on feet.'});
@@ -758,7 +767,7 @@ function renderToday(){
       <div style="display:flex;gap:11px;align-items:center"><span class="dot ${s.kind||'easy'}" style="width:12px;height:12px"></span>
         <div><div style="font-weight:800;font-size:17px">${s.t}</div><div class="sub">${s.note}</div></div></div>
       <div style="font-size:20px;font-weight:800" class="mono tick">${s.km?s.km+'km':'—'}</div></div>
-    <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this run →</button>`;
+    <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
 }
 
@@ -910,6 +919,7 @@ const LESSONS=[
 function lessonsOn(){return !(S&&S.lessonsOff);}
 function lessonCheck(){
   if(!run||!run.active||run.paused||!lessonsOn())return;
+  if(S&&S.mode==='walk')return;                                        // running-form tips don't fit walkers
   if(window._weatherNow&&window._weatherNow.wb>=23)return;              // heat → safety audio only
   if(/interval|tempo|hill|rep|race|trial/i.test(run.name||''))return;   // easy/long runs only
   if(run.elapsed<90)return;                                            // let the run settle first
@@ -920,8 +930,9 @@ function lessonCheck(){
   coach('📚 '+t+' — '+m);speak(m);
 }
 function toggleTips(){S=store.get()||S;S.lessonsOff=lessonsOn();store.set(S);reflectTips();coach(lessonsOn()?'📚 Coaching tips on — I\'ll teach you as you run.':'Coaching tips off.');}
-function reflectTips(){const b=$('#tips-btn');if(b){b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}
-  const h=$('#tips-hint');if(h)h.textContent=lessonsOn()?'📚 Coaching tips play during easy runs':'📚 Coaching tips off';}
+function reflectTips(){const walk=S&&S.mode==='walk';
+  const b=$('#tips-btn');if(b){b.style.display=walk?'none':'';b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}
+  const h=$('#tips-hint');if(h){h.style.display=walk?'none':'';h.textContent=lessonsOn()?'📚 Coaching tips play during easy runs':'📚 Coaching tips off';}}
 // warn on the RUN screen if current wet-bulb is unsafe
 function checkHeat(speakIt){
   const el=$('#heat-warn');if(!el)return;
@@ -940,11 +951,16 @@ function checkHeat(speakIt){
 
 // ---- run tracker (lap-based + live audio coaching) ----
 let run=null,watchId=null,tick=null,muted=false;
-const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,race:4.4,cool:6.3};
+const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,race:4.4,cool:6.3,walk:11.0,wwarm:12.5,brisk:9.0};
 function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=0;}return `${m}:${String(s).padStart(2,'0')}`;}
 function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy run',km:5,kind:'easy',note:''};}
+function actWord(){return S&&S.mode==='walk'?'walk':'run';}
 function buildLaps(se){
   const t=se.t||'',km=se.km||5,kind=se.kind;
+  if(/walk/i.test(t)){
+    if(/brisk/i.test(t))return[{d:500,pace:'wwarm',lab:'Warm-up'},{d:Math.max(500,(km-1)*1000),pace:'brisk',lab:'Brisk walk'},{d:500,pace:'wwarm',lab:'Ease down'}];
+    return[{d:km*1000,pace:'walk',lab:t}];
+  }
   if(kind==='quality'&&/interval|rep|400|800/i.test(t)){
     const laps=[{d:1000,pace:'warm',lab:'Warm-up'}];
     for(let i=0;i<6;i++){laps.push({d:400,pace:'hard',lab:`Rep ${i+1}`});laps.push({d:200,pace:'jog',lab:'Recovery'});}
@@ -1066,7 +1082,7 @@ function clearMap(){$('#map-tiles').innerHTML='';$('#r-marker').classList.remove
 function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();coach('Paused.');}
 function stopRun(){
   if(!run)return;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();
-  $('#r-start').textContent='Start run';$('#r-next').classList.remove('show');$('#r-lap').textContent='Finished';
+  $('#r-start').textContent='Start '+actWord();$('#r-next').classList.remove('show');$('#r-lap').textContent='Finished';
   speak(`Workout complete. ${(run.dist/1000).toFixed(1)} kilometres. Nice work.`);
   $('#rpe-card').classList.remove('hide');coach(`Nice — ${(run.dist/1000).toFixed(2)}km done. How'd it feel?`);
 }
@@ -1268,7 +1284,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
-  if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();}
+  if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
   if(v==='why'&&window.StrideSync)renderAccount(StrideSync.state());
   s.scrollTop=0;}
 

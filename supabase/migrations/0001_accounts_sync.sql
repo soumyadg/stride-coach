@@ -22,6 +22,7 @@ create table if not exists plans (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   goal text, goal_name text, weeks int, days int, experience text, pref text,
+  mode text default 'run',        -- 'run' | 'walk'
   start_date date,
   data jsonb not null,            -- == S.plan (weeks incl days/sessions)
   cur_week int default 1,
