@@ -75,6 +75,12 @@
   .statusbar{display:flex;justify-content:space-between;align-items:center;
     padding:12px 22px 4px;font-size:13px;font-weight:600;color:var(--text)}
   .statusbar .ic{letter-spacing:2px}
+  #install-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:6px 14px 0;padding:10px 12px;border-radius:14px;font-size:13px;font-weight:600;
+    background:linear-gradient(120deg,#2a1622,var(--surface));border:1px solid var(--accent-dim,#5c2a17)}
+  #install-banner button{border:none;cursor:pointer;font:inherit;font-weight:800}
+  #install-btn{background:var(--accent);color:#1a0704;border-radius:10px;padding:8px 14px;font-size:13px}
+  #install-x{background:transparent;color:var(--muted);font-size:15px;padding:4px 6px}
   h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
   h2{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
   .sub{color:var(--muted);font-size:14px}
@@ -295,6 +301,13 @@
     <div class="splash-tag">The running coach that won't get you injured.</div>
   </div>
   <div class="statusbar"><span>9:41</span><span class="ic">● ●●● ▮</span></div>
+  <div id="install-banner" class="hide">
+    <span id="install-text">📲 Install Stride for the full experience</span>
+    <span style="display:flex;gap:8px;flex:none">
+      <button id="install-btn" onclick="doInstall()">Install</button>
+      <button id="install-x" onclick="dismissInstall()" aria-label="Dismiss">✕</button>
+    </span>
+  </div>
 
   <!-- ================= ONBOARDING ================= -->
   <div id="s-onboard" class="screen">
@@ -631,7 +644,7 @@ function buildPlan(){
     const sessions=makeSessions(vol,days,goal,w,weeks);
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
-  S={goal,goalName,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:seedActivities()};
+  S={goal,goalName,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
   store.set(S); runBuildLoader();
 }
 function makeSessions(vol,days,goal,w,total){
@@ -647,7 +660,7 @@ function makeSessions(vol,days,goal,w,total){
 }
 
 // ---- render ----
-function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();}
+function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();}
 function renderAll(){if(!S)return;renderCurve();renderCalendar();renderToday();}
 function renderCurve(){
   const max=Math.max(...S.plan.map(x=>x.vol));
@@ -1080,6 +1093,22 @@ function exportCurrentRun(){if(!run)return;
 
 // ---- PWA: register service worker ----
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+
+// ---- PWA install prompt ----
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;maybeShowInstall();});
+window.addEventListener('appinstalled',function(){deferredPrompt=null;hideInstall();});
+function isStandalone(){return (window.matchMedia&&window.matchMedia('(display-mode:standalone)').matches)||window.navigator.standalone===true;}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+function hideInstall(){var b=document.getElementById('install-banner');if(b)b.classList.add('hide');}
+function dismissInstall(){try{localStorage.setItem('stride_install_dismissed','1');}catch(e){}hideInstall();}
+function maybeShowInstall(){
+  var b=document.getElementById('install-banner');if(!b)return;
+  if(isStandalone()||localStorage.getItem('stride_install_dismissed'))return;
+  if(deferredPrompt){document.getElementById('install-btn').style.display='';document.getElementById('install-text').textContent='📲 Install Stride for the full experience';b.classList.remove('hide');}
+  else if(isIOS()){document.getElementById('install-btn').style.display='none';document.getElementById('install-text').textContent='📲 Add to Home Screen — tap Share, then “Add to Home Screen”';b.classList.remove('hide');}
+}
+async function doInstall(){if(!deferredPrompt)return;deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;hideInstall();}
 
 // ---- workout library ----
 const WORKOUTS_RUN=[
