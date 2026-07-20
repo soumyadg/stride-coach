@@ -26,6 +26,13 @@
     --display:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
     --body:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
+  /* run-safety theme — retints the whole app based on how safe it is to run */
+  :root[data-safety="caution"]{--accent:#ffab3d;--accent-2:#ff8a2e;--bg:#100d0a;--surface:#191410;--surface2:#221a12;--line:#38301f;}
+  :root[data-safety="danger"]{--accent:#ff5555;--accent-2:#ff3b46;--bg:#120a0c;--surface:#1c1216;--surface2:#26151a;--surface3:#331b22;--line:#3e2530;}
+  :root[data-safety="caution"] .btn.p{background:linear-gradient(135deg,#ffbb4d,#ff8a2e)}
+  :root[data-safety="danger"] .btn.p{background:linear-gradient(135deg,#ff6a6a,#ff3b46)}
+  #app::before{content:"";position:absolute;top:0;left:0;right:0;height:0;background:var(--accent);z-index:200;transition:height .35s ease}
+  :root[data-safety="caution"] #app::before,:root[data-safety="danger"] #app::before{height:4px}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
   html,body{height:100%}
   body{background:#000;color:var(--text);
@@ -753,6 +760,7 @@ function bestWindow(h){
 function renderWeather(j,loc){
   const c=j.current,[cd,ce]=wmo(c.weather_code),cwb=wetBulb(c.temperature_2m,c.relative_humidity_2m),[crisk,crc]=heatRisk(cwb);
   window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc};
+  applySafetyTheme();
   if(typeof checkHeat==='function')checkHeat();
   const b=bestWindow(j.hourly);window._weatherBest=b;
   let bestHtml;
@@ -779,6 +787,27 @@ async function notifyBestRun(){
     $('#weather-note').innerHTML=ok?`<div class="banner g" style="margin-top:8px"><span class="tick">✓</span> You’ll get a notification at ${b.t.getHours()}:00.</div>`:`<div class="banner a" style="margin-top:8px">Allow notifications in Settings to get the alert.</div>`;
   }else{
     $('#weather-note').innerHTML=`<div class="banner a" style="margin-top:8px">🔔 In the installed app you’ll get a push at ${b.t.getHours()}:00 — ${window._weatherRec}.</div>`;
+  }
+}
+// retint the whole app by how safe it is to run right now
+function applySafetyTheme(){
+  const w=window._weatherNow,r=document.documentElement;
+  if(!w){r.removeAttribute('data-safety');return;}
+  if(w.wb>=23)r.setAttribute('data-safety','danger');
+  else if(w.wb>=18)r.setAttribute('data-safety','caution');
+  else r.removeAttribute('data-safety');
+}
+// hydration prompts during long runs (more often in heat)
+function hydrationCheck(){
+  if(!run||!run.active||run.paused)return;
+  const hot=window._weatherNow&&window._weatherNow.wb>=23;
+  const isLong=/long/i.test(run.name||'')||run.target>=12;
+  if(!isLong&&!hot)return; // long runs, or any run in heat
+  const gap=hot?900:1200; // 15 min in heat, else 20 min
+  if(run.elapsed-(run.lastHydrate||0)>=gap){
+    run.lastHydrate=run.elapsed;
+    coach('💧 Hydration check — take a few sips.');
+    speak(hot?'Hydration check. It is hot today — take a good drink.':'Hydration check. Take a few sips of water.');
   }
 }
 // warn on the RUN screen if current wet-bulb is unsafe
@@ -819,7 +848,7 @@ function toggleRun(){
   if(run&&run.active){pauseRun();return;}
   if(!run){const cs=window._chosen||curSession();window._chosen=null;
     run={active:true,dist:0,elapsed:0,moving:0,last:null,paused:false,pts:[],name:cs.t,target:cs.km,
-      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now()};}
+      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now(),lastHydrate:0};}
   else run.active=true;
   $('#r-start').textContent='Pause';$('#rpe-card').classList.add('hide');
   $('#r-next').classList.toggle('show',run.laps.length>1);
@@ -880,6 +909,7 @@ function onPos(p){
 }
 function render(){
   if(!run)return;
+  hydrationCheck();
   const L=run.laps[run.lap],rem=Math.max(0,L.d-run.lapDist),lapT=run.elapsed-run.lapStart;
   $('#r-lap').textContent=`Lap ${run.lap+1} / ${run.laps.length} · ${L.lab}`;
   $('#r-target').textContent=`${Math.round(rem)}m @ ${paceStr(PACES[L.pace])}/km`;
