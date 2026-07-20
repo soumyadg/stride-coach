@@ -838,6 +838,7 @@ function renderWeather(j,loc){
   const c=j.current,[cd,ce]=wmo(c.weather_code),cwb=wetBulb(c.temperature_2m,c.relative_humidity_2m),[crisk,crc]=heatRisk(cwb);
   window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc};
   applySafetyTheme();
+  try{localStorage.setItem('stride_wx',JSON.stringify({bucket:safetyBucket(cwb),at:Date.now()}));}catch(e){}
   if(typeof checkHeat==='function')checkHeat();
   const b=bestWindow(j.hourly);window._weatherBest=b;
   let bestHtml;
@@ -1308,11 +1309,23 @@ document.addEventListener('stride-synced',()=>{
   if(window.StrideSync)renderAccount(StrideSync.state());
 });
 
+// ---- tint the welcome splash to the last-known weather bucket ----
+function tintSplash(){
+  try{
+    const wx=JSON.parse(localStorage.getItem('stride_wx')||'null');
+    if(!wx||Date.now()-wx.at>18*3600*1000)return;   // only if recent (today-ish)
+    const map={ideal:['#2fe0c8','#18b8ff','#22d3c4'],good:['#ff7a45','#ff4d6b','#ff6a3d'],caution:['#ffbb4d','#ff8a2e','#ffab3d'],high:['#ff8a3d','#ff5a1e','#ff7a2e'],danger:['#ff6a6a','#ff3b46','#ff5555']};
+    const c=map[wx.bucket];if(!c)return;
+    const stops=document.querySelectorAll('#sg stop');if(stops[0])stops[0].setAttribute('stop-color',c[0]);if(stops[1])stops[1].setAttribute('stop-color',c[1]);
+    const dot=document.querySelector('.splash-word .d');if(dot)dot.style.color=c[2];
+  }catch(e){}
+}
 // ---- boot (welcome splash → app) ----
 function runBoot(){if(S&&S.plan)enterApp();else playStep($('#ob1'));}
 function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dataset.done='1';runBoot();s.classList.add('gone');setTimeout(()=>{s.style.display='none';},650);}
 (function(){
   const s=$('#splash');if(!s){runBoot();return;}
+  tintSplash();
   try{const p=s.querySelector('.route');const L=p.getTotalLength();if(L)p.style.setProperty('--L',L);}catch(e){}
   const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   s.addEventListener('click',dismissSplash);
