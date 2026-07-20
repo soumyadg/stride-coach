@@ -47,6 +47,9 @@ FONT: swapped to Space Grotesk (display/headings/big numbers) + Inter (body) via
 Added: staggered fade-up entrance of each onboarding step's content (playStep() flattens .rows/.grid2 so goal rows & pref tiles cascade), floaty brand logo, "Building your safe plan…" LOADER between build→app (spinning tangerine ring + staged messages: load limits → deload weeks → paces → safety-checks-passed, ~1.9s), and a subtle fade on every screen/tab switch (go() adds .fx). Respects prefers-reduced-motion. Verified in browser.
 ## 🏢 TREADMILL MODE (2026-07-20)
 Added Outdoor/Treadmill toggle on the run screen. Treadmill mode: GPS off, map replaced by a speed dial (−/+ 0.5 km/h, 0.5–25) + incline control (0–15%); distance integrates from speed (speed/3.6 m/s per tick), no auto-pause. Verified: 10 km/h × 60s = 167m, avg pace derives to exactly 6:00/km. Lap intervals still advance by distance. Attribution hidden in treadmill mode.
+## 🚀 DEPLOYED LIVE (2026-07-20) — https://soumyadg.github.io/stride-coach/
+Deployed to GitHub Pages. GOTCHA: GitHub Actions is BILLING-LOCKED on soumyadg's account ("account is locked due to a billing issue") → the Actions-based Pages deploy fails. WORKAROUND: branch-based (legacy) Pages from `gh-pages` branch (app/ subfolder split to branch root). Pages build_type=legacy, source gh-pages:/. Verified live: index/manifest/sw/icon all HTTP 200, onboarding renders. HTTPS ✓ (so PWA/GPS/Bluetooth work).
+REDEPLOY after changes: run `./deploy.sh` (subtree-splits app/ → gh-pages, force-push, triggers build). Do NOT rely on the pages.yml Actions workflow until billing is unlocked.
 Next: keep improving app #1 (candidates: negative-split coaching, embed fonts for offline, calibrate-distance-to-treadmill-readout).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
