@@ -1,6 +1,6 @@
-# Runna — Issues Found (research in progress)
+# the leading app — Issues Found (research in progress)
 
-Sources: App Store page, Google Play (com.runbuddy.prod), web search of reviews/Reddit/blogs, Runna's own support docs. **Deeper pass (Reddit threads, 1-star dumps, injury reports) happens after 03:20 limit reset.**
+Sources: App Store page, Google Play (com.runbuddy.prod), web search of reviews/Reddit/blogs, the leading app's own support docs. **Deeper pass (Reddit threads, 1-star dumps, injury reports) happens after 03:20 limit reset.**
 
 ## Ratings
 - **iOS:** 4.8★, 24,000+ ratings
@@ -23,8 +23,8 @@ Sources: App Store page, Google Play (com.runbuddy.prod), web search of reviews/
 - Generates plan up front and **doesn't recalibrate** as you progress.
 - **FIX:** enforce safe load ramp (ACWR / 10% cap), true adaptive recalibration each week from actual runs, "not feeling 100%" deload.
 
-### D. Watch sync broken (Runna's OWN support docs)
-- 3 documented Garmin failure modes: won't sync Runna→Garmin, won't appear on watch, won't sync back.
+### D. Watch sync broken (the leading app's OWN support docs)
+- 3 documented Garmin failure modes: won't sync app→Garmin, won't appear on watch, won't sync back.
 - **FIX:** rock-solid two-way sync, sync-status visibility, retry/queue, offline workout on watch.
 
 ### E. Subscription / support friction
@@ -36,7 +36,7 @@ Sources: App Store page, Google Play (com.runbuddy.prod), web search of reviews/
 - **FIX:** genuine individualization (fatigue, HR, sleep, history), injury-aware, optional human-coach touchpoints.
 
 ## To dig deeper after reset (P1 cont.)
-- Reddit r/running + r/RunnaApp exact quotes
+- Reddit r/running + the app's own subreddit exact quotes
 - the5krunner injury article specifics + PT reports
 - Google Play 1-star dump via browser (playwright) — JS-rendered, needs headless browser
 - Strava-acquisition price/backlash

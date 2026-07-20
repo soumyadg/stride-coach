@@ -1,12 +1,12 @@
 # Stride Coach — Build Blueprint
 
-A running-coach app **like Runna, but injury-safe, honestly adaptive, and fair-priced.**
+A running-coach app **like the leading app, but injury-safe, honestly adaptive, and fair-priced.**
 
 ## Positioning
-> "The running coach that won't get you injured." Polished like Nike, adaptive like TrainAsONE, honest pricing unlike Runna.
+> "The running coach that won't get you injured." Polished like Nike, adaptive like TrainAsONE, honest pricing unlike the leading app.
 
-## Core differentiators (each maps to a verified Runna complaint)
-| # | Runna problem | Our fix (the feature) |
+## Core differentiators (each maps to a verified the leading app complaint)
+| # | the leading app problem | Our fix (the feature) |
 |---|---------------|------------------------|
 | 1 | Ramps too fast → injuries | **SafeRamp engine**: enforce ≤10% weekly load ↑, ACWR 0.8–1.3 sweet-spot, mandatory deload every 4th week, hard cap on weekly intensity |
 | 2 | "Takes runner at their word" | **Daily readiness check-in** (sleep, soreness, energy, HR) → auto-adjusts today's session. Never trust one-time self-assessment |
@@ -24,7 +24,7 @@ Ship a working, self-contained web app demonstrating the differentiated core:
 3. **Daily readiness check-in** → adjusts today's session (green/amber/red).
 4. **Run tracker** → browser geolocation, live distance/pace, **auto-pause**, post-run RPE.
 5. **Adaptive recalibration** → next week's plan shifts based on RPE + readiness + missed runs.
-6. **Honest pricing screen** → real free tier vs Runna's paywall.
+6. **Honest pricing screen** → real free tier vs the leading app's paywall.
 
 ## Stack (MVP)
 - **Single-page web app**, self-contained: HTML + vanilla JS + CSS (no build step, runs by opening the file). Fast to ship, easy to demo, portable to Capacitor/React Native later.

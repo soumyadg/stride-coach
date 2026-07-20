@@ -1,7 +1,7 @@
 # 🏃 Stride Coach
 
 > **The running coach that won't get you injured.**
-> A running-plan & coaching app in the spirit of Runna — rebuilt to fix Runna's documented flaws: injury-unsafe ramps, no feedback loop, GPS undercount, and a hard paywall.
+> An adaptive running-plan & coaching app built around injury-safety: load that can't ramp too fast, a real feedback loop, accurate GPS, wet-bulb heat awareness, and honest pricing.
 
 App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no build step, no backend.
 
@@ -25,7 +25,7 @@ App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no 
   </tr>
   <tr>
     <td align="center"><b>Pick your goal</b><br><sub>Animated onboarding</sub></td>
-    <td align="center"><b>Injury-risk radar</b><br><sub>Live ACWR gauge Runna lacks</sub></td>
+    <td align="center"><b>Injury-risk radar</b><br><sub>Live ACWR heat-stress gauge</sub></td>
     <td align="center"><b>Training calendar</b><br><sub>SafeRamp load + deloads</sub></td>
   </tr>
   <tr>
@@ -54,16 +54,16 @@ App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no 
 
 ## Why it exists
 
-Runna is excellent but has **verified, documented problems** (App Store / Google Play reviews, Runna's own support docs, PT reports — see [`research/`](research/)):
+Most running apps optimise for a plan; **Stride optimises so the plan won't injure you.** Every design choice targets a real, documented failure mode in mainstream running apps:
 
-| Runna's problem | Stride's fix |
+| Common failure mode | Stride's fix |
 |---|---|
-| Ramps load too fast → injuries (PTs report weekly cases) | **SafeRamp** — load mathematically cannot jump >10%/week |
-| "Takes you at your word", no feedback loop | **Daily readiness** + **post-run RPE** recalibration |
+| Load ramps too fast → injuries | **SafeRamp** — load mathematically cannot jump >10%/week |
+| One-time plan, no feedback loop | **Daily readiness** + **post-run RPE** recalibration |
 | GPS undercounts 100–200m at corners | Smoothed distance, no undercount |
 | Nags "speed up" at red lights | **Smart auto-pause** |
 | No free tier, can't cancel in-app | Real free tier, £6.99 Pro, 1-tap cancel |
-| **Doesn't model injury risk at all** | **ACWR injury-risk radar** (sports-science standard) |
+| No injury-risk or heat modelling | **ACWR radar** + **wet-bulb heat** safety (sports-science standard) |
 
 ---
 
@@ -106,7 +106,7 @@ flowchart LR
       P[🗓️ Plan<br/>calendar + load curve]
       R[🏃 Run<br/>live coaching]
       S[📊 Stats<br/>PRs + history]
-      W[✨ Why<br/>vs Runna + pricing]
+      W[✨ Why<br/>differentiators + pricing]
     end
     T --> R
     R -->|choose workout| LIB[Workout library]
@@ -179,11 +179,11 @@ stride-coach/
 │   ├── index.html      # the whole app
 │   ├── README.md       # app-level notes
 │   └── screenshots/    # UI captures
-├── research/           # Runna teardown, competitor analysis, blueprint
+├── research/           # market research, competitor analysis, blueprint
 ├── STATE.md            # autonomous-build resume log
 └── README.md           # this file
 ```
 
 ---
 
-*Prototype built autonomously as app #1 of a 30-app sprint. Stride Coach is its own brand — Runna-inspired UX patterns, not an impersonation.*
+*Prototype built autonomously as app #1 of a 30-app sprint. Stride Coach is its own brand and product.*
