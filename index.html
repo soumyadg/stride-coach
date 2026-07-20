@@ -162,6 +162,7 @@
   /* run toolbar */
   .run-toolbar{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding-top:6px}
   .run-toolbar .tbtn{padding:7px 11px;font-size:12px}
+  .tips-hint{text-align:center;font-size:11.5px;color:var(--faint);margin-top:7px}
   .tbtn{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
   .tbtn.off{opacity:.5}
   .tbtn.on{border-color:var(--accent);color:var(--accent)}
@@ -434,6 +435,7 @@
         <button class="tbtn" id="mute-btn" onclick="toggleMute()">🔊 Voice</button>
         <button class="tbtn" id="tips-btn" onclick="toggleTips()">📚 Tips</button>
       </div>
+      <div id="tips-hint" class="tips-hint"></div>
       <div class="run-top">
         <div class="lap" id="r-lap">Session · not started</div>
         <div class="target" id="r-target">Easy run</div>
@@ -918,7 +920,8 @@ function lessonCheck(){
   coach('📚 '+t+' — '+m);speak(m);
 }
 function toggleTips(){S=store.get()||S;S.lessonsOff=lessonsOn();store.set(S);reflectTips();coach(lessonsOn()?'📚 Coaching tips on — I\'ll teach you as you run.':'Coaching tips off.');}
-function reflectTips(){const b=$('#tips-btn');if(b){b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}}
+function reflectTips(){const b=$('#tips-btn');if(b){b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}
+  const h=$('#tips-hint');if(h)h.textContent=lessonsOn()?'📚 Coaching tips play during easy runs':'📚 Coaching tips off';}
 // warn on the RUN screen if current wet-bulb is unsafe
 function checkHeat(speakIt){
   const el=$('#heat-warn');if(!el)return;
