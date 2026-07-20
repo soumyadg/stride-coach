@@ -29,13 +29,28 @@ npm run open:android  # opens android/ in Android Studio
 ```
 Press ▶ with a device/emulator selected.
 
-## Next: native superpowers (what web can't do)
-These are Capacitor plugins to add when ready — they're also what makes Apple accept the app (not "just a website"):
-- `@capacitor/geolocation` + background mode — GPS tracking with screen off
-- native **Bluetooth LE** heart-rate (works on iOS, unlike Web Bluetooth)
-- **HealthKit / Google Fit** sync
+## Native plugins (installed + wired)
+The app uses these when running natively, and falls back to web APIs in the browser (`app/native-bridge.js`):
+
+| Plugin | Used for | Status |
+|---|---|---|
+| `@capacitor/geolocation` @8 | Native high-accuracy GPS run tracking (bg mode declared) | ✅ wired (GPS start/stop) |
+| `@capacitor-community/bluetooth-le` @8 | Heart-rate strap over BLE — **works on iOS** (Web Bluetooth doesn't) | ✅ wired (best-effort, verify on device) |
+| `@perfood/capacitor-healthkit` | Apple Health authorization / read | ⚠️ installed; see caveat |
+
+**Permissions configured:** iOS `Info.plist` (location, bluetooth, health usage strings + background modes); Android `AndroidManifest.xml` (fine/background location, BLUETOOTH_SCAN/CONNECT, Health Connect).
+
+### ⚠️ HealthKit build caveat
+`@perfood/capacitor-healthkit` has **no `Package.swift`**, so it doesn't integrate with the iOS project's Swift Package Manager setup (Capacitor 8 default). To use HealthKit, at build time either:
+1. switch the iOS project to **CocoaPods** (`npx cap add ios` after removing SPM), or
+2. swap to a **SPM-compatible** health plugin, or
+3. add the HealthKit capability + Health framework manually in Xcode.
+Also: the HealthKit **capability/entitlement** must be enabled in Xcode (Signing & Capabilities → + HealthKit) before it works. GPS + BLE need no such step.
+
+## Still to add later
 - `@capacitor/push-notifications`
-- native OAuth → real one-tap Strava/Garmin sync
+- native OAuth → one-tap Strava/Garmin sync
+- writing completed workouts to Apple Health / Health Connect (needs a write-capable plugin)
 
 ## Prerequisites status (this machine, 2026-07-20)
 - ✅ Node / npm, Capacitor project scaffolded

@@ -23,9 +23,12 @@
   },
   "homepage": "https://github.com/soumyadg/stride-coach#readme",
   "dependencies": {
+    "@capacitor-community/bluetooth-le": "^8.2.0",
     "@capacitor/android": "^8.4.2",
     "@capacitor/core": "^8.4.2",
-    "@capacitor/ios": "^8.4.2"
+    "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/ios": "^8.4.2",
+    "@perfood/capacitor-healthkit": "^1.3.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.4.2"

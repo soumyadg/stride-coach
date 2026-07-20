@@ -47,5 +47,24 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Stride Coach uses your location to track your run route, distance and pace.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Stride Coach uses your location to keep tracking your run accurately, even when the screen is off.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Stride Coach uses motion data to improve pace and cadence accuracy.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Stride Coach connects to your heart-rate strap or watch over Bluetooth to show live heart-rate zones.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Stride Coach connects to Bluetooth heart-rate sensors during your runs.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Stride Coach reads workouts and heart-rate data from Apple Health to personalise your training.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Stride Coach saves your completed runs to Apple Health.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>bluetooth-central</string>
+	</array>
 </dict>
 </plist>
