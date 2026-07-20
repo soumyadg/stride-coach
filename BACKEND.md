@@ -9,6 +9,18 @@
 4. **RLS everywhere** — a user can only ever touch their own rows (`auth.uid() = user_id`).
 5. **Minimal.** Supabase (Postgres + Auth + Storage) + 2–3 edge functions. Free tier until thousands of MAU.
 
+## ✅ Built — turn it on in ~5 minutes
+The client (auth UI + offline-first sync engine) is **built and wired** (`app/config.js`, `app/sync.js`, vendored `app/vendor/supabase.js`, Account card on the **Why** tab). It's **inert until you add keys** — the app runs 100% offline with `config.js` blank. To enable cloud accounts + sync:
+
+1. Create a **free Supabase project** at supabase.com.
+2. **SQL Editor** → paste [`supabase/migrations/0001_accounts_sync.sql`](supabase/migrations/0001_accounts_sync.sql) → **Run**. (Creates tables, RLS, triggers, auto-profile-on-signup.)
+3. *(For fast testing)* **Authentication → Providers → Email** → turn **off "Confirm email"** (or leave on and confirm via the email link).
+4. **Project Settings → API** → copy the **Project URL** and the **anon public** key.
+5. Paste both into **`app/config.js`**, then `./deploy.sh` (or reload locally).
+6. Open the app → **Why** tab → **Create account**. Your plan + runs now back up to the cloud. Sign in on another device → everything restores.
+
+**Verified so far (offline path + data mapping):** app is unaffected with blank config; Supabase JS loads; local↔cloud row mappers round-trip losslessly (plan, profile, activities). **Not yet verified:** the live cloud round-trip (auth/RLS/upsert/merge) — that needs *your* Supabase project or a local `supabase start` stack. The code is written to the Supabase-JS v2 API.
+
 ## Data model (ERD)
 
 ```mermaid

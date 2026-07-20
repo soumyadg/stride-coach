@@ -1,7 +1,8 @@
 /* Stride Coach service worker — offline shell + cached map tiles */
-const CACHE = 'stride-v1';
+const CACHE = 'stride-v2';
 const TILES = 'stride-tiles-v1';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg',
+  './config.js', './sync.js', './native-bridge.js', './vendor/supabase.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
