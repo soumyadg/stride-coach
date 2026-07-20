@@ -40,6 +40,9 @@ Backend cost discussion: £0 until real users; Apple Dev $99/yr is the first rea
 NOTE: app #2 is OFF the table until Soumya says app #1 is done — do NOT ask about app #2.
 ## ⬇ GPX EXPORT (2026-07-20) — sync-lite, no OAuth
 Added GPX 1.1 export so users upload runs to Strava/Garmin manually (no backend/OAuth). buildGPX() emits valid GPX (metadata + trk/trkseg/trkpt w/ lat/lon/ISO time); downloadGPX() via Blob+anchor. Runs now store pts+startAt+hr in the activity; seeded activities get synthRoute() so all are exportable. UI: ⬇ button per Stats activity + on post-run card. Verified: valid XML (parses clean, root <gpx>), 82 trackpoints, filename stride-YYYYMMDD-HHMM-name.gpx.
+## 💷 PRICING SCREEN + 🔤 FONT (2026-07-20)
+Wired the Why screen with the full Free-vs-Pro split (after a freemium-strategy discussion): FREE forever (SafeRamp plan, injury-risk radar, tracking/map/auto-pause, stats/PRs, manual GPX) vs PRO £6.99/mo (auto-sync Strava/Garmin, live voice coaching, HR zones + full workout library, race/multiple plans, load analytics) + "MOST POPULAR" badge + 7-day-trial button (prototype note, no billing) + "safety promise always free" banner. Conversion logic: free proves the promise, Pro sells convenience+commitment (race signup = key trigger); ~2-5% convert, freemium is a volume game → don't build billing/backend until the free base is proven.
+FONT: swapped to Space Grotesk (display/headings/big numbers) + Inter (body) via Google Fonts — "cooler & sexier" per Soumya. Verified both load.
 Next: keep improving app #1 (candidates: negative-split coaching, onboarding animations, treadmill mode).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
