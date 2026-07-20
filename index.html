@@ -367,6 +367,7 @@
         <div class="upval" id="r-up">Pick a workout, then hit start</div>
       </div>
       <div class="segbar" id="r-segbar"></div>
+      <div id="heat-warn" class="hide"></div>
       <div class="stats">
         <div class="stat"><div class="v mono" id="r-ldist">0m</div><div class="k">Lap distance</div></div>
         <div class="stat"><div class="v mono" id="r-ltime">0:00</div><div class="k">Lap time</div></div>
@@ -751,6 +752,8 @@ function bestWindow(h){
 }
 function renderWeather(j,loc){
   const c=j.current,[cd,ce]=wmo(c.weather_code),cwb=wetBulb(c.temperature_2m,c.relative_humidity_2m),[crisk,crc]=heatRisk(cwb);
+  window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc};
+  if(typeof checkHeat==='function')checkHeat();
   const b=bestWindow(j.hourly);window._weatherBest=b;
   let bestHtml;
   if(b){const[bd,be]=wmo(b.code),[br,brc]=heatRisk(b.wb);
@@ -776,6 +779,21 @@ async function notifyBestRun(){
     $('#weather-note').innerHTML=ok?`<div class="banner g" style="margin-top:8px"><span class="tick">✓</span> You’ll get a notification at ${b.t.getHours()}:00.</div>`:`<div class="banner a" style="margin-top:8px">Allow notifications in Settings to get the alert.</div>`;
   }else{
     $('#weather-note').innerHTML=`<div class="banner a" style="margin-top:8px">🔔 In the installed app you’ll get a push at ${b.t.getHours()}:00 — ${window._weatherRec}.</div>`;
+  }
+}
+// warn on the RUN screen if current wet-bulb is unsafe
+function checkHeat(speakIt){
+  const el=$('#heat-warn');if(!el)return;
+  const w=window._weatherNow;
+  if(!w||w.wb<23){el.className='hide';el.innerHTML='';return;}
+  if(w.wb>=27){
+    el.className='banner r';el.style.marginBottom='10px';
+    el.innerHTML=`🥵 <b>Dangerous heat — wet-bulb ${w.wb.toFixed(1)}°C.</b> High heat-stroke risk. Cut the session, slow right down &amp; hydrate — or wait for a cooler window.`;
+    if(speakIt)speak(`Warning. Dangerous heat. Wet bulb ${w.wb.toFixed(0)} degrees. Slow down, hydrate, or postpone your run.`);
+  }else{
+    el.className='banner a';el.style.marginBottom='10px';
+    el.innerHTML=`🔥 <b>High heat — wet-bulb ${w.wb.toFixed(1)}°C.</b> Ease the pace, hydrate, and keep it shorter than planned.`;
+    if(speakIt)speak(`Heads up. High heat stress. Ease your pace and hydrate.`);
   }
 }
 
@@ -805,6 +823,7 @@ function toggleRun(){
   else run.active=true;
   $('#r-start').textContent='Pause';$('#rpe-card').classList.add('hide');
   $('#r-next').classList.toggle('show',run.laps.length>1);
+  checkHeat(true);
   const L=run.laps[run.lap];
   speak(`Starting ${run.name}. ${L.lab}: ${L.d} metres at ${paceStr(PACES[L.pace])} per kilometre.`);
   coach(`${L.lab} — ${L.d}m @ ${paceStr(PACES[L.pace])}/km`);
@@ -927,7 +946,7 @@ function saveRPE(){
   $('#r-lap').textContent='Session · not started';$('#r-target').textContent=curSession().t;$('#r-up').textContent='Pick a workout, then hit start';
   ['r-ldist','r-tdist'].forEach(id=>$('#'+id).textContent=id==='r-ldist'?'0m':'0.00');
   ['r-ltime','r-ttime'].forEach(id=>$('#'+id).textContent='0:00');['r-lpace','r-tpace'].forEach(id=>$('#'+id).textContent='--:--');
-  $('#r-segbar').innerHTML='';clearMap();
+  $('#r-segbar').innerHTML='';clearMap();$('#heat-warn').className='hide';
 }
 function coach(t){$('#r-coach-q').textContent='“'+t+'”';}
 
@@ -1061,6 +1080,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
+  if(v==='run'&&typeof checkHeat==='function')checkHeat(false);
   s.scrollTop=0;}
 
 // ---- boot ----
