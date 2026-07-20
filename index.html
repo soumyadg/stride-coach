@@ -115,6 +115,7 @@
   .run-toolbar{display:flex;justify-content:space-between;gap:8px;padding-top:6px}
   .tbtn{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
   .tbtn.off{opacity:.5}
+  .tbtn.on{border-color:var(--accent);color:var(--accent)}
   #r-next{display:none}
   #r-next.show{display:block}
   /* stats chart */
@@ -197,6 +198,18 @@
   #r-marker.on{display:block}
   .hrpill{position:absolute;right:12px;top:12px;z-index:4;background:rgba(20,18,26,.85);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 11px;font:inherit;font-weight:800;font-size:12px;cursor:pointer}
   .attrib{position:absolute;right:8px;bottom:6px;z-index:4;font-size:8px;color:var(--muted);background:rgba(10,9,18,.55);padding:1px 5px;border-radius:4px}
+  /* treadmill panel */
+  .tread{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 38%,#1a1330,var(--bg))}
+  .tlabel{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .tspeed{display:flex;align-items:center;gap:20px}
+  .tspeed>div{text-align:center;min-width:96px}
+  .tspeed span{font-family:var(--display);font-size:54px;font-weight:700;letter-spacing:-2px}
+  .tspeed small{display:block;color:var(--muted);font-size:12px;margin-top:-8px}
+  .tstep{width:54px;height:54px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);font-size:26px;font-weight:700;cursor:pointer;display:grid;place-items:center}
+  .tstep:active{transform:scale(.92)}
+  .tstep.sm{width:32px;height:32px;font-size:17px}
+  .tincline{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;font-weight:700}
+  .tincline b{font-family:var(--display);color:var(--text);font-size:16px;min-width:34px;text-align:center;display:inline-block}
   .coach{position:absolute;left:12px;bottom:12px;background:rgba(20,22,26,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:9px 12px;display:flex;align-items:center;gap:8px;max-width:70%}
   .coach .q{font-weight:700;font-size:13px}
   .wave{display:flex;align-items:center;gap:2px;height:16px}
@@ -335,7 +348,8 @@
   <div id="s-run" class="screen hide">
     <div class="runwrap">
       <div class="run-toolbar">
-        <button class="tbtn" onclick="openLib()">☰ Choose workout</button>
+        <button class="tbtn" onclick="openLib()">☰ Workout</button>
+        <button class="tbtn" id="mode-btn" onclick="toggleMode()">🛰️ Outdoor</button>
         <button class="tbtn" id="mute-btn" onclick="toggleMute()">🔊 Voice</button>
       </div>
       <div class="run-top">
@@ -359,6 +373,11 @@
         <div id="r-marker"></div>
         <div class="gpspill" id="r-gps">GPS ●</div>
         <button class="hrpill" id="hr-pill" onclick="connectHR()">❤️ Connect HR</button>
+        <div id="tread-panel" class="tread hide">
+          <div class="tlabel">🏢 Treadmill speed</div>
+          <div class="tspeed"><button class="tstep" onclick="setSpeed(-0.5)">−</button><div><span id="t-speed">8.0</span><small>km/h</small></div><button class="tstep" onclick="setSpeed(0.5)">+</button></div>
+          <div class="tincline">⛰ Incline <button class="tstep sm" onclick="setIncline(-0.5)">−</button> <b id="t-incline">0.0</b>% <button class="tstep sm" onclick="setIncline(0.5)">+</button></div>
+        </div>
         <div class="coach" id="r-coach"><div class="wave"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:0s"></i></div><div class="q" id="r-coach-q">“Auto-pause is on — no nagging at red lights.”</div></div>
         <div class="attrib">© OpenStreetMap © CARTO</div>
       </div>
@@ -688,11 +707,32 @@ function toggleRun(){
   const L=run.laps[run.lap];
   speak(`Starting ${run.name}. ${L.lab}: ${L.d} metres at ${paceStr(PACES[L.pace])} per kilometre.`);
   coach(`${L.lab} — ${L.d}m @ ${paceStr(PACES[L.pace])}/km`);
-  if(!navigator.geolocation){run.demo=true;demoRun();}
-  else watchId=navigator.geolocation.watchPosition(onPos,()=>{if(watchId)navigator.geolocation.clearWatch(watchId);if(!run.demo){run.demo=true;demoRun();}},{enableHighAccuracy:true,maximumAge:1000,timeout:8000});
-  tick=setInterval(()=>{if(run.active&&!run.paused&&!run.demo){run.elapsed++;render();}},1000);
+  if(treadmillMode){
+    run.speed=tSpeed;run.incline=tIncline;
+    coach('Treadmill mode — set your speed with ± .');
+    tick=setInterval(()=>{if(run.active&&!run.paused){run.elapsed++;run.moving++;addDist((run.speed||tSpeed)/3.6);render();}},1000);
+  }else{
+    if(!navigator.geolocation){run.demo=true;demoRun();}
+    else watchId=navigator.geolocation.watchPosition(onPos,()=>{if(watchId)navigator.geolocation.clearWatch(watchId);if(!run.demo){run.demo=true;demoRun();}},{enableHighAccuracy:true,maximumAge:1000,timeout:8000});
+    tick=setInterval(()=>{if(run.active&&!run.paused&&!run.demo){run.elapsed++;render();}},1000);
+  }
   render();
 }
+// ---- treadmill mode ----
+let treadmillMode=false,tSpeed=8.0,tIncline=0;
+function toggleMode(){
+  if(run&&run.active){coach('Finish the current run to switch mode.');return;}
+  treadmillMode=!treadmillMode;
+  $('#mode-btn').textContent=treadmillMode?'🏢 Treadmill':'🛰️ Outdoor';
+  $('#mode-btn').classList.toggle('on',treadmillMode);
+  $('#tread-panel').classList.toggle('hide',!treadmillMode);
+  ['#map-tiles','#r-route','#r-marker','#r-gps','.attrib'].forEach(s=>{const el=$(s);if(el)el.style.display=treadmillMode?'none':'';});
+  updateTread();
+  coach(treadmillMode?'Treadmill mode on — GPS off, you control the speed.':'Outdoor mode — GPS tracking on.');
+}
+function setSpeed(d){tSpeed=Math.min(25,Math.max(0.5,+(tSpeed+d).toFixed(1)));if(run)run.speed=tSpeed;updateTread();}
+function setIncline(d){tIncline=Math.min(15,Math.max(0,+(tIncline+d).toFixed(1)));updateTread();}
+function updateTread(){$('#t-speed').textContent=tSpeed.toFixed(1);$('#t-incline').textContent=tIncline.toFixed(1);}
 function addDist(d){run.dist+=d;run.lapDist+=d;
   const L=run.laps[run.lap];
   if(run.lapDist>=L.d&&run.lap<run.laps.length-1)advanceLap(false);}
