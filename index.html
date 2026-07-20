@@ -161,7 +161,8 @@
   .risk-hd{display:flex;justify-content:space-between;align-items:center}
   .risk-num{font-size:34px;font-weight:800;letter-spacing:-1px}
   /* run toolbar */
-  .run-toolbar{display:flex;justify-content:space-between;gap:8px;padding-top:6px}
+  .run-toolbar{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding-top:6px}
+  .run-toolbar .tbtn{padding:7px 11px;font-size:12px}
   .tbtn{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
   .tbtn.off{opacity:.5}
   .tbtn.on{border-color:var(--accent);color:var(--accent)}
@@ -432,6 +433,7 @@
         <button class="tbtn" onclick="openLib()">☰ Workout</button>
         <button class="tbtn" id="mode-btn" onclick="toggleMode()">🛰️ Outdoor</button>
         <button class="tbtn" id="mute-btn" onclick="toggleMute()">🔊 Voice</button>
+        <button class="tbtn" id="tips-btn" onclick="toggleTips()">📚 Tips</button>
       </div>
       <div class="run-top">
         <div class="lap" id="r-lap">Session · not started</div>
@@ -885,6 +887,39 @@ function hydrationCheck(){
     speak(hot?'Hydration check. It is hot today — take a good drink.':'Hydration check. Take a few sips of water.');
   }
 }
+// ---- learn on the go: short coaching lessons during EASY/LONG runs ----
+const LESSONS=[
+  ['Cadence','Aim for a quick, light cadence — around 170 to 180 steps a minute. Shorter, faster steps cut the impact on your knees and hips.'],
+  ['Form','Run tall, like a string is pulling the top of your head up. A slight lean from the ankles — not the waist — keeps you efficient.'],
+  ['Foot strike','Land with your foot under your hips, not reaching out in front. Overstriding acts like a brake and spikes impact — a common injury cause.'],
+  ['Easy pace','On easy runs you should be able to hold a conversation. If you can\'t speak in full sentences, you\'re going too hard. Ease off.'],
+  ['Breathing','Breathe from your belly, not your chest. Try a rhythm: in for three steps, out for two, to stay relaxed.'],
+  ['The 10% rule','Never raise your weekly distance by more than about ten percent. That\'s exactly what Stride\'s SafeRamp does for you automatically.'],
+  ['Recovery','Rest days aren\'t lazy — they\'re when your body actually gets stronger. Adaptation happens during recovery, not the run.'],
+  ['Fuelling','For runs over ninety minutes, take thirty to sixty grams of carbs an hour. Practise it in training — never try something new on race day.'],
+  ['Hydration','Drink to thirst on the run and rehydrate afterward. A simple check: your urine should be pale straw, not clear and not dark.'],
+  ['Strength','Two short strength sessions a week — squats, lunges, calf raises — build the resilience that prevents most running injuries.'],
+  ['Warm-up','Start every run with the first few minutes truly easy. Cold muscles get hurt; let your heart rate and joints warm up gradually.'],
+  ['Hills','Uphill, shorten your stride and pump your arms. Downhill, stay relaxed and let gravity help. Don\'t brake hard — it hammers your quads.'],
+  ['Mindset','Break a long run into chunks. Focus only on reaching the next lamppost or the next kilometre, not the whole distance.'],
+  ['Sleep','Sleep is the best recovery tool there is. Seven to nine hours lets your body repair and adapt to your training.'],
+  ['Cross-training','Swap a run for cycling or swimming now and then. You keep the fitness while giving your joints a break from impact.'],
+  ['Listen to niggles','Sharp or one-sided pain is a stop sign, not something to push through. Catching a niggle early prevents a real injury.']
+];
+function lessonsOn(){return !(S&&S.lessonsOff);}
+function lessonCheck(){
+  if(!run||!run.active||run.paused||!lessonsOn())return;
+  if(window._weatherNow&&window._weatherNow.wb>=23)return;              // heat → safety audio only
+  if(/interval|tempo|hill|rep|race|trial/i.test(run.name||''))return;   // easy/long runs only
+  if(run.elapsed<90)return;                                            // let the run settle first
+  if(run.elapsed-(run.lastHydrate||0)<25)return;                       // don't collide with a hydration cue
+  if(run.elapsed-(run.lastLesson||0)<300)return;                       // ~5 min apart
+  run.lastLesson=run.elapsed;
+  const [t,m]=LESSONS[(run.lessonIdx||0)%LESSONS.length];run.lessonIdx=(run.lessonIdx||0)+1;
+  coach('📚 '+t+' — '+m);speak(m);
+}
+function toggleTips(){S=store.get()||S;S.lessonsOff=lessonsOn();store.set(S);reflectTips();coach(lessonsOn()?'📚 Coaching tips on — I\'ll teach you as you run.':'Coaching tips off.');}
+function reflectTips(){const b=$('#tips-btn');if(b){b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}}
 // warn on the RUN screen if current wet-bulb is unsafe
 function checkHeat(speakIt){
   const el=$('#heat-warn');if(!el)return;
@@ -923,7 +958,7 @@ function toggleRun(){
   if(run&&run.active){pauseRun();return;}
   if(!run){const cs=window._chosen||curSession();window._chosen=null;
     run={active:true,dist:0,elapsed:0,moving:0,last:null,paused:false,pts:[],name:cs.t,target:cs.km,
-      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now(),lastHydrate:0};}
+      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now(),lastHydrate:0,lessonIdx:0,lastLesson:0};}
   else run.active=true;
   $('#r-start').textContent='Pause';$('#rpe-card').classList.add('hide');
   $('#r-next').classList.toggle('show',run.laps.length>1);
@@ -984,7 +1019,7 @@ function onPos(p){
 }
 function render(){
   if(!run)return;
-  hydrationCheck();
+  hydrationCheck();lessonCheck();
   const L=run.laps[run.lap],rem=Math.max(0,L.d-run.lapDist),lapT=run.elapsed-run.lapStart;
   $('#r-lap').textContent=`Lap ${run.lap+1} / ${run.laps.length} · ${L.lab}`;
   $('#r-target').textContent=`${Math.round(rem)}m @ ${paceStr(PACES[L.pace])}/km`;
@@ -1231,7 +1266,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
-  if(v==='run'&&typeof checkHeat==='function')checkHeat(false);
+  if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();}
   if(v==='why'&&window.StrideSync)renderAccount(StrideSync.state());
   s.scrollTop=0;}
 
