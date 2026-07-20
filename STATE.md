@@ -38,7 +38,9 @@ Soumya chose the £0 path (no backend). Built + browser-verified:
 - **Bluetooth HR**: Web Bluetooth (heart_rate service/characteristic parse) + HR zones (Z1–5 vs maxHR 190) + zone-colored pill + simulated fallback when no device/BT. Verified: "142 Z3" pill renders.
 Backend cost discussion: £0 until real users; Apple Dev $99/yr is the first real spend (distribution, not backend). Matches Soumya's spend-gating.
 NOTE: app #2 is OFF the table until Soumya says app #1 is done — do NOT ask about app #2.
-Next: keep improving app #1 (candidates: GPX export, negative-split coaching, onboarding animations).
+## ⬇ GPX EXPORT (2026-07-20) — sync-lite, no OAuth
+Added GPX 1.1 export so users upload runs to Strava/Garmin manually (no backend/OAuth). buildGPX() emits valid GPX (metadata + trk/trkseg/trkpt w/ lat/lon/ISO time); downloadGPX() via Blob+anchor. Runs now store pts+startAt+hr in the activity; seeded activities get synthRoute() so all are exportable. UI: ⬇ button per Stats activity + on post-run card. Verified: valid XML (parses clean, root <gpx>), 82 trackpoints, filename stride-YYYYMMDD-HHMM-name.gpx.
+Next: keep improving app #1 (candidates: negative-split coaching, onboarding animations, treadmill mode).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.

@@ -122,6 +122,8 @@
   .act{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
   .act:last-child{border-bottom:none}
   .act .ad{margin-left:auto;text-align:right}
+  .gpxbtn{margin-left:12px;background:var(--surface2);border:1px solid var(--line);color:var(--accent);width:34px;height:34px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;flex:none}
+  .gpxbtn:active{transform:scale(.94)}
   /* modal / workout library */
   .modal{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:flex-end}
   .sheet{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:20px 20px 30px;max-height:86%;overflow-y:auto;border-top:1px solid var(--line)}
@@ -334,7 +336,7 @@
         <div class="kicker">How did that feel?</div>
         <div class="sub" style="margin:3px 0">Recalibrates next week — the injury-safe loop.</div>
         <div class="seg" id="rpe-seg"><button data-v="easy">Easy</button><button data-v="right" class="on">Just right</button><button data-v="hard">Hard</button><button data-v="painful">Painful</button></div>
-        <button class="btn p" style="margin-top:12px" onclick="saveRPE()">Log &amp; recalibrate</button>
+        <div class="row" style="margin-top:12px"><button class="btn p" onclick="saveRPE()">Log &amp; recalibrate</button><button class="btn ghost" style="flex:.55" onclick="exportCurrentRun()">⬇ GPX</button></div>
       </div>
     </div>
   </div>
@@ -586,7 +588,7 @@ function toggleRun(){
   if(run&&run.active){pauseRun();return;}
   if(!run){const cs=window._chosen||curSession();window._chosen=null;
     run={active:true,dist:0,elapsed:0,moving:0,last:null,paused:false,pts:[],name:cs.t,target:cs.km,
-      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0};}
+      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now()};}
   else run.active=true;
   $('#r-start').textContent='Pause';$('#rpe-card').classList.add('hide');
   $('#r-next').classList.toggle('show',run.laps.length>1);
@@ -678,7 +680,7 @@ function saveRPE(){
   const rpe=$('#rpe-seg .on').dataset.v;
   const km=+(run.dist/1000).toFixed(2),secs=run.moving||run.elapsed,pace=km>0.02?Math.max(2.8,secs/60/km):6;
   S.history=S.history||[];S.history.push({km,rpe,at:Date.now()});
-  S.activities=S.activities||[];S.activities.unshift({km,secs,pace,name:run.name||'Run',at:Date.now(),rpe});
+  S.activities=S.activities||[];S.activities.unshift({km,secs,pace,name:run.name||'Run',at:Date.now(),rpe,hr:run.hr||null,startAt:run.startedAt||Date.now()-secs*1000,pts:(run.pts||[]).slice()});
   const factor=rpe==='painful'?0.82:rpe==='hard'?0.93:rpe==='easy'?1.05:1.0;
   const ni=S.curWeek%S.plan.length,nw=S.plan[ni];
   if(nw&&!nw.isDeload&&!nw.isTaper){const cap=S.plan[ni-1]?S.plan[ni-1].vol*1.10:nw.vol;
@@ -722,6 +724,31 @@ function startHRSim(){if(hrSim)clearInterval(hrSim);let h=95;
 function stopHR(){if(hrSim){clearInterval(hrSim);hrSim=null;}try{if(hrDevice&&hrDevice.gatt.connected)hrDevice.gatt.disconnect();}catch(e){}
   $('#hr-pill').innerHTML='❤️ Connect HR';$('#hr-pill').style.color='';$('#hr-pill').style.borderColor='';}
 
+// ---- GPX export (upload to Strava/Garmin manually — no OAuth needed) ----
+function xesc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
+function buildGPX(act){
+  const pts=act.pts||[],start=act.startAt||(act.at-(act.secs||0)*1000),dur=(act.secs||0)*1000,n=pts.length;
+  const trk=pts.map((p,i)=>{const t=new Date(start+(n>1?i/(n-1):0)*dur).toISOString();
+    return `  <trkpt lat="${(+p[0]).toFixed(6)}" lon="${(+p[1]).toFixed(6)}"><time>${t}</time></trkpt>`;}).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Stride Coach" xmlns="http://www.topografix.com/GPX/1/1">
+ <metadata><name>${xesc(act.name)}</name><time>${new Date(start).toISOString()}</time></metadata>
+ <trk><name>${xesc(act.name)}</name><type>running</type><trkseg>
+${trk}
+ </trkseg></trk>
+</gpx>`;
+}
+function dlSlug(ms){const d=new Date(ms);return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;}
+function downloadGPX(act){
+  const blob=new Blob([buildGPX(act)],{type:'application/gpx+xml'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`stride-${dlSlug(act.at)}-${(act.name||'run').replace(/\s+/g,'-').toLowerCase()}.gpx`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function exportActivity(i){const a=(S.activities||[])[i];if(a)downloadGPX(a);}
+function exportCurrentRun(){if(!run)return;
+  downloadGPX({name:run.name,at:Date.now(),secs:run.moving||run.elapsed,km:run.dist/1000,startAt:run.startedAt,pts:run.pts,hr:run.hr});
+  coach('GPX saved — upload it to Strava or Garmin.');}
+
 // ---- PWA: register service worker ----
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 
@@ -749,12 +776,15 @@ function pickWorkout(i){const w=WORKOUTS_RUN[i];if(run&&run.active){closeLib();c
 function pickX(n){closeLib();go('run');coach(`${n} lives in Pro — this prototype is running-focused.`);}
 
 // ---- stats + PRs ----
+function synthRoute(km){const pts=[];let la=51.5074,lo=-0.1278,ang=Math.random()*6,steps=Math.max(8,Math.round(km*8));
+  for(let i=0;i<steps;i++){ang+=0.25;la+=Math.sin(ang)*0.0004;lo+=Math.cos(ang*0.7)*0.0005;pts.push([+la.toFixed(6),+lo.toFixed(6)]);}return pts;}
 function seedActivities(){
   const now=Date.now(),day=86400000,names=['Easy run','Tempo','400m Intervals','Long run','Easy run'],paces=[6.1,5.0,5.2,6.3,6.2],acts=[];
   for(let w=6;w>=1;w--){const nRuns=w%4===0?2:4;
     for(let r=0;r<nRuns;r++){const i=r%names.length;
       const km=+((4+(6-w)*0.4)+(i===3?4:i===2?1.5:0)+Math.random()).toFixed(1);
-      acts.push({km,secs:Math.round(paces[i]*60*km),pace:paces[i],name:names[i],at:now-Math.round((w*7-r*1.7)*day),rpe:'right'});}}
+      const secs=Math.round(paces[i]*60*km),at=now-Math.round((w*7-r*1.7)*day);
+      acts.push({km,secs,pace:paces[i],name:names[i],at,rpe:'right',startAt:at-secs*1000,pts:synthRoute(km)});}}
   return acts.sort((a,b)=>b.at-a.at);
 }
 function kindOf(n){return /interval|rep|tempo|hill|race|parkrun|trial/i.test(n)?'quality':/long/i.test(n)?'long':'easy';}
@@ -771,10 +801,11 @@ function renderStats(){
   const defs=[{d:1,lab:'1K',m:'🥉'},{d:5,lab:'5K',m:'🥈'},{d:10,lab:'10K',m:'🥇'}];
   $('#st-prs').innerHTML=defs.map(p=>{let best=null;acts.filter(a=>a.km>=p.d*0.98&&a.pace>=2.8).forEach(a=>{const t=a.pace*p.d;if(best===null||t<best)best=t;});
     return `<div class="pr"><div class="medal">${p.m}</div><div class="pd">${p.lab}</div><div class="pt ${best===null?'empty':''}">${best===null?'—':fmt(Math.round(best*60))}</div></div>`;}).join('');
-  $('#st-acts').innerHTML=acts.slice(0,6).map(a=>{const dd=new Date(a.at);
+  $('#st-acts').innerHTML=acts.slice(0,6).map((a,i)=>{const dd=new Date(a.at);
     return `<div class="act"><span class="dot ${kindOf(a.name)}" style="width:11px;height:11px"></span>
       <div><div style="font-weight:700;font-size:14px">${a.name}</div><div class="sub">${DOW[dd.getDay()]} ${dd.getDate()} ${MON[dd.getMonth()]}</div></div>
-      <div class="ad"><div style="font-weight:800" class="tick">${a.km.toFixed(1)}km</div><div class="sub">${paceStr(a.pace)}/km</div></div></div>`;}).join('')||'<div class="sub">No runs yet — complete a run to see it here.</div>';
+      <div class="ad"><div style="font-weight:800" class="tick">${a.km.toFixed(1)}km</div><div class="sub">${paceStr(a.pace)}/km</div></div>
+      ${(a.pts&&a.pts.length>1)?`<button class="gpxbtn" onclick="exportActivity(${i})" title="Export GPX">⬇</button>`:''}</div>`;}).join('')||'<div class="sub">No runs yet — complete a run to see it here.</div>';
 }
 
 // ---- calendar editing ----
