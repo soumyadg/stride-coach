@@ -1,15 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 120" width="680" height="120" role="img" aria-label="Stride.Coach">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ff7a45"/>
-      <stop offset="1" stop-color="#ff4d6b"/>
-    </linearGradient>
-  </defs>
-  <g transform="translate(8,24) scale(0.34)" fill="url(#g)">
-    <path d="M0 0 L100 106 L0 212 L56 212 L156 106 L56 0 Z"/>
-    <path d="M112 0 L212 106 L112 212 L168 212 L268 106 L168 0 Z" opacity="0.55"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 120" width="660" height="120" role="img" aria-label="Stride">
+  <defs><linearGradient id="g" x1="20" y1="180" x2="180" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#ff4d6b"/></linearGradient></defs>
+  <g transform="translate(5.70,19.30) scale(0.45)" fill="url(#g)">
+    <circle cx="119.1" cy="35.1" r="17"/>
+    <rect x="90.0" y="103.0" width="65.0" height="24.0" rx="12.0" transform="rotate(-70 90.0 115.0)"/>
+    <rect x="90.0" y="104.0" width="50.0" height="22.0" rx="11.0" transform="rotate(-20 90.0 115.0)"/>
+    <rect x="137.0" y="89.4" width="48.0" height="17.0" rx="8.5" transform="rotate(60 137.0 97.9)"/>
+    <rect x="90.0" y="104.0" width="48.0" height="22.0" rx="11.0" transform="rotate(150 90.0 115.0)"/>
+    <rect x="48.4" y="131.0" width="42.0" height="16.0" rx="8.0" transform="rotate(110 48.4 139.0)"/>
+    <rect x="105.4" y="65.2" width="32.0" height="15.0" rx="7.5" transform="rotate(-30 105.4 72.7)"/>
+    <rect x="133.1" y="50.7" width="30.0" height="12.0" rx="6.0" transform="rotate(20 133.1 56.7)"/>
+    <rect x="105.4" y="65.2" width="30.0" height="15.0" rx="7.5" transform="rotate(160 105.4 72.7)"/>
+    <rect x="77.2" y="77.5" width="28.0" height="11.0" rx="5.5" transform="rotate(100 77.2 83.0)"/>
   </g>
   <text font-family="'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif" font-weight="800" font-size="64" letter-spacing="-2">
-    <tspan x="120" y="87" fill="#0a0912">Stride</tspan><tspan fill="#ff6a3d">.</tspan><tspan fill="#0a0912">Coach</tspan>
+    <tspan x="112" y="87" fill="#0a0912">Stride</tspan><tspan fill="#ff6a3d">.</tspan><tspan fill="#0a0912">Coach</tspan>
   </text>
 </svg>
