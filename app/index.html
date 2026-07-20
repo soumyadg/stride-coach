@@ -982,8 +982,8 @@ function toggleRun(){
   $('#r-next').classList.toggle('show',run.laps.length>1);
   checkHeat(true);
   const L=run.laps[run.lap];
-  speak(`Starting ${run.name}. ${L.lab}: ${L.d} metres at ${paceStr(PACES[L.pace])} per kilometre.`);
-  coach(`${L.lab} — ${L.d}m @ ${paceStr(PACES[L.pace])}/km`);
+  speak(`Starting ${run.name}. ${L.lab}: ${L.d} metres at ${paceStr(lapPace(L))} per kilometre.`);
+  coach(`${L.lab} — ${L.d}m @ ${paceStr(lapPace(L))}/km`);
   if(treadmillMode){
     run.speed=tSpeed;run.incline=tIncline;
     coach('Treadmill mode — set your speed with ± .');
@@ -1020,8 +1020,8 @@ function advanceLap(manual){
   if(run.lap>=run.laps.length-1){if(manual)coach('Final lap — finish strong!');return;}
   run.lap++;run.lapDist=0;run.lapStart=run.elapsed;
   const L=run.laps[run.lap];
-  speak(`${L.lab}. ${L.d} metres at ${paceStr(PACES[L.pace])} pace.`);
-  coach(`${L.lab} — ${L.d}m @ ${paceStr(PACES[L.pace])}/km`);render();
+  speak(`${L.lab}. ${L.d} metres at ${paceStr(lapPace(L))} pace.`);
+  coach(`${L.lab} — ${L.d}m @ ${paceStr(lapPace(L))}/km`);render();
 }
 function nextLap(){if(run&&run.active)advanceLap(true);}
 function onPos(p){
@@ -1040,9 +1040,9 @@ function render(){
   hydrationCheck();lessonCheck();
   const L=run.laps[run.lap],rem=Math.max(0,L.d-run.lapDist),lapT=run.elapsed-run.lapStart;
   $('#r-lap').textContent=`Lap ${run.lap+1} / ${run.laps.length} · ${L.lab}`;
-  $('#r-target').textContent=`${Math.round(rem)}m @ ${paceStr(PACES[L.pace])}/km`;
+  $('#r-target').textContent=`${Math.round(rem)}m @ ${paceStr(lapPace(L))}/km`;
   const nx=run.laps[run.lap+1];
-  $('#r-up').textContent=nx?`${nx.d}m @ ${paceStr(PACES[nx.pace])}/km — ${nx.lab}`:'Final lap — finish strong';
+  $('#r-up').textContent=nx?`${nx.d}m @ ${paceStr(lapPace(nx))}/km — ${nx.lab}`:'Final lap — finish strong';
   $('#r-ldist').textContent=`${Math.round(run.lapDist)}m`;
   $('#r-ltime').textContent=fmt(lapT);
   const lapKm=run.lapDist/1000,lp=lapKm>0.02?lapT/60/lapKm:0;
@@ -1221,6 +1221,22 @@ function seedActivities(){
 function kindOf(n){return /interval|rep|tempo|hill|race|parkrun|trial/i.test(n)?'quality':/long/i.test(n)?'long':'easy';}
 // ---- BMI (body mass index) ----
 function bmiCat(b){return b<18.5?['Underweight','b']:b<25?['Healthy','g']:b<30?['Overweight','a']:['Obese','r'];}
+// BMI-aware easy-pace suggestion (heavier + beginner = slower, lower impact)
+function paceSuggestion(){
+  const h=S.heightCm,w=S.weightKg;if(!h||!w)return null;
+  const bmi=w/Math.pow(h/100,2),beginner=S.exp==='new',walk=S.mode==='walk';
+  let base=walk?11.0:(beginner?7.0:6.2),runwalk=false,tip='';
+  if(bmi>=30){base+=walk?0.6:(beginner?1.5:1.0);runwalk=beginner&&!walk;tip=walk?'Keep it comfortable — build your minutes up gradually.':'Higher BMI means more joint impact. Start slow and use run-walk intervals to build safely.';}
+  else if(bmi>=25){base+=walk?0.3:(beginner?0.75:0.5);tip='Ease in a little slower while your body adapts.';}
+  else if(bmi<18.5){tip='You\'re light — focus on consistency and fuelling well.';}
+  else{tip=beginner?'A relaxed, conversational pace is perfect to start.':'Keep easy efforts truly easy.';}
+  return {bmi,pace:base,ps:paceStr(base),runwalk,tip,beginner,walk};
+}
+// use the BMI-suggested easy pace for beginners' easy/long laps
+function lapPace(lap){
+  if(lap&&(lap.pace==='easy'||lap.pace==='long')){const s=paceSuggestion();if(s&&s.beginner)return s.pace;}
+  return PACES[lap?lap.pace:'easy'];
+}
 function renderBMI(){
   const el=$('#bmi-card');if(!el)return;
   const h=S.heightCm,w=S.weightKg;
@@ -1238,7 +1254,8 @@ function renderBMI(){
       <div class="sub" style="text-align:right">${h}cm · ${w}kg<br><span onclick="editBMI()" style="color:var(--accent);cursor:pointer;font-weight:700">Edit</span></div>
     </div>
     <div class="gauge" style="background:linear-gradient(90deg,#5b8cff 0 14%,var(--safe-dim) 14% 40%,#7a5a1e 40% 60%,#7a2634 60% 100%)"><div class="mk" style="left:calc(${pos}% - 2px)"></div></div>
-    <div class="gscale"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>`;
+    <div class="gscale"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+    ${(()=>{const s=paceSuggestion();return s?`<div class="banner g" style="margin-top:12px">${s.walk?'🚶':'🏃'} Suggested easy ${s.walk?'walk':'run'} pace <b>${s.ps}/km</b>${s.runwalk?' · <b>run-walk</b>':''}<div class="sub" style="margin-top:3px">${s.tip}</div></div>`:'';})()}`;
 }
 function saveBMI(){
   const h=+$('#bmi-h').value,w=+$('#bmi-w').value,m=$('#bmi-msg');
