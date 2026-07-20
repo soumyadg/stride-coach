@@ -25,7 +25,13 @@ Verified working in browser (playwright): plan cap holds ≤9.8% max jump, 0 vio
 Rebuilt index.html to match Runna's App Store aesthetic: dark theme, 3-step onboarding w/ progress bar, icon-row goal picker, 2×2 preferences grid, training CALENDAR (dated day-rows + colored workout dots), and Live-Audio-Coaching RUN screen (big green target, segment bar, lap stat grid, live SVG route trace from GPS, coaching bubble w/ waveform). All logic preserved + re-verified. Screenshots in app/screenshots/. Own branding, NOT a Runna impersonation.
 
 ## 🩹 INJURY-RISK RADAR added (2026-07-20) — the real differentiator
-Built ACWR (Acute:Chronic Workload Ratio) injury-risk gauge on the Today screen: color-banded gauge (0.5–2.0), sweet-spot 0.8–1.3, live marker + verdict (Optimal/Caution/High-risk/Recovery). Proves peak ACWR across the whole plan stays in the safe band (verified 1.13). This is the sports-science model Runna doesn't have — makes "won't get you injured" tangible + quantified. Verified in browser (ACWR 0.98 Optimal, peak 1.13). Next: phase-2 native/watch-sync OR app #2.
+Built ACWR (Acute:Chronic Workload Ratio) injury-risk gauge on the Today screen: color-banded gauge (0.5–2.0), sweet-spot 0.8–1.3, live marker + verdict (Optimal/Caution/High-risk/Recovery). Proves peak ACWR across the whole plan stays in the safe band (verified 1.13). This is the sports-science model Runna doesn't have — makes "won't get you injured" tangible + quantified. Verified in browser (ACWR 0.98 Optimal, peak 1.13).
+
+## 🧩 4 PARITY FEATURES + NEW THEME + GITHUB (2026-07-20)
+Built & browser-verified 4 Runna-parity features: (1) Workout library modal (8 run + 3 cross-training tiles); (2) Stats screen — weekly summary, 6-week volume chart, Personal Records (1K/5K/10K), activity history (22 seeded acts); (3) Calendar editing — done-ticks, +Add to rest days, per-week Reset (via persisted plan[].days); (4) Real audio coaching — lap-based intervals (14-lap interval session), SpeechSynthesis TTS voice + mute, full 2-row lap/total stat grid, Next-Lap button. Guarded PR calc against implausible paces.
+NEW THEME "Neon Aurora": deep indigo bg, electric-tangerine brand accent, mint-green reserved for safety semantics only (ditched Runna's black+lime). Verified all screens.
+GITHUB: repo pushed → https://github.com/soumyadg/stride-coach (main + tag v0.1.0). README has 5 mermaid diagrams. Deferred (need backend): Community, 24/7 human support, native watch sync.
+Next: phase-2 native/watch-sync OR app #2.
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.
