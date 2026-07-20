@@ -351,6 +351,10 @@
         <div><label>Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
         <div><label>Longest run (km)</label><input id="o-long" type="number" value="7" min="0"></div>
       </div>
+      <div class="row">
+        <div><label>Height (cm)</label><input id="o-height" type="number" value="" placeholder="175" min="100" max="230"></div>
+        <div><label>Weight (kg)</label><input id="o-weight" type="number" value="" placeholder="70" min="30" max="250"></div>
+      </div>
       <label>Runs per week</label>
       <div class="seg" id="o-days"><button data-v="3">3</button><button data-v="4" class="on">4</button><button data-v="5">5</button></div>
       <label>Experience</label>
@@ -537,6 +541,7 @@
         <div class="stat"><div class="v" id="st-runs">0</div><div class="k">Runs</div></div>
       </div>
     </div>
+    <div class="card" id="bmi-card"></div>
     <div class="card">
       <div class="kicker">Weekly volume</div>
       <div class="chart" id="st-chart"></div>
@@ -651,7 +656,8 @@ function buildPlan(){
     const sessions=makeSessions(vol,days,goal,w,weeks);
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
-  S={goal,goalName,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
+  const heightCm=+$('#o-height').value||null, weightKg=+$('#o-weight').value||null;
+  S={goal,goalName,base,days,exp,pref,weeks,plan,planId:uuid(),heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
   store.set(S); runBuildLoader();
 }
 function makeSessions(vol,days,goal,w,total){
@@ -1153,7 +1159,37 @@ function seedActivities(){
   return acts.sort((a,b)=>b.at-a.at);
 }
 function kindOf(n){return /interval|rep|tempo|hill|race|parkrun|trial/i.test(n)?'quality':/long/i.test(n)?'long':'easy';}
+// ---- BMI (body mass index) ----
+function bmiCat(b){return b<18.5?['Underweight','b']:b<25?['Healthy','g']:b<30?['Overweight','a']:['Obese','r'];}
+function renderBMI(){
+  const el=$('#bmi-card');if(!el)return;
+  const h=S.heightCm,w=S.weightKg;
+  if(!h||!w){
+    el.innerHTML=`<div class="kicker">Body · BMI</div><div class="sub" style="margin:4px 0 10px">Add your height &amp; weight to track BMI.</div>
+      <div class="row"><input id="bmi-h" type="number" placeholder="Height cm" min="100" max="230"><input id="bmi-w" type="number" placeholder="Weight kg" min="30" max="250"></div>
+      <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;
+    return;
+  }
+  const bmi=w/Math.pow(h/100,2),[cat,cls]=bmiCat(bmi);
+  const pos=Math.max(2,Math.min(98,(Math.min(40,Math.max(15,bmi))-15)/25*100));
+  el.innerHTML=`<div class="risk-hd"><div class="kicker">Body · BMI</div><span class="pill ${cls}">${cat}</span></div>
+    <div class="risk-hd" style="margin-top:6px">
+      <div class="risk-num ${cls==='g'?'tick':''}">${bmi.toFixed(1)}</div>
+      <div class="sub" style="text-align:right">${h}cm · ${w}kg<br><span onclick="editBMI()" style="color:var(--accent);cursor:pointer;font-weight:700">Edit</span></div>
+    </div>
+    <div class="gauge" style="background:linear-gradient(90deg,#5b8cff 0 14%,var(--safe-dim) 14% 40%,#7a5a1e 40% 60%,#7a2634 60% 100%)"><div class="mk" style="left:calc(${pos}% - 2px)"></div></div>
+    <div class="gscale"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>`;
+}
+function saveBMI(){
+  const h=+$('#bmi-h').value,w=+$('#bmi-w').value,m=$('#bmi-msg');
+  if(h>=100&&h<=230&&w>=30&&w<=250){S.heightCm=h;S.weightKg=w;store.set(S);renderBMI();}
+  else if(m)m.innerHTML='<div class="banner a" style="margin-top:8px">Enter a valid height (100–230cm) and weight (30–250kg).</div>';
+}
+function editBMI(){$('#bmi-card').innerHTML=`<div class="kicker">Body · BMI</div>
+  <div class="row" style="margin-top:8px"><input id="bmi-h" type="number" value="${S.heightCm||''}" placeholder="Height cm"><input id="bmi-w" type="number" value="${S.weightKg||''}" placeholder="Weight kg"></div>
+  <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;}
 function renderStats(){
+  renderBMI();
   const acts=S.activities||[],now=Date.now(),wkms=7*86400000;
   const tw=acts.filter(a=>now-a.at<wkms);
   $('#st-km').textContent=tw.reduce((s,a)=>s+a.km,0).toFixed(1);
