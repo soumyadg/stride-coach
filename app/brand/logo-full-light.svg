@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 96" width="470" height="96">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#ff4d6b"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(4 8) scale(0.76)" fill="none" stroke="url(#g)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/>
+    <path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/>
+    <circle cx="63" cy="24" r="9" fill="url(#g)" stroke="none"/>
+  </g>
+  <text x="94" y="66" font-family="'Space Grotesk','Segoe UI',system-ui,sans-serif" font-weight="800" font-size="56" letter-spacing="-2" fill="#0d0b16">Stride<tspan fill="#ff6a3d">.</tspan>Coach</text>
+</svg>
