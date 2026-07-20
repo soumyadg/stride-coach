@@ -503,6 +503,7 @@
   </nav>
 </div>
 
+<script src="native-bridge.js"></script>
 <script>
 "use strict";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -711,6 +712,9 @@ function toggleRun(){
     run.speed=tSpeed;run.incline=tIncline;
     coach('Treadmill mode — set your speed with ± .');
     tick=setInterval(()=>{if(run.active&&!run.paused){run.elapsed++;run.moving++;addDist((run.speed||tSpeed)/3.6);render();}},1000);
+  }else if(window.StrideNative&&StrideNative.available&&StrideNative.startGeo(onPos)){
+    coach('Native GPS tracking — auto-pause armed.');
+    tick=setInterval(()=>{if(run.active&&!run.paused&&!run.demo){run.elapsed++;render();}},1000);
   }else{
     if(!navigator.geolocation){run.demo=true;demoRun();}
     else watchId=navigator.geolocation.watchPosition(onPos,()=>{if(watchId)navigator.geolocation.clearWatch(watchId);if(!run.demo){run.demo=true;demoRun();}},{enableHighAccuracy:true,maximumAge:1000,timeout:8000});
@@ -798,9 +802,9 @@ function drawRoute(){
   $('#r-marker').classList.add('on');
 }
 function clearMap(){$('#map-tiles').innerHTML='';$('#r-marker').classList.remove('on');$('#r-line').setAttribute('points','');}
-function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);coach('Paused.');}
+function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();coach('Paused.');}
 function stopRun(){
-  if(!run)return;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);
+  if(!run)return;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();
   $('#r-start').textContent='Start run';$('#r-next').classList.remove('show');$('#r-lap').textContent='Finished';
   speak(`Workout complete. ${(run.dist/1000).toFixed(1)} kilometres. Nice work.`);
   $('#rpe-card').classList.remove('hide');coach(`Nice — ${(run.dist/1000).toFixed(2)}km done. How'd it feel?`);
@@ -830,6 +834,7 @@ function coach(t){$('#r-coach-q').textContent='“'+t+'”';}
 // ---- Bluetooth heart-rate (Web Bluetooth) + HR zones ----
 let hrDevice=null,hrSim=null;
 async function connectHR(){
+  if(window.StrideNative&&StrideNative.available){try{if(await StrideNative.connectHR(setHR)){coach('Heart-rate strap connected.');return;}}catch(e){}}
   if(!navigator.bluetooth){coach('No Bluetooth here — showing simulated HR.');startHRSim();return;}
   try{
     const dev=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});
