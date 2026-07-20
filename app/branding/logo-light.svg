@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="520" height="120" role="img" aria-label="Stride">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7a45"/>
+      <stop offset="1" stop-color="#ff4d6b"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8,24) scale(0.34)" fill="url(#g)">
+    <path d="M0 0 L100 106 L0 212 L56 212 L156 106 L56 0 Z"/>
+    <path d="M112 0 L212 106 L112 212 L168 212 L268 106 L168 0 Z" opacity="0.55"/>
+  </g>
+  <text x="120" y="87" font-family="'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif" font-weight="800" font-size="64" letter-spacing="-2" fill="#0a0912">Stride</text>
+</svg>

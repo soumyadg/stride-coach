@@ -1,4 +1,9 @@
-# 🏃 Stride Coach
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="app/branding/logo-full-dark.svg">
+    <img src="app/branding/logo-full-light.svg" alt="Stride.Coach" height="72">
+  </picture>
+</p>
 
 > **The running coach that won't get you injured.**
 > An adaptive running-plan & coaching app built around injury-safety: load that can't ramp too fast, a real feedback loop, accurate GPS, wet-bulb heat awareness, and honest pricing.
