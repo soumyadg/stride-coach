@@ -43,7 +43,9 @@ Added GPX 1.1 export so users upload runs to Strava/Garmin manually (no backend/
 ## 💷 PRICING SCREEN + 🔤 FONT (2026-07-20)
 Wired the Why screen with the full Free-vs-Pro split (after a freemium-strategy discussion): FREE forever (SafeRamp plan, injury-risk radar, tracking/map/auto-pause, stats/PRs, manual GPX) vs PRO £6.99/mo (auto-sync Strava/Garmin, live voice coaching, HR zones + full workout library, race/multiple plans, load analytics) + "MOST POPULAR" badge + 7-day-trial button (prototype note, no billing) + "safety promise always free" banner. Conversion logic: free proves the promise, Pro sells convenience+commitment (race signup = key trigger); ~2-5% convert, freemium is a volume game → don't build billing/backend until the free base is proven.
 FONT: swapped to Space Grotesk (display/headings/big numbers) + Inter (body) via Google Fonts — "cooler & sexier" per Soumya. Verified both load.
-Next: keep improving app #1 (candidates: negative-split coaching, onboarding animations, treadmill mode).
+## ✨ ONBOARDING ANIMATIONS (2026-07-20)
+Added: staggered fade-up entrance of each onboarding step's content (playStep() flattens .rows/.grid2 so goal rows & pref tiles cascade), floaty brand logo, "Building your safe plan…" LOADER between build→app (spinning tangerine ring + staged messages: load limits → deload weeks → paces → safety-checks-passed, ~1.9s), and a subtle fade on every screen/tab switch (go() adds .fx). Respects prefers-reduced-motion. Verified in browser.
+Next: keep improving app #1 (candidates: negative-split coaching, treadmill mode, embed fonts for offline).
 
 ## Verified findings so far (from deep-research run, 3-vote adversarial pass)
 1. Price: £15.99/mo or ~£9.99/mo annual ($19.99 / $119.99 US). No real free tier.
