@@ -2,8 +2,8 @@
 // Create a free Supabase project → Project Settings → API, then paste the two values below.
 // Leave BOTH blank to run the app fully offline (no accounts / no sync) — everything still works.
 window.STRIDE_CONFIG = {
-  SUPABASE_URL: '',        // e.g. https://xxxxxxxx.supabase.co
-  SUPABASE_ANON_KEY: '',   // the public "anon" key (safe to ship; RLS protects data)
+  SUPABASE_URL: 'https://fvgtetbtppcxspvjbfie.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2Z3RldGJ0cHBjeHNwdmpiZmllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MTA1NzksImV4cCI6MjEwMDE4NjU3OX0.7FK1Pds3EGxbyPNnQT7poGweU9lNd0TZ5z8OzlYOrB0',
 
   // Pro subscription (Stripe). Web only — the App Store requires Apple IAP instead. See PRO.md.
   // Create a recurring Payment Link in the Stripe dashboard (£6.99/mo) and paste its URL here.
