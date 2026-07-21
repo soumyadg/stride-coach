@@ -2,7 +2,7 @@
   "name": "Strivon",
   "short_name": "Strivon",
   "description": "The running coach that won't get you injured.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

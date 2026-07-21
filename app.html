@@ -1,0 +1,1842 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strivon — the running coach that won't get you injured</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a0912">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Strivon">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* "Neon Aurora" — deep indigo canvas, electric tangerine brand, mint = safety only */
+    --bg:#0a0912; --surface:#16131f; --surface2:#201b2e; --surface3:#2c2542;
+    --line:#332c47; --text:#f5f2fa; --muted:#9a91ad; --faint:#655c7a;
+    --accent:#ff6a3d; --accent-dim:#5c2a17;
+    --safe:#2fe3a0; --safe-dim:#12503a;
+    --blue:#5b8cff; --amber:#ffb84d; --red:#ff5d6b;
+    --violet:#b07bff; --orange:#ff8a4c; --r:20px;
+    --display:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
+    --body:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  /* run-safety theme — 5 weather buckets retint the whole app based on the area's conditions */
+  :root[data-safety="ideal"]{--accent:#22d3c4;--accent-2:#18b8ff;--bg:#070f10;--surface:#0f1a1b;--surface2:#142324;--surface3:#1c3234;--line:#234042;}
+  :root[data-safety="good"]{--accent:#ff6a3d;--accent-2:#ff4d6b;} /* = default tangerine */
+  :root[data-safety="caution"]{--accent:#ffab3d;--accent-2:#ff8a2e;--bg:#100d0a;--surface:#191410;--surface2:#221a12;--surface3:#2c220f;--line:#38301f;}
+  :root[data-safety="high"]{--accent:#ff7a2e;--accent-2:#ff5a1e;--bg:#120c08;--surface:#1c130c;--surface2:#261810;--surface3:#33220f;--line:#3a2a1a;}
+  :root[data-safety="danger"]{--accent:#ff5555;--accent-2:#ff3b46;--bg:#120a0c;--surface:#1c1216;--surface2:#26151a;--surface3:#331b22;--line:#3e2530;}
+  :root[data-safety="ideal"] .btn.p{background:linear-gradient(135deg,#2fe0c8,#18b8ff)}
+  :root[data-safety="caution"] .btn.p{background:linear-gradient(135deg,#ffbb4d,#ff8a2e)}
+  :root[data-safety="high"] .btn.p{background:linear-gradient(135deg,#ff8a3d,#ff5a1e)}
+  :root[data-safety="danger"] .btn.p{background:linear-gradient(135deg,#ff6a6a,#ff3b46)}
+  #app::before{content:"";position:absolute;top:0;left:0;right:0;height:0;background:var(--accent);z-index:200;transition:height .35s ease,background .35s ease}
+  :root[data-safety="ideal"] #app::before,:root[data-safety="caution"] #app::before,:root[data-safety="high"] #app::before,:root[data-safety="danger"] #app::before{height:4px}
+  /* welcome splash — a route draws itself, a runner-dot leads, wordmark reveals */
+  #splash{position:absolute;inset:0;z-index:300;background:radial-gradient(circle at 50% 42%,#141024,#05050a 78%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .55s ease}
+  #splash.gone{opacity:0;pointer-events:none}
+  #splash-logo{width:min(82vw,360px);height:auto;mix-blend-mode:screen;
+    opacity:0;transform:scale(.93) translateY(10px);animation:splashIn 1s cubic-bezier(.2,.75,.25,1) .15s forwards}
+  @keyframes splashIn{to{opacity:1;transform:none}}
+  .mic-btn.listening{color:#fff;border-color:#ff4d6b;background:rgba(255,77,107,.16);animation:micpulse 1s ease-in-out infinite}
+  @keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,107,.5)}50%{box-shadow:0 0 0 8px rgba(255,77,107,0)}}
+  @media (prefers-reduced-motion:reduce){.mic-btn.listening{animation:none}}
+  .atlas-pin{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:rgba(18,15,32,.92);display:grid;place-items:center;font-size:15px;cursor:pointer;box-shadow:0 2px 9px rgba(0,0,0,.55);padding:0;z-index:2}
+  .atlas-pin.cap{border-color:#2ee6c6}
+  .atlas-mem{display:flex;gap:12px;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,.06);cursor:pointer}
+  .atlas-mem:first-child{border-top:0}
+  .am-thumb{width:46px;height:46px;border-radius:11px;object-fit:cover;flex:0 0 auto;background:rgba(255,255,255,.05);display:grid;place-items:center;font-size:20px}
+  .feelrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .feelrow .feel{width:42px;height:42px;border-radius:11px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);font-size:20px;cursor:pointer;padding:0}
+  .feelrow .feel.on{border-color:#ff6a3d;background:rgba(255,106,61,.15)}
+  @media (prefers-reduced-motion:reduce){#splash-logo{animation:none;opacity:1;transform:none}}
+  .splash-art{width:min(76vw,300px);height:130px;position:relative}
+  .splash-art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .route-bg{fill:none;stroke:rgba(255,106,61,.13);stroke-width:3}
+  .route{fill:none;stroke:url(#sg);stroke-width:4.5;stroke-linecap:round;stroke-dasharray:var(--L);stroke-dashoffset:var(--L);
+    filter:drop-shadow(0 0 5px rgba(255,106,61,.5));animation:draw 1.7s cubic-bezier(.65,0,.25,1) .25s forwards}
+  .lead{fill:#fff;offset-path:path("M12,96 C70,18 120,120 168,62 S262,14 292,74");offset-distance:0%;
+    animation:lead 1.7s cubic-bezier(.65,0,.25,1) .25s forwards, bob .5s ease-in-out infinite}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes lead{to{offset-distance:100%}}
+  @keyframes bob{0%,100%{filter:drop-shadow(0 0 6px #ff6a3d)}50%{filter:drop-shadow(0 0 13px #ff4d6b)}}
+  .splash-word{font-family:var(--display);font-size:36px;font-weight:800;letter-spacing:-1.2px;
+    opacity:0;transform:translateY(12px) scale(.95);animation:wordIn .7s cubic-bezier(.2,.7,.2,1) 1.35s forwards}
+  .splash-word .d{color:#ff6a3d}
+  .splash-tag{color:var(--muted);font-size:14px;text-align:center;max-width:80%;opacity:0;animation:fadeIn .6s ease 1.95s forwards}
+  @keyframes wordIn{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.route{animation:none;stroke-dashoffset:0}.lead{animation:none;offset-distance:100%}.splash-word,.splash-tag{animation:none;opacity:1;transform:none}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
+  html,body{height:100%}
+  html{background:var(--bg)}
+  body{background:var(--bg);color:var(--text);
+    font:15px/1.45 var(--body);letter-spacing:-.1px;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    display:flex;justify-content:center}
+  h1,h2,.brand,.target,.price,.risk-num,.stat .v,.big,.km,.pr .pt,.dd,.pname,.lap,.upnext,.kicker{font-family:var(--display)}
+  .target,.risk-num,.stat .v,.price,.big{letter-spacing:-1.5px;font-feature-settings:"tnum" 1,"ss01" 1}
+  #app{width:100%;max-width:440px;min-height:100vh;min-height:100dvh;background:var(--bg);position:relative;
+    padding-top:max(env(safe-area-inset-top), 8px);
+    display:flex;flex-direction:column;overflow:hidden}
+  .screen{flex:1;overflow-y:auto;padding:0 20px calc(96px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+  .screen::-webkit-scrollbar{display:none}
+  /* iPhone/installed-app safe areas: hide the mock status bar (iOS shows its own) + clear the notch.
+     Driven by a JS-added .standalone class (reliable on all iOS) plus the media query as backup. */
+  @media (display-mode:standalone),(display-mode:fullscreen){
+    .statusbar{display:none}
+    #app{padding-top:max(env(safe-area-inset-top), 44px)}
+    #install-banner{margin-top:10px}
+  }
+  html.standalone .statusbar{display:none}
+  html.standalone #app{padding-top:max(env(safe-area-inset-top), 44px)}
+  html.standalone #install-banner{margin-top:10px}
+  .hide{display:none!important}
+  /* mock status bar removed — real device shows its own; env() safe-areas handle spacing */
+  .statusbar{display:none}
+  #install-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:6px 14px 0;padding:10px 12px;border-radius:14px;font-size:13px;font-weight:600;
+    background:linear-gradient(120deg,#2a1622,var(--surface));border:1px solid var(--accent-dim,#5c2a17)}
+  #install-banner button{border:none;cursor:pointer;font:inherit;font-weight:800}
+  #install-btn{background:var(--accent);color:#1a0704;border-radius:10px;padding:8px 14px;font-size:13px}
+  #install-x{background:transparent;color:var(--muted);font-size:15px;padding:4px 6px}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.6px}
+  h2{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:14px}
+  .brand{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .brand .g{color:var(--accent)}
+  /* progress bar */
+  .prog{height:4px;background:var(--surface2);border-radius:99px;margin:10px 0 22px;overflow:hidden}
+  .prog>i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .35s ease}
+  /* icon-row list (goal picker) */
+  .rows{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .opt{display:flex;align-items:center;gap:14px;background:var(--surface);border:1.5px solid var(--line);
+    border-radius:16px;padding:14px;cursor:pointer;transition:.15s}
+  .opt:active{transform:scale(.99)}
+  .opt.on{border-color:var(--accent);background:linear-gradient(var(--surface),#2a1622)}
+  .opt .tile{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--surface3)}
+  .opt .t{font-weight:700;font-size:15px}
+  .opt .d{color:var(--muted);font-size:12.5px;line-height:1.3;margin-top:1px}
+  .opt .chev{margin-left:auto;color:var(--faint);font-size:20px}
+  .opt.on .chev{color:var(--accent)}
+  /* fields */
+  label{display:block;font-size:12.5px;color:var(--muted);margin:16px 0 7px;font-weight:600;letter-spacing:.2px}
+  input,select{width:100%;background:var(--surface);border:1.5px solid var(--line);color:var(--text);
+    border-radius:14px;padding:14px;font:inherit;font-weight:600}
+  .row{display:flex;gap:12px}.row>*{flex:1}
+  /* segmented */
+  .seg{display:flex;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;padding:4px;gap:4px}
+  .seg button{flex:1;background:transparent;border:none;border-radius:10px;padding:11px 4px;color:var(--muted);font:inherit;font-weight:700;font-size:13.5px;cursor:pointer}
+  .seg button.on{background:var(--accent);color:#1a0704}
+  /* 2x2 pref grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+  .ptile{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:16px;cursor:pointer;transition:.15s}
+  .ptile:active{transform:scale(.98)}
+  .ptile.on{border-color:var(--accent)}
+  .ptile .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:24px;margin-bottom:10px}
+  .ptile .t{font-weight:800;font-size:15px}
+  .ptile .d{color:var(--muted);font-size:12px;margin-top:2px}
+  .ic.v{background:linear-gradient(135deg,#3b2f6b,#5b46b0)}
+  .ic.g{background:linear-gradient(135deg,#1f5b3a,#37b06a)}
+  .ic.o{background:linear-gradient(135deg,#6b3a1f,#c46a2e)}
+  .ic.b{background:linear-gradient(135deg,#1f406b,#2e78c4)}
+  /* buttons */
+  .btn{width:100%;border:none;border-radius:16px;padding:16px;font:inherit;font-weight:800;font-size:16px;cursor:pointer;background:var(--surface2);color:var(--text)}
+  .btn.p{background:linear-gradient(135deg,#ff7a45,#ff4d6b);color:#1a0704}
+  .btn.p:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;border:1.5px solid var(--line)}
+  .cta{position:sticky;bottom:0;padding:14px 0;background:linear-gradient(transparent,var(--bg) 30%)}
+  /* cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin:14px 0}
+  .card.glow{border-color:var(--safe-dim);box-shadow:0 0 0 1px rgba(47,227,160,.18)}
+  .kicker{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+  .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.3px}
+  .pill.g{background:rgba(47,227,160,.16);color:var(--safe)}
+  .pill.a{background:rgba(255,191,71,.16);color:var(--amber)}
+  .pill.b{background:rgba(74,168,255,.16);color:var(--blue)}
+  .mono{font-variant-numeric:tabular-nums}
+  .banner{padding:12px 14px;border-radius:13px;font-size:13px;margin-top:12px;line-height:1.4}
+  .banner.g{background:rgba(47,227,160,.1);border:1px solid rgba(47,227,160,.3)}
+  .banner.a{background:rgba(255,191,71,.1);border:1px solid rgba(255,191,71,.3)}
+  .banner.r{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3)}
+  .tick{color:var(--safe)}
+  /* ACWR injury-risk gauge */
+  .gauge{position:relative;height:12px;border-radius:99px;margin:14px 0 6px;
+    background:linear-gradient(90deg,#3a3450 0 22%,var(--safe-dim) 22% 60%,#7a5a1e 60% 74%,#7a2634 74% 100%)}
+  .gauge .sweet{position:absolute;top:-3px;bottom:-3px;left:22%;width:38%;border:1.5px solid var(--safe);border-radius:99px;opacity:.5}
+  .gauge .mk{position:absolute;top:-5px;width:4px;height:22px;background:#fff;border-radius:3px;box-shadow:0 0 0 2px var(--bg);transition:left .4s ease}
+  .gscale{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);font-weight:700}
+  .risk-hd{display:flex;justify-content:space-between;align-items:center}
+  .risk-num{font-size:34px;font-weight:800;letter-spacing:-1px}
+  /* run toolbar */
+  .run-toolbar{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding-top:6px}
+  .run-toolbar .tbtn{padding:7px 11px;font-size:12px}
+  .tips-hint{text-align:center;font-size:11.5px;color:var(--faint);margin-top:7px}
+  .tbtn{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:8px 14px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer}
+  .tbtn.off{opacity:.5}
+  .tbtn.on{border-color:var(--accent);color:var(--accent)}
+  #r-next{display:none}
+  #r-next.show{display:block}
+  /* stats chart */
+  .chart{display:flex;align-items:flex-end;gap:6px;height:100px;margin-top:12px}
+  .chart .cb{flex:1;background:linear-gradient(var(--accent),rgba(255,106,61,.25));border-radius:5px 5px 0 0;min-height:4px;position:relative}
+  .chart .cb small{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:9px;color:var(--faint)}
+  .prs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+  .pr{background:var(--surface2);border-radius:14px;padding:12px 6px;text-align:center}
+  .pr .medal{font-size:22px}
+  .pr .pd{font-weight:800;font-size:13px;margin-top:3px}
+  .pr .pt{font-variant-numeric:tabular-nums;font-weight:800;color:var(--accent);font-size:15px;margin-top:2px}
+  .pr .pt.empty{color:var(--faint);font-size:12px;font-weight:600}
+  .act{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .act:last-child{border-bottom:none}
+  .act .ad{margin-left:auto;text-align:right}
+  .gpxbtn{margin-left:12px;background:var(--surface2);border:1px solid var(--line);color:var(--accent);width:34px;height:34px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;flex:none}
+  .gpxbtn:active{transform:scale(.94)}
+  /* pricing plans */
+  .plan{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:18px;margin-top:12px;position:relative}
+  .plan.pro{border-color:var(--accent);background:linear-gradient(var(--surface),#1e1524)}
+  .plan .price{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .plan .price small{font-size:13px;color:var(--muted);font-weight:600}
+  .plan .pname{font-weight:800;font-size:16px}
+  .feat{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:9px}
+  .feat li{display:flex;gap:9px;font-size:13.5px;align-items:flex-start;line-height:1.35}
+  .feat li::before{content:'✓';color:var(--safe);font-weight:800;flex:none}
+  .feat li.lock::before{content:'★';color:var(--accent)}
+  .badge{position:absolute;top:-10px;right:14px;background:var(--accent);color:#1a0704;font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.5px}
+  /* modal / workout library */
+  .modal{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:flex-end}
+  .sheet{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:20px 20px 30px;max-height:86%;overflow-y:auto;border-top:1px solid var(--line)}
+  .sheet-hd{display:flex;justify-content:space-between;align-items:center}
+  .xbtn{background:var(--surface2);border:none;color:var(--text);width:34px;height:34px;border-radius:99px;font-size:15px;cursor:pointer}
+  .wgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+  .wtile{border:none;border-radius:16px;padding:14px 8px;cursor:pointer;color:#fff;text-align:center;font:inherit}
+  .wtile .wi{font-size:22px}
+  .wtile .wn{font-weight:800;font-size:12.5px;margin-top:5px}
+  .wtile:active{transform:scale(.97)}
+  /* load curve */
+  .curve{display:flex;align-items:flex-end;gap:5px;height:120px;margin:14px 0 24px}
+  .bar{flex:1;background:linear-gradient(var(--blue),rgba(74,168,255,.2));border-radius:5px 5px 0 0;min-height:5px;position:relative}
+  .bar.dl{background:linear-gradient(var(--safe),rgba(47,227,160,.2))}
+  .bar small{position:absolute;bottom:-19px;left:0;right:0;text-align:center;font-size:10px;color:var(--faint)}
+  /* calendar */
+  .wkhead{display:flex;justify-content:space-between;align-items:center;margin:22px 0 6px}
+  .wkhead .l{font-weight:800;font-size:16px}
+  .wkhead .r{font-size:12px;color:var(--muted)}
+  .day{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .day:last-child{border-bottom:none}
+  .day .dn{width:38px;flex:none;text-align:center}
+  .day .dn .dd{font-weight:800;font-size:16px}
+  .day .dn .dw{font-size:10px;color:var(--faint);text-transform:uppercase}
+  .chip{flex:1;background:var(--surface2);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+  .chip.rest{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+  .chip .ct{font-weight:700;font-size:13.5px}
+  .chip .cs{font-size:11.5px;color:var(--muted)}
+  .chip .km{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;margin-left:8px}
+  .dot{width:9px;height:9px;border-radius:99px;flex:none}
+  .dot.long{background:var(--violet)}.dot.quality{background:var(--orange)}.dot.easy{background:var(--blue)}.dot.rest{background:var(--faint)}
+  /* RUN screen */
+  #s-run{padding:0}
+  #s-run:not(.hide){display:flex;flex-direction:column;padding:0}
+  .runwrap{display:flex;flex-direction:column;flex:1;min-height:0;padding:6px 18px calc(88px + env(safe-area-inset-bottom))}
+  .run-top{padding-top:6px;text-align:center}
+  .lap{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  .target{font-size:40px;font-weight:800;color:var(--accent);letter-spacing:-1px;margin:2px 0}
+  .upnext{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--faint);text-transform:uppercase}
+  .upval{font-size:15px;font-weight:700;color:var(--text)}
+  .segbar{display:flex;gap:3px;margin:12px 4px}
+  .segbar i{flex:1;height:5px;border-radius:99px;background:var(--surface3)}
+  .segbar i.on{background:var(--accent)}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 8px;margin:16px 0 4px}
+  .stat{text-align:center;padding:8px 0}
+  .stat .v{font-size:24px;font-weight:800;letter-spacing:-.5px}
+  .stat .k{font-size:9.5px;font-weight:700;letter-spacing:.6px;color:var(--faint);text-transform:uppercase;margin-top:2px}
+  .map{flex:1;min-height:150px;background:radial-gradient(circle at 50% 40%,#141020,#0a0912);border-radius:20px;position:relative;overflow:hidden;margin:8px 0}
+  #map-tiles{position:absolute;inset:0;z-index:1}
+  #map-tiles img{position:absolute;width:256px;height:256px}
+  .map svg{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+  #r-marker{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff;transform:translate(-50%,-50%);z-index:3;box-shadow:0 0 0 6px rgba(255,106,61,.25);display:none}
+  #r-marker.on{display:block}
+  .hrpill{position:absolute;right:12px;top:12px;z-index:4;background:rgba(20,18,26,.85);border:1px solid var(--line);color:var(--text);border-radius:99px;padding:6px 11px;font:inherit;font-weight:800;font-size:12px;cursor:pointer}
+  .attrib{position:absolute;right:8px;bottom:6px;z-index:4;font-size:8px;color:var(--muted);background:rgba(10,9,18,.55);padding:1px 5px;border-radius:4px}
+  /* treadmill panel */
+  .tread{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 38%,#1a1330,var(--bg))}
+  .tlabel{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .tspeed{display:flex;align-items:center;gap:20px}
+  .tspeed>div{text-align:center;min-width:96px}
+  .tspeed span{font-family:var(--display);font-size:54px;font-weight:700;letter-spacing:-2px}
+  .tspeed small{display:block;color:var(--muted);font-size:12px;margin-top:-8px}
+  .tstep{width:54px;height:54px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface2);color:var(--text);font-size:26px;font-weight:700;cursor:pointer;display:grid;place-items:center}
+  .tstep:active{transform:scale(.92)}
+  .tstep.sm{width:32px;height:32px;font-size:17px}
+  .tincline{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;font-weight:700}
+  .tincline b{font-family:var(--display);color:var(--text);font-size:16px;min-width:34px;text-align:center;display:inline-block}
+  .coach{position:absolute;left:12px;bottom:12px;background:rgba(20,22,26,.92);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:9px 12px;display:flex;align-items:center;gap:8px;max-width:70%}
+  .coach .q{font-weight:700;font-size:13px}
+  .wave{display:flex;align-items:center;gap:2px;height:16px}
+  .wave i{width:2.5px;background:var(--accent);border-radius:2px;animation:w 1s ease-in-out infinite}
+  @keyframes w{0%,100%{height:4px}50%{height:15px}}
+  .gpspill{position:absolute;left:12px;top:12px;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--muted);background:rgba(20,22,26,.85);padding:4px 9px;border-radius:99px}
+  .runbtns{display:flex;gap:12px;margin-top:8px}
+  .runbtns .btn{flex:1}
+  /* why table */
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  td,th{padding:9px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  .center{text-align:center}
+  /* ---- animations ---- */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,106,61,.35)}50%{box-shadow:0 0 0 14px rgba(255,106,61,0)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .screen.fx{animation:fadeIn .34s ease both}
+  .brand{display:inline-block}
+  .stepanim .brand{animation:floaty 3.5s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* build-plan loader */
+  .loader{position:absolute;inset:0;z-index:60;background:radial-gradient(circle at 50% 38%,#1a1330,var(--bg));
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:fadeIn .3s ease both}
+  .lspin{width:66px;height:66px;border-radius:50%;border:5px solid var(--surface3);border-top-color:var(--accent);border-right-color:var(--accent);animation:spin .8s linear infinite}
+  .lmsg{font-family:var(--display);font-size:20px;font-weight:700;letter-spacing:-.3px}
+  .lsub{color:var(--muted);font-size:13.5px;min-height:18px;transition:opacity .25s}
+  /* bottom nav */
+  nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:440px;display:flex;z-index:40;
+    background:rgba(8,9,11,.92);backdrop-filter:blur(16px);border-top:1px solid var(--line);padding-bottom:max(env(safe-area-inset-bottom), 14px)}
+  nav button{flex:1;background:none;border:none;padding:11px 4px 13px;color:var(--faint);font:inherit;font-size:10.5px;font-weight:700;
+    display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+  nav button.on{color:var(--accent)}
+  nav .ni{font-size:20px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="splash">
+    <img id="splash-logo" src="splash-logo.png" alt="Strivon — Train smarter" decoding="async">
+  </div>
+  <div class="statusbar"><span>9:41</span><span class="ic">● ●●● ▮</span></div>
+  <div id="install-banner" class="hide">
+    <span id="install-text">📲 Install Strivon for the full experience</span>
+    <span style="display:flex;gap:8px;flex:none">
+      <button id="install-btn" onclick="doInstall()">Install</button>
+      <button id="install-x" onclick="dismissInstall()" aria-label="Dismiss">✕</button>
+    </span>
+  </div>
+
+  <!-- ================= ONBOARDING ================= -->
+  <div id="s-onboard" class="screen">
+    <div class="prog" id="ob-prog"><i style="width:33%"></i></div>
+
+    <!-- step 1: goal -->
+    <div id="ob1">
+      <div class="brand">Strivon</div>
+      <h2 style="margin-top:22px">What's your goal?</h2>
+      <div class="sub">Pick the one that fits you best.</div>
+      <div class="rows" id="goal-rows">
+        <div class="opt on" data-v="race"><div class="tile">🏁</div><div><div class="t">Race</div><div class="d">A plan built around an upcoming race date.</div></div><div class="chev">›</div></div>
+        <div class="opt" data-v="distance"><div class="tile">📏</div><div><div class="t">Run a specific distance</div><div class="d">5K all the way up to an ultramarathon.</div></div><div class="chev">›</div></div>
+        <div class="opt" data-v="first5k"><div class="tile">🐣</div><div><div class="t">Run a first 5K</div><div class="d">Couch-to-5K, gently and safely.</div></div><div class="chev">›</div></div>
+        <div class="opt" data-v="general"><div class="tile">❤️</div><div><div class="t">General training</div><div class="d">Stay fit, build a consistent habit.</div></div><div class="chev">›</div></div>
+        <div class="opt" data-v="injury"><div class="tile">🩹</div><div><div class="t">Post-injury recovery</div><div class="d">Return-to-run with extra load caution.</div></div><div class="chev">›</div></div>
+        <div class="opt" data-v="walk"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Build a walking habit or walk to a 5K — gently &amp; safely.</div></div><div class="chev">›</div></div>
+      </div>
+      <div class="cta"><button class="btn p" onclick="obStep(2)">Continue</button></div>
+    </div>
+
+    <!-- step 2: about you -->
+    <div id="ob2" class="hide">
+      <h2>Your running now</h2>
+      <div class="sub">So we set a safe, honest starting point.</div>
+      <div class="row">
+        <div><label>Race distance</label>
+          <select id="o-goal">
+            <option value="5k">5K</option><option value="10k">10K</option>
+            <option value="half" selected>Half marathon</option><option value="marathon">Marathon</option>
+          </select></div>
+        <div><label>Weeks to race</label><input id="o-weeks" type="number" value="12" min="4" max="24"></div>
+      </div>
+      <div class="row">
+        <div><label>Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
+        <div><label>Longest run (km)</label><input id="o-long" type="number" value="7" min="0"></div>
+      </div>
+      <div class="row">
+        <div><label>Height (cm)</label><input id="o-height" type="number" value="" placeholder="175" min="100" max="230"></div>
+        <div><label>Weight (kg)</label><input id="o-weight" type="number" value="" placeholder="70" min="30" max="250"></div>
+      </div>
+      <label>Runs per week</label>
+      <div class="seg" id="o-days"><button data-v="3">3</button><button data-v="4" class="on">4</button><button data-v="5">5</button></div>
+      <label>Experience</label>
+      <div class="seg" id="o-exp"><button data-v="new" class="on">New</button><button data-v="return">Returning</button><button data-v="regular">Regular</button></div>
+      <div class="cta"><div class="row"><button class="btn ghost" style="flex:.5" onclick="obStep(1)">Back</button><button class="btn p" onclick="obStep(3)">Continue</button></div></div>
+    </div>
+
+    <!-- step 3: preferences -->
+    <div id="ob3" class="hide">
+      <h2>Set your training preferences</h2>
+      <div class="sub">Drives how hard we push — always inside the safety cap.</div>
+      <div class="grid2" id="pref-grid">
+        <div class="ptile" data-v="gentle"><div class="ic g">🌱</div><div class="t">Gentle</div><div class="d">Extra-cautious ramp</div></div>
+        <div class="ptile on" data-v="balanced"><div class="ic b">⚖️</div><div class="t">Balanced</div><div class="d">Recommended</div></div>
+        <div class="ptile" data-v="ambitious"><div class="ic o">🔥</div><div class="t">Ambitious</div><div class="d">Faster build, still capped</div></div>
+        <div class="ptile" data-v="auto"><div class="ic v">🤖</div><div class="t">Auto-adapt</div><div class="d">We tune it weekly</div></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <div style="display:flex;justify-content:space-between">
+          <div><div class="kicker">Training volume</div><div style="font-weight:800;margin-top:4px" id="sum-vol">Progressive 📈</div></div>
+          <div style="text-align:right"><div class="kicker">Safety</div><div style="font-weight:800;margin-top:4px" class="tick">≤10% / wk ✓</div></div>
+        </div>
+      </div>
+      <div class="cta"><div class="row"><button class="btn ghost" style="flex:.5" onclick="obStep(2)">Back</button><button class="btn p" onclick="buildPlan()">Build my safe plan →</button></div></div>
+    </div>
+  </div>
+
+  <!-- ================= TODAY ================= -->
+  <div id="s-today" class="screen hide">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px">
+      <h1>Today</h1><span class="sub" id="today-date"></span>
+    </div>
+    <div id="today-plan"></div>
+    <div class="card" id="risk-card"></div>
+    <div class="card glow">
+      <div class="kicker">Daily readiness check</div>
+      <div class="sub" style="margin:4px 0 4px">20 seconds — adapts today's run to how you feel.</div>
+      <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="2" class="on">Good</button><button data-v="1">OK</button><button data-v="0">Poor</button></div>
+      <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="2" class="on">None</button><button data-v="1">Some</button><button data-v="0">High</button></div>
+      <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="2" class="on">High</button><button data-v="1">Meh</button><button data-v="0">Low</button></div>
+      <button class="btn p" style="margin-top:16px" onclick="computeReadiness()">Check readiness</button>
+      <div id="readiness-out"></div>
+    </div>
+    <div class="card" id="today-sesh"></div>
+    <div class="card" id="weather-card"><div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Checking conditions…</div></div>
+    <div class="card" id="reminder-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div><div class="kicker">🔔 Training reminders</div><div class="sub" style="margin-top:2px">A nudge on your run days at 7:30am.</div></div>
+        <button class="btn ghost" id="rem-btn" style="width:auto;padding:11px 16px;flex:none" onclick="toggleReminders()">Turn on</button>
+      </div>
+      <div id="rem-out"></div>
+    </div>
+  </div>
+
+  <!-- ================= PLAN / CALENDAR ================= -->
+  <div id="s-plan" class="screen hide">
+    <h1 style="padding-top:6px">Training calendar</h1>
+    <div class="card">
+      <div class="kicker">Weekly load — safety-checked</div>
+      <div class="sub" style="margin-top:3px"><span style="color:var(--blue)">■</span> build · <span class="tick">■</span> deload. Bars can't jump &gt;10%.</div>
+      <div class="curve" id="curve"></div>
+      <div id="safety-report"></div>
+    </div>
+    <div id="calendar"></div>
+  </div>
+
+  <!-- ================= RUN ================= -->
+  <div id="s-run" class="screen hide">
+    <div class="runwrap">
+      <div class="run-toolbar">
+        <button class="tbtn" onclick="openLib()">☰ Workout</button>
+        <button class="tbtn" id="mode-btn" onclick="toggleMode()">🛰️ Outdoor</button>
+        <button class="tbtn" id="mute-btn" onclick="toggleMute()">🔊 Voice</button>
+        <button class="tbtn" id="tips-btn" onclick="toggleTips()">📚 Tips</button>
+      </div>
+      <div id="tips-hint" class="tips-hint"></div>
+      <div class="run-top">
+        <div class="lap" id="r-lap">Session · not started</div>
+        <div class="target" id="r-target">Easy run</div>
+        <div class="upnext">Up next</div>
+        <div class="upval" id="r-up">Pick a workout, then hit start</div>
+      </div>
+      <div class="segbar" id="r-segbar"></div>
+      <div id="heat-warn" class="hide"></div>
+      <div class="stats">
+        <div class="stat"><div class="v mono" id="r-ldist">0m</div><div class="k">Lap distance</div></div>
+        <div class="stat"><div class="v mono" id="r-ltime">0:00</div><div class="k">Lap time</div></div>
+        <div class="stat"><div class="v mono" id="r-lpace">--:--</div><div class="k">Lap pace</div></div>
+        <div class="stat"><div class="v mono" id="r-tdist">0.00</div><div class="k">Total km</div></div>
+        <div class="stat"><div class="v mono" id="r-ttime">0:00</div><div class="k">Total time</div></div>
+        <div class="stat"><div class="v mono" id="r-tpace">--:--</div><div class="k">Avg pace</div></div>
+      </div>
+      <div class="map">
+        <div id="map-tiles"></div>
+        <svg id="r-route" preserveAspectRatio="none"><polyline id="r-line" fill="none" stroke="#ff6a3d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points=""/></svg>
+        <div id="r-marker"></div>
+        <div class="gpspill" id="r-gps">GPS ●</div>
+        <button class="hrpill" id="hr-pill" onclick="connectHR()">❤️ Connect HR</button>
+        <div id="tread-panel" class="tread hide">
+          <div class="tlabel">🏢 Treadmill speed</div>
+          <div class="tspeed"><button class="tstep" onclick="setSpeed(-0.5)">−</button><div><span id="t-speed">8.0</span><small>km/h</small></div><button class="tstep" onclick="setSpeed(0.5)">+</button></div>
+          <div class="tincline">⛰ Incline <button class="tstep sm" onclick="setIncline(-0.5)">−</button> <b id="t-incline">0.0</b>% <button class="tstep sm" onclick="setIncline(0.5)">+</button></div>
+        </div>
+        <div class="coach" id="r-coach"><div class="wave"><i style="animation-delay:0s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:0s"></i></div><div class="q" id="r-coach-q">“Auto-pause is on — no nagging at red lights.”</div></div>
+        <div class="attrib">© OpenStreetMap © CARTO</div>
+      </div>
+      <div class="runbtns">
+        <button class="btn" id="r-start" onclick="toggleRun()">Start run</button>
+        <button class="btn ghost" id="r-next" onclick="nextLap()">Next lap</button>
+        <button class="btn ghost" id="r-stop" onclick="stopRun()">Finish</button>
+      </div>
+      <div class="card hide" id="rpe-card" style="margin:12px 0 0">
+        <div class="kicker">How did that feel?</div>
+        <div class="sub" style="margin:3px 0">Recalibrates next week — the injury-safe loop.</div>
+        <div class="seg" id="rpe-seg"><button data-v="easy">Easy</button><button data-v="right" class="on">Just right</button><button data-v="hard">Hard</button><button data-v="painful">Painful</button></div>
+        <div class="row" style="margin-top:12px"><button class="btn p" onclick="saveRPE()">Log &amp; recalibrate</button><button class="btn ghost" style="flex:.55" onclick="exportCurrentRun()">⬇ GPX</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= WHY ================= -->
+  <div id="s-why" class="screen hide">
+    <h1 style="padding-top:6px">Why Strivon</h1>
+    <div class="card" id="account-card"></div>
+    <div class="card" id="strava-card" style="display:none"></div>
+    <div class="card" id="import-card" style="display:none"></div>
+    <div class="card" id="coach-card" style="display:none"></div>
+    <div class="card" id="plans-card"></div>
+    <div class="card">
+      <div class="kicker">What makes Strivon different</div>
+      <table>
+        <tr><th>What most running apps miss</th><th>Strivon</th></tr>
+        <tr><td>Ramps too fast → injuries (PTs report weekly cases)</td><td class="tick">SafeRamp ≤10%/wk + deloads</td></tr>
+        <tr><td>“Takes you at your word”, no feedback loop</td><td class="tick">Daily readiness + post-run RPE</td></tr>
+        <tr><td>GPS undercounts 100–200m</td><td class="tick">Smoothed, no undercount</td></tr>
+        <tr><td>Nags “speed up” at traffic lights</td><td class="tick">Smart auto-pause</td></tr>
+        <tr><td>No free tier, can't cancel in-app</td><td class="tick">Free tier, 1-tap cancel</td></tr>
+      </table>
+    </div>
+    <div class="card" style="padding:16px 16px 18px">
+      <div class="kicker">Simple, honest pricing</div>
+
+      <div class="plan">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="pname">Free <span class="pill g">forever</span></div>
+          <div class="price">£0</div>
+        </div>
+        <div class="sub" style="margin-top:2px">Everything you need to run safely &amp; build the habit.</div>
+        <ul class="feat">
+          <li>SafeRamp adaptive plan (1 goal)</li>
+          <li>Injury-risk radar + daily readiness</li>
+          <li>GPS tracking, live map, smart auto-pause</li>
+          <li>Stats &amp; personal records</li>
+          <li>Manual GPX export</li>
+        </ul>
+      </div>
+
+      <div class="plan pro">
+        <div class="badge">MOST POPULAR</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="pname">Pro</div>
+          <div class="price">£6.99<small>/mo</small></div>
+        </div>
+        <div class="sub" style="margin-top:2px">Effortless &amp; serious — for when you commit to a race.</div>
+        <ul class="feat">
+          <li class="lock">Import your runs — GPX/TCX files (+ Strava)</li>
+          <li class="lock">Live audio coaching (voice)</li>
+          <li class="lock">HR-zone training + full workout library</li>
+          <li class="lock">Race-specific &amp; multiple plans</li>
+          <li class="lock">Advanced training-load analytics</li>
+        </ul>
+        <button class="btn p" id="pro-btn" style="margin-top:14px" onclick="goPro()">Go Pro — £6.99/mo</button>
+        <div class="sub center" style="margin-top:7px">Secure checkout via Stripe · cancel anytime</div>
+        <div id="trial-note" class="banner a hide" style="margin-top:10px">Checkout isn't configured yet — add your Stripe payment link in <b>config.js</b> (see PRO.md).</div>
+      </div>
+
+      <div class="banner g" style="margin-top:14px"><span class="tick">✓</span> The safety promise is <b>always free</b> — Pro never paywalls what keeps you injury-free.</div>
+      <div class="sub center" style="margin-top:8px">Typical coaching apps: <b>£15.99/mo, no free tier</b>. Our Pro is less than half — and the core stays free.</div>
+    </div>
+    <div class="sub center" style="padding:8px 0 4px">Prototype · app #1 of 30 🤖</div>
+  </div>
+
+  <!-- ================= STATS ================= -->
+  <div id="s-stats" class="screen hide">
+    <h1 style="padding-top:6px">Your stats</h1>
+    <div class="card">
+      <div class="kicker">This week</div>
+      <div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px">
+        <div class="stat"><div class="v tick" id="st-km">0</div><div class="k">Kilometres</div></div>
+        <div class="stat"><div class="v" id="st-time">0h</div><div class="k">Time</div></div>
+        <div class="stat"><div class="v" id="st-runs">0</div><div class="k">Runs</div></div>
+      </div>
+    </div>
+    <div class="card" id="insights-card"></div>
+    <div class="card" id="bmi-card"></div>
+    <div class="card">
+      <div class="kicker">Weekly volume</div>
+      <div class="chart" id="st-chart"></div>
+    </div>
+    <div class="card">
+      <div class="kicker">Personal records</div>
+      <div class="prs" id="st-prs"></div>
+    </div>
+    <div class="card">
+      <div class="kicker">Recent activities</div>
+      <div id="st-acts"></div>
+    </div>
+  </div>
+
+  <!-- ================= ATLAS — life story map ================= -->
+  <div id="s-atlas" class="screen hide">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px">
+      <h1>Atlas</h1><span class="sub">Your life, in motion</span>
+    </div>
+    <div id="atlas-reveal"></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="atlas-map" style="position:relative;height:280px;background:#0c0e16">
+        <div id="atlas-tiles" style="position:absolute;inset:0"></div>
+        <svg id="atlas-routes" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" preserveAspectRatio="none"></svg>
+        <div id="atlas-pins" style="position:absolute;inset:0"></div>
+        <div class="attrib" style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · CARTO</div>
+        <div id="atlas-empty" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);font-size:14px">Your map is empty.<br>Add your first moment below — every memory pins to where it happened.</div>
+      </div>
+      <div class="row" style="gap:8px;padding:12px">
+        <button class="btn p" onclick="addMoment()">＋ Add a moment</button>
+        <button class="btn ghost" style="flex:0 0 auto;width:auto;padding:12px 14px" onclick="sealCapsule()">⏳ Capsule</button>
+      </div>
+    </div>
+    <div class="card"><div class="kicker">🧵 Your story</div><div id="atlas-memories" style="margin-top:6px"></div></div>
+    <div class="card" id="atlas-caps-card"><div class="kicker">⏳ Time capsules</div><div id="atlas-capsules" style="margin-top:6px"></div></div>
+  </div>
+
+  <!-- Atlas modal (add moment / seal capsule / view memory) -->
+  <div id="atlas-modal" class="modal hide">
+    <div class="sheet">
+      <div class="sheet-hd"><h2 id="am-title">Add a moment</h2><button class="xbtn" onclick="closeAtlasModal()">✕</button></div>
+      <div id="am-body" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ================= WORKOUT LIBRARY (modal) ================= -->
+  <div id="lib" class="modal hide">
+    <div class="sheet">
+      <div class="sheet-hd"><h2>Choose a workout</h2><button class="xbtn" onclick="closeLib()">✕</button></div>
+      <div class="kicker" style="margin-top:6px">Run</div>
+      <div class="wgrid" id="lib-run"></div>
+      <div class="kicker" style="margin-top:16px">Cross-training</div>
+      <div class="wgrid" id="lib-x"></div>
+    </div>
+  </div>
+
+  <div id="ob-loader" class="loader hide">
+    <div class="lspin"></div>
+    <div class="lmsg">Building your safe plan…</div>
+    <div class="lsub" id="lsub">Checking load limits</div>
+  </div>
+
+  <nav id="nav" class="hide">
+    <button data-v="today" class="on" onclick="go('today')"><span class="ni">☀️</span>Today</button>
+    <button data-v="plan" onclick="go('plan')"><span class="ni">🗓️</span>Plan</button>
+    <button data-v="run" onclick="go('run')"><span class="ni">🏃</span>Run</button>
+    <button data-v="stats" onclick="go('stats')"><span class="ni">📊</span>Stats</button>
+    <button data-v="atlas" onclick="go('atlas')"><span class="ni">🗺️</span>Atlas</button>
+    <button data-v="why" onclick="go('why')"><span class="ni">✨</span>Why</button>
+  </nav>
+</div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="sync.js"></script>
+<script src="native-bridge.js"></script>
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+// installed-app detection (iOS navigator.standalone + display-mode) → drives safe-area CSS
+if(window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode:standalone)').matches)){document.documentElement.classList.add('standalone');}
+const store={get:()=>JSON.parse(localStorage.getItem('stride')||'null'),set:d=>{try{d._mut=Date.now();}catch(e){}localStorage.setItem('stride',JSON.stringify(d));if(window.StrideSync)StrideSync.markDirty();}};
+let S=store.get();
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function uuid(){return crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}
+
+// ---- generic single-select wiring ----
+function wireSelect(sel){$$(sel+' > *').forEach(el=>el.onclick=()=>{el.parentElement.children&&[...el.parentElement.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');});}
+['#goal-rows','#o-days','#o-exp','#pref-grid'].forEach(wireSelect);
+$$('.rd button').forEach(b=>b.onclick=()=>{[...b.parentElement.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+$$('#rpe-seg button').forEach(b=>b.onclick=()=>{[...b.parentElement.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+
+// ---- onboarding steps ----
+function obStep(n){
+  ['ob1','ob2','ob3'].forEach((id,i)=>$('#'+id).classList.toggle('hide',i!==n-1));
+  $('#ob-prog>i').style.width=(n*33.33)+'%';
+  $('#s-onboard').scrollTop=0;
+  // sync goal choice into distance default
+  if(n===2){const g=$('#goal-rows .on').dataset.v; if(g==='first5k')$('#o-goal').value='5k';}
+  playStep($('#ob'+n));
+}
+function playStep(el){
+  const seq=[];
+  el.querySelectorAll(':scope > *').forEach(c=>{
+    if(c.matches('.rows,.grid2'))c.querySelectorAll(':scope > *').forEach(g=>seq.push(g));
+    else seq.push(c);
+  });
+  seq.forEach((node,i)=>{
+    node.style.animation='none';void node.offsetWidth;
+    if(node.classList.contains('brand'))node.style.animation='fadeUp .5s cubic-bezier(.2,.75,.25,1) both, floaty 3.6s ease-in-out .7s infinite';
+    else{node.style.animation='fadeUp .5s cubic-bezier(.2,.75,.25,1) both';node.style.animationDelay=(0.04+i*0.05).toFixed(2)+'s';}
+  });
+}
+function runBuildLoader(){
+  const l=$('#ob-loader');l.classList.remove('hide');
+  const msgs=['Checking load limits…','Building in deload weeks…','Personalising your paces…','Injury-safety checks passed ✓'];
+  let i=0;$('#lsub').textContent=msgs[0];
+  const iv=setInterval(()=>{i++;if(i<msgs.length){const s=$('#lsub');s.style.opacity=0;setTimeout(()=>{s.textContent=msgs[i];s.style.opacity=1;},150);}},430);
+  setTimeout(()=>{clearInterval(iv);l.classList.add('hide');enterApp();},1900);
+}
+
+// ---- SafeRamp plan generator ----
+function buildPlan(){
+  const goal=$('#o-goal').value;
+  const base=Math.max(5,+$('#o-base').value||10);
+  const days=+$('#o-days .on').dataset.v;
+  const longNow=+$('#o-long').value||base*0.4;
+  const weeks=Math.min(24,Math.max(4,+$('#o-weeks').value||12));
+  const exp=$('#o-exp .on').dataset.v;
+  const pref=$('#pref-grid .on').dataset.v;
+  const goalName=$('#goal-rows .on .t').textContent;
+  const mode=$('#goal-rows .on').dataset.v==='walk'?'walk':'run';
+  const peak=(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
+  let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
+  if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
+  const start=new Date(); start.setHours(0,0,0,0);
+  let vol=base, plan=[], recent=[base];
+  for(let w=1;w<=weeks;w++){
+    const isDeload=(w%4===0)&&w<weeks-1, isTaper=w>weeks-2;
+    if(isDeload)vol=+(vol*0.65).toFixed(1);
+    else if(isTaper)vol=+(vol*0.6).toFixed(1);
+    else{const avg=recent.slice(-4).reduce((a,b)=>a+b,0)/Math.min(4,recent.length);
+      const last=recent[recent.length-1];
+      vol=Math.floor(Math.min(peak,avg*rampCap,last*1.10)*10)/10;}
+    recent.push(vol);
+    const wkStart=new Date(start); wkStart.setDate(start.getDate()+(w-1)*7);
+    const sessions=makeSessions(vol,days,goal,w,weeks,mode);
+    plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
+  }
+  const heightCm=+$('#o-height').value||null, weightKg=+$('#o-weight').value||null;
+  const p={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1};
+  if(S&&S.plan&&S._addPlan){                                    // Pro: adding an extra race plan — keep account data + existing plans
+    saveActiveToPlans();
+    S.plans=S.plans||[]; S.plans.push({...p,_mut:Date.now()});
+    loadSnapshot(p);
+    if(heightCm)S.heightCm=heightCm; if(weightKg)S.weightKg=weightKg;
+    delete S._addPlan;
+    store.set(S); runBuildLoader(); return;
+  }
+  S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
+  S.plans=[planSnapshot()];
+  store.set(S); runBuildLoader();
+}
+// ---- AI Running Coach (Pro, Claude via edge function) ----
+let coachMsgs=[];
+// ---- voice input (Web Speech API — free, on-device, no key) ----
+let _rec=null,_recOn=false;
+function speechSupported(){return !!(window.SpeechRecognition||window.webkitSpeechRecognition);}
+function coachVoice(){
+  const inp=$('#coach-q'),btn=$('#coach-mic');
+  if(_recOn){try{_rec&&_rec.stop();}catch(e){}return;}
+  if(!speechSupported()){if(inp)inp.placeholder='Voice not supported on this browser';return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  _rec=new SR();_rec.lang='en-GB';_rec.interimResults=true;_rec.maxAlternatives=1;_rec.continuous=false;
+  let finalTxt='';
+  _rec.onstart=()=>{_recOn=true;if(btn){btn.classList.add('listening');btn.textContent='◉';}if(inp){inp.placeholder='Listening… speak now';inp.value='';}};
+  _rec.onresult=e=>{let interim='';finalTxt='';for(let i=0;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)finalTxt+=r[0].transcript;else interim+=r[0].transcript;}if(inp)inp.value=(finalTxt||interim).replace(/^\s+/,'');};
+  _rec.onerror=e=>{_recOn=false;if(btn){btn.classList.remove('listening');btn.textContent='🎤';}if(inp)inp.placeholder=(e&&e.error==='not-allowed')?'Mic blocked — allow it in settings':'Should I run today?';};
+  _rec.onend=()=>{_recOn=false;if(btn){btn.classList.remove('listening');btn.textContent='🎤';}if(inp){inp.placeholder='Should I run today?';const q=inp.value.trim();if(q)askCoach();}};  // auto-send when you stop speaking
+  try{_rec.start();}catch(e){_recOn=false;}
+}
+function coachConfigured(){return !!(window.StrideSync&&StrideSync.state().configured);}
+function buildCoachContext(){
+  const L=[];
+  if(S.goalName)L.push(`Goal: ${S.goalName} (${S.mode||'run'}), week ${S.curWeek}/${S.weeks}.`);
+  try{const cs=curSession();if(cs)L.push(`Today's planned session: ${cs.t}${cs.km?' '+cs.km+'km':''}.`);}catch(e){}
+  if(S.readiness)L.push(`Latest readiness: ${S.readiness.level} (score ${S.readiness.score}/6).`);
+  const acts=(S.activities||[]).slice(0,6);
+  if(acts.length)L.push('Recent runs: '+acts.map(a=>`${a.km.toFixed(1)}km @ ${paceStr(a.pace)}/km${a.hr?' HR'+a.hr:''}`).join('; ')+'.');
+  try{const f=trainingForm();if(f)L.push(`Training form: fitness ${f.ctl}, fatigue ${f.atl}, form ${f.tsb>0?'+':''}${f.tsb} (${formVerdict(f.tsb)[0]}).`);}catch(e){}
+  try{const p=predictRaces();if(p)L.push('Predicted races: '+Object.keys(p.out).map(k=>`${k} ${fmtHMS(p.out[k].secs)}`).join(', ')+'.');const v=vdotEstimate();if(v)L.push(`Est. VO2max ${v}.`);}catch(e){}
+  if(window._weatherRec)L.push('Weather today: '+window._weatherRec+'.');
+  if(window._airNow)L.push(`Air quality: ${window._airNow.label} (AQI ${window._airNow.val}).`);
+  if(S.heightCm&&S.weightKg)L.push(`Height ${S.heightCm}cm, weight ${S.weightKg}kg.`);
+  return L.join('\n');
+}
+function renderCoach(){
+  const el=$('#coach-card');if(!el||!S)return;
+  if(!coachConfigured()){el.style.display='none';return;}
+  el.style.display='';
+  const st=StrideSync.state();
+  if(!isPro()){
+    el.innerHTML=`<div class="kicker">🧠 AI running coach <span class="pill">PRO</span></div>
+      <div class="sub" style="margin-top:4px">Ask anything — "should I run today?", "how do I pace my long run?" — and get answers grounded in your plan, runs, readiness and the weather.</div>
+      <button class="btn p" style="margin-top:12px" onclick="document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">Unlock the AI coach — Pro</button>`;
+    return;
+  }
+  if(!st.signedIn){el.innerHTML=`<div class="kicker">🧠 AI running coach</div><div class="sub" style="margin-top:4px">Sign in to your Strivon account above to chat with your coach.</div>`;return;}
+  const thread=coachMsgs.map(m=>`<div style="margin:8px 0;${m.role==='user'?'text-align:right':''}"><span style="display:inline-block;max-width:85%;text-align:left;padding:9px 12px;border-radius:13px;font-size:14px;line-height:1.4;background:${m.role==='user'?'var(--brand,#4be3c3);color:#04121f':'rgba(255,255,255,.06)'}">${m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</span></div>`).join('');
+  el.innerHTML=`<div class="kicker">🧠 AI running coach <span class="pill g">PRO</span></div>
+    <div id="coach-thread" style="margin-top:8px;max-height:320px;overflow-y:auto">${thread||'<div class="sub">Ask your coach anything about your training. It knows your plan, runs, readiness &amp; the weather.</div>'}</div>
+    <div class="row" style="margin-top:10px;gap:8px">
+      <input id="coach-q" placeholder="Should I run today?" style="flex:1" onkeydown="if(event.key==='Enter')askCoach()">
+      ${speechSupported()?'<button class="btn ghost mic-btn" id="coach-mic" style="flex:0 0 auto;width:auto;padding:12px 14px;font-size:17px" title="Speak your question" onclick="coachVoice()">🎤</button>':''}
+      <button class="btn p" style="flex:0 0 auto;width:auto;padding:12px 16px" id="coach-send" onclick="askCoach()">Ask</button></div>
+    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">${['Should I run today?','Explain my next workout','Am I overtraining?'].map(q=>`<button class="btn ghost" style="flex:0 0 auto;width:auto;padding:7px 11px;font-size:12px" onclick="askCoach('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>`;
+}
+async function askCoach(preset){
+  const inp=$('#coach-q'),send=$('#coach-send');const q=(preset||(inp&&inp.value)||'').trim();if(!q)return;
+  const jwt=(window.StrideSync&&StrideSync.token())||'';
+  if(!jwt){coachMsgs.push({role:'assistant',content:'Please sign in first.'});renderCoach();return;}
+  coachMsgs.push({role:'user',content:q});if(inp)inp.value='';
+  coachMsgs.push({role:'assistant',content:'…thinking'});renderCoach();
+  const th=$('#coach-thread');if(th)th.scrollTop=th.scrollHeight;
+  try{
+    const history=coachMsgs.slice(0,-2).filter(m=>m.content!=='…thinking');
+    const r=await fetch(StrideSync.fnBase()+'/ai-coach',{method:'POST',headers:{'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,context:buildCoachContext(),history})});
+    const d=await r.json();
+    coachMsgs.pop();
+    if(!r.ok||d.error){const msg=d.error==='pro_required'?'The AI coach is a Pro feature.':d.error==='not_configured'?'Coach isn’t set up yet (add the Anthropic key — see AICOACH.md).':(d.detail||d.error||'Coach unavailable right now.');coachMsgs.push({role:'assistant',content:msg});}
+    else coachMsgs.push({role:'assistant',content:d.reply||'…'});
+  }catch(e){coachMsgs.pop();coachMsgs.push({role:'assistant',content:'Network error — try again.'});}
+  renderCoach();const t2=$('#coach-thread');if(t2)t2.scrollTop=t2.scrollHeight;
+}
+// ---- ATLAS: life story map (memories + time capsules) ----
+const ATLAS_Z=14;
+function ensureAtlas(){if(!S)return;if(!Array.isArray(S.memories))S.memories=[];if(!Array.isArray(S.capsules))S.capsules=[];}
+function feelings(){return[['🤩','Elated'],['😊','Happy'],['😌','Calm'],['💪','Strong'],['😤','Determined'],['😮‍💨','Drained'],['😰','Anxious'],['😢','Low'],['🧠','Reflective'],['❤️','Grateful']];}
+function atlasPoints(){ensureAtlas();const pts=[];S.memories.forEach(m=>{if(isFinite(m.lat)&&isFinite(m.lon))pts.push([m.lat,m.lon]);});S.capsules.forEach(c=>{if(isFinite(c.lat)&&isFinite(c.lon))pts.push([c.lat,c.lon]);});if(!pts.length)(S.activities||[]).forEach(a=>{if(a.pts&&a.pts.length)pts.push(a.pts[Math.floor(a.pts.length/2)]);});return pts;}
+function atlasCenter(){const pts=atlasPoints();if(!pts.length)return null;let la=0,lo=0;pts.forEach(p=>{la+=p[0];lo+=p[1];});return[la/pts.length,lo/pts.length];}
+async function drawAtlasMap(){
+  ensureAtlas();
+  const wrap=$('#atlas-map'),tiles=$('#atlas-tiles'),svg=$('#atlas-routes'),pinsEl=$('#atlas-pins'),empty=$('#atlas-empty');if(!wrap)return;
+  const hasContent=S.memories.length||S.capsules.length||(S.activities||[]).some(a=>a.pts&&a.pts.length);
+  if(empty)empty.style.display=hasContent?'none':'flex';
+  let ctr=atlasCenter();if(!ctr){try{const l=await getLoc();ctr=[l.lat,l.lon];}catch(e){ctr=[51.5074,-0.1278];}}
+  const Z=ATLAS_Z,n=Math.pow(2,Z),W=wrap.clientWidth||360,H=wrap.clientHeight||280;
+  const c=project(ctr[0],ctr[1],Z),ox=c.x-W/2,oy=c.y-H/2;
+  const t0x=Math.floor(ox/256),t1x=Math.floor((ox+W)/256),t0y=Math.floor(oy/256),t1y=Math.floor((oy+H)/256);
+  let html='';for(let tx=t0x;tx<=t1x;tx++)for(let ty=t0y;ty<=t1y;ty++){if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n;html+=`<img src="https://basemaps.cartocdn.com/dark_all/${Z}/${wx}/${ty}.png" style="position:absolute;width:256px;height:256px;left:${Math.round(tx*256-ox)}px;top:${Math.round(ty*256-oy)}px" onerror="this.style.visibility='hidden'">`;}
+  tiles.innerHTML=html;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  let rHtml='';(S.activities||[]).forEach(a=>{if(a.pts&&a.pts.length>1){const pp=a.pts.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' ');rHtml+=`<polyline points="${pp}" fill="none" stroke="#ff6a3d" stroke-opacity=".5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;}});
+  svg.innerHTML=rHtml;
+  let pHtml='';
+  S.memories.forEach(m=>{if(!isFinite(m.lat))return;const w=project(m.lat,m.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-20||x>W+20||y<-20||y>H+20)return;pHtml+=`<button class="atlas-pin" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px" onclick="viewMemory('${m.id}')">${m.feeling||'📍'}</button>`;});
+  S.capsules.forEach(c2=>{if(!isFinite(c2.lat))return;const w=project(c2.lat,c2.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-20||x>W+20||y<-20||y>H+20)return;pHtml+=`<button class="atlas-pin cap" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px" onclick="viewCapsule('${c2.id}')">⏳</button>`;});
+  pinsEl.innerHTML=pHtml;
+}
+function checkCapsules(){ensureAtlas();const now=Date.now();let any=false;(S.capsules||[]).forEach(c=>{if(!c.revealed&&(!c.unlockAt||c.unlockAt<=now)){c.revealed=true;c.seenReveal=false;any=true;}});if(any)store.set(S);}
+function renderAtlas(){
+  ensureAtlas();
+  checkCapsules();
+  const rev=(S.capsules||[]).find(c=>c.revealed&&c.seenReveal===false),rv=$('#atlas-reveal');
+  if(rv)rv.innerHTML=rev?`<div class="card" style="border-color:rgba(46,230,198,.45);cursor:pointer" onclick="viewCapsule('${rev.id}')"><div class="kicker">⏳ A capsule just opened</div><div style="margin-top:6px;font-weight:700">A message you left for yourself</div><div class="sub" style="margin-top:4px">“${(rev.message||'').replace(/</g,'&lt;')}” — tap to read</div></div>`:'';
+  drawAtlasMap();
+  const mem=$('#atlas-memories'),ms=(S.memories||[]).slice().sort((a,b)=>b.at-a.at);
+  mem.innerHTML=ms.length?ms.map(m=>{const d=new Date(m.at),f=feelings().find(x=>x[0]===m.feeling);
+    return `<div class="atlas-mem" onclick="viewMemory('${m.id}')">${m.photo?`<img src="${m.photo}" class="am-thumb">`:`<div class="am-thumb">${m.feeling||'📍'}</div>`}<div style="min-width:0;flex:1"><div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(m.note||'A moment').replace(/</g,'&lt;')}</div><div class="sub">${f?f[1]+' · ':''}${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}</div></div></div>`;}).join(''):'<div class="sub">No moments yet. Tap “Add a moment” to begin your map.</div>';
+  const cap=$('#atlas-capsules'),cs=(S.capsules||[]).slice().sort((a,b)=>(a.unlockAt||0)-(b.unlockAt||0));
+  cap.innerHTML=cs.length?cs.map(c=>{const sealed=!c.revealed&&c.unlockAt>Date.now(),dd=new Date(c.unlockAt);
+    return `<div class="atlas-mem" onclick="viewCapsule('${c.id}')"><div class="am-thumb">${sealed?'🔒':'⏳'}</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${sealed?'Sealed capsule':'Opened capsule'}</div><div class="sub">${sealed?'Unlocks '+DOW[dd.getDay()]+' '+dd.getDate()+' '+MON[dd.getMonth()]+' '+dd.getFullYear():'“'+((c.message||'').slice(0,42).replace(/</g,'&lt;'))+'”'}</div></div></div>`;}).join(''):'<div class="sub">Seal a message to your future self — it reopens on the date you choose.</div>';
+}
+function openAtlasModal(t,b){$('#am-title').textContent=t;$('#am-body').innerHTML=b;$('#atlas-modal').classList.remove('hide');}
+function closeAtlasModal(){$('#atlas-modal').classList.add('hide');}
+function addMoment(){
+  window._amPhoto=null;
+  const fl=feelings().map((f,i)=>`<button type="button" class="feel${i===1?' on':''}" data-f="${f[0]}" onclick="[...this.parentElement.children].forEach(x=>x.classList.remove('on'));this.classList.add('on')">${f[0]}</button>`).join('');
+  openAtlasModal('Add a moment',`<label>How did it feel?</label><div class="feelrow" id="am-feel">${fl}</div>
+    <label style="margin-top:12px">A note</label><input id="am-note" placeholder="e.g. The run before my big interview" maxlength="140">
+    <label style="margin-top:12px">Photo (optional)</label><br><label class="btn ghost" style="display:inline-block;width:auto;cursor:pointer;margin-top:4px;padding:9px 14px">Choose photo<input id="am-photo" type="file" accept="image/*" style="display:none" onchange="amPreview(this)"></label>
+    <div id="am-photo-prev"></div><div id="am-msg" class="sub" style="margin-top:8px">📍 Pins to your current location.</div>
+    <button class="btn p" style="margin-top:14px" onclick="saveMoment()">Save moment</button>`);
+}
+function downscaleImg(file,max,q){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const sc=Math.min(1,max/Math.max(w,h));w=Math.round(w*sc);h=Math.round(h*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',q));};img.onerror=rej;img.src=URL.createObjectURL(file);});}
+async function amPreview(inp){const f=inp.files&&inp.files[0];if(!f)return;const msg=$('#am-msg');if(msg)msg.textContent='Processing photo…';try{const d=await downscaleImg(f,640,.62);window._amPhoto=d;$('#am-photo-prev').innerHTML=`<img src="${d}" style="width:100%;max-height:170px;object-fit:cover;border-radius:12px;margin-top:8px">`;if(msg)msg.textContent='📍 Pins to your current location.';}catch(e){if(msg)msg.textContent='Could not read that image.';}}
+async function saveMoment(){
+  const fe=$('#am-feel .on'),feel=fe?fe.dataset.f:'📍',note=($('#am-note').value||'').trim(),msg=$('#am-msg');
+  if(msg)msg.textContent='📍 Finding your location…';
+  let loc;try{loc=await getLoc();}catch(e){loc={lat:51.5074,lon:-0.1278,ok:false};}
+  ensureAtlas();
+  S.memories.unshift({id:(crypto.randomUUID?crypto.randomUUID():'m'+Date.now()),at:Date.now(),lat:loc.lat,lon:loc.lon,feeling:feel,note:note,photo:window._amPhoto||null});
+  try{store.set(S);}catch(e){S.memories.shift();if(msg)msg.textContent='Storage full — try a moment without a photo.';return;}
+  window._amPhoto=null;closeAtlasModal();renderAtlas();
+}
+function sealCapsule(){
+  const d=new Date();d.setFullYear(d.getFullYear()+1);const def=d.toISOString().slice(0,10),min=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  openAtlasModal('Seal a time capsule',`<div class="sub" style="margin-bottom:8px">Write to your future self. It stays sealed until the date you pick, then reopens here.</div>
+    <label>Your message</label><textarea id="cap-msg" rows="4" placeholder="Remember why you started…" maxlength="600" style="width:100%;resize:vertical"></textarea>
+    <label style="margin-top:12px">Reopen on</label><input id="cap-date" type="date" value="${def}" min="${min}">
+    <div id="cap-out" class="sub" style="margin-top:8px">📍 Pins to your current location.</div>
+    <button class="btn p" style="margin-top:14px" onclick="saveCapsule()">Seal it 🔒</button>`);
+}
+async function saveCapsule(){
+  const message=($('#cap-msg').value||'').trim(),date=$('#cap-date').value,out=$('#cap-out');
+  if(!message){if(out)out.textContent='Write a message first.';return;}
+  if(out)out.textContent='📍 Finding your location…';
+  let loc;try{loc=await getLoc();}catch(e){loc={lat:51.5074,lon:-0.1278,ok:false};}
+  ensureAtlas();
+  const unlockAt=date?new Date(date+'T09:00:00').getTime():Date.now()+365*86400000;
+  S.capsules.unshift({id:(crypto.randomUUID?crypto.randomUUID():'c'+Date.now()),createdAt:Date.now(),lat:loc.lat,lon:loc.lon,message,unlockAt,revealed:false});
+  try{store.set(S);}catch(e){S.capsules.shift();if(out)out.textContent='Storage full.';return;}
+  closeAtlasModal();renderAtlas();
+}
+function viewMemory(id){ensureAtlas();const m=(S.memories||[]).find(x=>x.id===id);if(!m)return;const d=new Date(m.at),f=feelings().find(x=>x[0]===m.feeling);
+  openAtlasModal('Moment',`${m.photo?`<img src="${m.photo}" style="width:100%;max-height:240px;object-fit:cover;border-radius:14px">`:''}<div style="font-size:34px;margin-top:${m.photo?'12px':'0'}">${m.feeling||'📍'}</div><div style="font-weight:800;font-size:18px;margin-top:4px">${(m.note||'A moment').replace(/</g,'&lt;')}</div><div class="sub" style="margin-top:4px">${f?f[1]+' · ':''}${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}</div><button class="btn ghost" style="margin-top:16px" onclick="deleteMemory('${m.id}')">Delete moment</button>`);
+}
+function deleteMemory(id){ensureAtlas();if(!confirm('Delete this moment?'))return;S.memories=S.memories.filter(x=>x.id!==id);store.set(S);closeAtlasModal();renderAtlas();}
+function viewCapsule(id){ensureAtlas();const c=(S.capsules||[]).find(x=>x.id===id);if(!c)return;const sealed=!c.revealed&&c.unlockAt>Date.now(),dd=new Date(c.unlockAt);
+  if(c.revealed&&c.seenReveal===false){c.seenReveal=true;store.set(S);const rv=$('#atlas-reveal');if(rv)rv.innerHTML='';}
+  openAtlasModal(sealed?'Sealed capsule':'Time capsule',sealed?`<div style="font-size:40px;text-align:center">🔒</div><div class="sub" style="text-align:center;margin-top:8px">Sealed until <b style="color:#fff">${DOW[dd.getDay()]} ${dd.getDate()} ${MON[dd.getMonth()]} ${dd.getFullYear()}</b>.<br>Come back then to read what you wrote.</div><button class="btn ghost" style="margin-top:16px" onclick="deleteCapsule('${c.id}')">Delete capsule</button>`:`<div class="kicker">A message you left yourself</div><div style="font-size:16px;margin-top:8px;line-height:1.5">“${(c.message||'').replace(/</g,'&lt;')}”</div><button class="btn ghost" style="margin-top:16px" onclick="deleteCapsule('${c.id}')">Delete capsule</button>`);
+}
+function deleteCapsule(id){ensureAtlas();if(!confirm('Delete this capsule?'))return;S.capsules=S.capsules.filter(x=>x.id!==id);store.set(S);closeAtlasModal();renderAtlas();}
+// ---- multiple race-specific plans (Pro) ----
+function planSnapshot(src){src=src||S;return{planId:src.planId,goal:src.goal,goalName:src.goalName,mode:src.mode,base:src.base,days:src.days,exp:src.exp,pref:src.pref,weeks:src.weeks,plan:src.plan,created:src.created,curWeek:src.curWeek,_mut:Date.now()};}
+function ensurePlans(){if(!S)return;if(!Array.isArray(S.plans)||!S.plans.length){S.plans=S.plan?[planSnapshot()]:[];if(S.plan)store.set(S);}else if(S.plan&&!S.plans.some(p=>p.planId===S.planId)){S.plans.push(planSnapshot());store.set(S);}}
+function saveActiveToPlans(){if(!S||!S.plan)return;S.plans=S.plans||[];const i=S.plans.findIndex(p=>p.planId===S.planId),snap=planSnapshot();if(i>=0)S.plans[i]=snap;else S.plans.push(snap);}
+function loadSnapshot(p){Object.assign(S,{planId:p.planId,goal:p.goal,goalName:p.goalName,mode:p.mode,base:p.base,days:p.days,exp:p.exp,pref:p.pref,weeks:p.weeks,plan:p.plan,created:p.created,curWeek:p.curWeek});}
+function switchPlan(id){if(!S||id===S.planId)return;saveActiveToPlans();const p=(S.plans||[]).find(x=>x.planId===id);if(!p)return;loadSnapshot(p);store.set(S);renderAll();go('today');}
+function deletePlan(id){const plans=S.plans||[];if(plans.length<=1)return;if(!confirm('Delete this plan? This can’t be undone.'))return;const wasActive=id===S.planId;S.plans=plans.filter(p=>p.planId!==id);if(wasActive)loadSnapshot(S.plans[0]);store.set(S);renderAll();renderPlans();}
+function startNewPlan(){if(!isPro())return;saveActiveToPlans();store.set(S);S._addPlan=true;$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');obStep(1);}
+function distLabel(g){return({'5k':'5K','10k':'10K','half':'Half','marathon':'Marathon'})[g]||g||'';}
+function renderPlans(){
+  const el=$('#plans-card');if(!el||!S){if(el)el.style.display='none';return;}
+  ensurePlans();el.style.display='';
+  const plans=S.plans||[],canAdd=isPro();
+  const items=plans.map(p=>{const active=p.planId===S.planId,d=distLabel(p.goal);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)">
+      <div style="min-width:0"><div style="font-weight:800;display:flex;align-items:center;gap:8px">${p.goalName||d||'Plan'} ${active?'<span class="pill g">active</span>':''}</div>
+        <div class="sub">${d} · ${p.weeks}wk · ${p.mode==='walk'?'walk':'run'} · Wk ${p.curWeek}/${p.weeks}</div></div>
+      <div class="row" style="flex:0 0 auto;gap:6px;width:auto">${active?'':`<button class="btn ghost" style="padding:8px 12px;flex:0 0 auto" onclick="switchPlan('${p.planId}')">Switch</button>`}${plans.length>1?`<button class="btn ghost" style="padding:8px 10px;flex:0 0 auto" title="Delete" onclick="deletePlan('${p.planId}')">✕</button>`:''}</div>
+    </div>`;}).join('');
+  el.innerHTML=`<div class="kicker">🏁 Your training plans ${!canAdd?'<span class="pill">PRO</span>':''}</div>
+    <div class="sub" style="margin-top:4px">Train for more than one race — keep a 5K and a marathon plan side by side and switch anytime. Each keeps its own week &amp; progress.</div>
+    <div style="margin-top:8px">${items}</div>
+    ${canAdd?`<button class="btn p" style="margin-top:14px" onclick="startNewPlan()">＋ New plan</button>`
+            :`<button class="btn p" style="margin-top:14px" onclick="document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">Unlock multiple plans — Pro</button>`}
+    <div id="plans-msg"></div>`;
+}
+function makeSessions(vol,days,goal,w,total,mode){
+  const longFrac=goal==='marathon'?0.34:goal==='half'?0.32:0.30;
+  const long=+(vol*longFrac).toFixed(1);
+  if(mode==='walk'){
+    let rest=vol-long, easyN=Math.max(1,days-1), easy=+(rest/easyN).toFixed(1), s=[];
+    s.push({t:'Long walk',km:long,kind:'long',note:'Steady, relaxed pace — enjoy the time out.'});
+    for(let i=0;i<easyN;i++)s.push(i===0?{t:'Brisk walk',km:easy,kind:'quality',note:'Pick up the pace — you can still hold a chat.'}
+                                        :{t:'Easy walk',km:easy,kind:'easy',note:'Comfortable, conversational walk.'});
+    return s;
+  }
+  let rest=vol-long, easyN=Math.max(1,days-2), easy=+(rest*0.62/easyN).toFixed(1), quality=+(rest*0.38).toFixed(1);
+  const taper=w>total-2, s=[];
+  s.push({t:'Long run',km:long,kind:'long',note:'Conversational pace — time on feet.'});
+  s.push(taper?{t:'Sharpener',km:+Math.max(3,quality*0.6).toFixed(1),kind:'quality',note:'Short strides, stay fresh.'}
+              :{t:w%2?'Intervals':'Tempo',km:quality,kind:'quality',note:w%2?'6×2min hard / 90s jog':'20min at threshold.'});
+  for(let i=0;i<easyN;i++)s.push({t:'Easy run',km:easy,kind:'easy',note:'Nose-breathing easy — build the aerobic base.'});
+  return s;
+}
+
+// ---- render ----
+function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');if(typeof ensurePlans==='function')ensurePlans();renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();if(typeof stravaInit==='function')stravaInit();if(typeof checkCapsules==='function')checkCapsules();}
+function renderAll(){if(!S)return;renderCurve();renderCalendar();renderToday();}
+function renderCurve(){
+  const max=Math.max(...S.plan.map(x=>x.vol));
+  $('#curve').innerHTML=S.plan.map(x=>`<div class="bar ${x.isDeload?'dl':''}" style="height:${Math.round(x.vol/max*100)}%" title="Wk ${x.w}: ${x.vol}km">${(x.w%2||x.w===1)?`<small>${x.w}</small>`:''}</div>`).join('');
+  let viol=0,maxJump=0;
+  for(let i=1;i<S.plan.length;i++){
+    if(S.plan[i].isDeload||S.plan[i].isTaper||S.plan[i-1].isDeload||S.plan[i-1].isTaper)continue;
+    const j=(S.plan[i].vol/S.plan[i-1].vol-1)*100; if(j>maxJump)maxJump=j; if(j>10.05)viol++;
+  }
+  const dl=S.plan.filter(x=>x.isDeload).length;
+  $('#safety-report').innerHTML=`<div class="banner ${viol?'a':'g'}">${viol?'⚠️':'<span class="tick">✓</span>'} Biggest weekly jump <b>${maxJump.toFixed(1)}%</b> (cap 10%) · <b>${dl}</b> deload weeks. <span style="color:var(--muted)">The guardrail most plans lack.</span></div>`;
+}
+function renderCalendar(){
+  const out=S.plan.map((x,wi)=>{
+    if(!x.days)x.days=assignDays(x.sessions);
+    const st=new Date(x.startISO), en=new Date(st); en.setDate(st.getDate()+6);
+    const badge=x.isDeload?'<span class="pill g">deload</span>':x.isTaper?'<span class="pill a">taper</span>':'<span class="pill b">week '+x.w+'</span>';
+    let rows='';
+    for(let d=0;d<7;d++){
+      const day=new Date(st); day.setDate(st.getDate()+d);
+      const s=x.days[d];
+      rows+=`<div class="day"><div class="dn"><div class="dd">${day.getDate()}</div><div class="dw">${DOW[day.getDay()]}</div></div>`;
+      rows+= s?`<div class="chip" onclick="toggleDone(${wi},${d})" style="cursor:pointer"><div style="display:flex;align-items:center;gap:9px"><span class="dot ${s.kind}"></span><div><div class="ct" style="${s.done?'text-decoration:line-through;opacity:.6':''}">${s.t}</div><div class="cs">${s.note}</div></div></div><div style="display:flex;align-items:center;gap:8px"><span class="km">${s.km}km</span>${s.done?'<span class="tick" style="font-size:16px">✓</span>':''}</div></div>`
+             :`<div class="chip rest" onclick="addToDay(${wi},${d})" style="cursor:pointer"><div style="display:flex;align-items:center;gap:9px"><span class="dot rest"></span><div class="ct" style="color:var(--muted)">Rest / recovery</div></div><span style="color:var(--accent);font-weight:800">＋ Add</span></div>`;
+      rows+=`</div>`;
+    }
+    return `<div class="wkhead"><div class="l">${st.getDate()} ${MON[st.getMonth()]} – ${en.getDate()} ${MON[en.getMonth()]}</div><div class="r">${badge} · ${x.vol}km <button class="tbtn" style="padding:4px 10px;font-size:11px;margin-left:6px" onclick="resetWeek(${wi})">↺ Reset</button></div></div><div class="card" style="padding:6px 16px">${rows}</div>`;
+  }).join('');
+  $('#calendar').innerHTML=out;
+}
+// ---- ACWR injury-risk model (Acute:Chronic Workload Ratio) ----
+// Acute = this week's load. Chronic = trailing 4-week avg. Sweet spot 0.8–1.3.
+function acwrFor(idx){
+  const acute=S.plan[idx].vol;
+  const lo=Math.max(0,idx-3);
+  const win=S.plan.slice(lo,idx+1);
+  const chronic=win.reduce((a,b)=>a+b.vol,0)/win.length;
+  return chronic>0?acute/chronic:1;
+}
+function renderRisk(){
+  const idx=(S.curWeek-1)%S.plan.length;
+  const wk=S.plan[idx], acwr=acwrFor(idx);
+  // whole-plan proof: max ACWR across BUILD weeks (deloads dip low on purpose)
+  let peak=0; S.plan.forEach((w,i)=>{ if(!w.isDeload&&!w.isTaper){const a=acwrFor(i); if(a>peak)peak=a;} });
+  let band,cls,msg;
+  if(wk.isDeload){band='Recovery';cls='b';msg='Deload week — recover and absorb the work.';}
+  else if(acwr<0.8){band='Detraining';cls='b';msg='Very light — fine for a taper week.';}
+  else if(acwr<=1.3){band='Optimal';cls='g';msg='In the sweet spot — fitness builds, no injury spike.';}
+  else if(acwr<=1.5){band='Caution';cls='a';msg='Load climbing — we\'ll watch it.';}
+  else{band='High risk';cls='r';msg='Danger zone — SafeRamp blocks this ramp.';}
+  const pos=Math.max(2,Math.min(98,(Math.min(2,Math.max(0.5,acwr))-0.5)/1.5*100));
+  $('#risk-card').innerHTML=`
+    <div class="risk-hd"><div class="kicker">Injury-risk radar · ACWR</div><span class="pill ${cls}">${band}</span></div>
+    <div class="risk-hd" style="margin-top:6px">
+      <div class="risk-num ${cls==='g'?'tick':''}">${acwr.toFixed(2)}</div>
+      <div class="sub" style="text-align:right;max-width:60%">${msg}</div>
+    </div>
+    <div class="gauge"><div class="sweet"></div><div class="mk" style="left:calc(${pos}% - 2px)"></div></div>
+    <div class="gscale"><span>0.5</span><span>0.8</span><span>1.3</span><span>1.5</span><span>2.0+</span></div>
+    <div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Peak ACWR <b>${peak.toFixed(2)}</b> — safe every week.</div>`;
+}
+function renderToday(){
+  const now=new Date();
+  renderRisk();
+  $('#today-date').textContent=`${DOW[now.getDay()]} ${now.getDate()} ${MON[now.getMonth()]}`;
+  const tp=$('#today-plan');if(tp){const n=(S.plans&&S.plans.length)||1;
+    tp.innerHTML=`<div onclick="go('why');setTimeout(()=>{const c=document.querySelector('#plans-card');c&&c.scrollIntoView({behavior:'smooth'})},80)" style="display:inline-flex;align-items:center;gap:8px;margin:2px 0 12px;padding:7px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:999px;cursor:pointer;font-size:13px">🏁 <b>${S.goalName||distLabel(S.goal)||'Plan'}</b><span class="sub">· Wk ${S.curWeek}/${S.weeks}</span>${n>1?` <span class="pill">${n} plans</span>`:''}<span class="sub">⌄</span></div>`;}
+  const wk=S.plan[(S.curWeek-1)%S.plan.length], sesh=wk.sessions[0], adj=S.readiness;
+  let s=sesh;
+  if(adj&&adj.level==='amber')s={...sesh,km:+(sesh.km*0.8).toFixed(1),note:'Trimmed 20% — you flagged fatigue.'};
+  if(adj&&adj.level==='red')s={t:'Rest / walk',km:0,kind:'rest',note:'Readiness low — recovery IS training. Most apps would still push you.'};
+  $('#today-sesh').innerHTML=`<div class="kicker">Week ${wk.w} · today's session</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+      <div style="display:flex;gap:11px;align-items:center"><span class="dot ${s.kind||'easy'}" style="width:12px;height:12px"></span>
+        <div><div style="font-weight:800;font-size:17px">${s.t}</div><div class="sub">${s.note}</div></div></div>
+      <div style="font-size:20px;font-weight:800" class="mono tick">${s.km?s.km+'km':'—'}</div></div>
+    <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
+  reflectReminders();
+}
+
+// ---- readiness ----
+function computeReadiness(){
+  const v=k=>+$(`.rd[data-k="${k}"] .on`).dataset.v;
+  const score=v('sleep')+v('sore')+v('energy');
+  let level='green',msg='',cls='g';
+  if(score<=1){level='red';cls='r';msg='Low readiness — today becomes rest. Pushing now is how injuries happen.';}
+  else if(score<=3){level='amber';cls='a';msg="Moderate — we'll trim today ~20%. Smart, not soft.";}
+  else msg='Green light — full session ahead. 🟢';
+  S.readiness={level,score,at:Date.now()};store.set(S);
+  $('#readiness-out').innerHTML=`<div class="banner ${cls}">${msg}</div>`;renderToday();
+}
+
+// ---- training reminders (local notifications, on-device — no backend) ----
+function buildReminderList(){
+  const out=[],now=Date.now();let id=2000;
+  (S.plan||[]).forEach(wk=>{
+    const st=new Date(wk.startISO),days=wk.days||[];
+    days.forEach((s,d)=>{
+      if(!s||s.kind==='rest')return;
+      const day=new Date(st);day.setDate(st.getDate()+d);day.setHours(7,30,0,0);
+      const t=day.getTime();
+      if(t>now&&t<now+14*86400000)out.push({id:id++,at:t,title:`Today: ${s.t}`,body:`${s.km?s.km+'km · ':''}${s.note||'Ready to run?'}`});
+    });
+  });
+  if(window._weatherBest&&window._weatherRec&&window._weatherBest.t.getTime()>now)
+    out.unshift({id:3000,at:window._weatherBest.t.getTime(),title:'Good time to run 🏃',body:window._weatherRec});
+  return out;
+}
+async function toggleReminders(){
+  if(S.reminders&&S.reminders.on){
+    if(window.StrideNative&&StrideNative.available)await StrideNative.cancelReminders();
+    S.reminders={on:false};store.set(S);reflectReminders();
+    $('#rem-out').innerHTML=`<div class="banner a" style="margin-top:10px">Reminders off.</div>`;return;
+  }
+  const list=buildReminderList();
+  if(window.StrideNative&&StrideNative.available){
+    const ok=await StrideNative.scheduleReminders(list);
+    if(ok){S.reminders={on:true};store.set(S);reflectReminders();$('#rem-out').innerHTML=`<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> ${list.length} reminders scheduled for your run days.</div>`;}
+    else $('#rem-out').innerHTML=`<div class="banner a" style="margin-top:10px">Allow notifications in Settings to enable reminders.</div>`;
+  }else{
+    $('#rem-out').innerHTML=`<div class="banner a" style="margin-top:10px">🔔 Reminders run in the installed app — <b>${list.length}</b> would be scheduled for your run days.</div>`;
+  }
+}
+function reflectReminders(){const on=S&&S.reminders&&S.reminders.on,b=$('#rem-btn');if(b){b.textContent=on?'On ✓':'Turn on';b.classList.toggle('p',!!on);}}
+
+// ---- local weather + best time to run (wet-bulb heat-stress) ----
+function wmo(code){const m={0:['Clear','☀️'],1:['Mainly clear','🌤️'],2:['Partly cloudy','⛅'],3:['Overcast','☁️'],45:['Fog','🌫️'],48:['Fog','🌫️'],51:['Light drizzle','🌦️'],53:['Drizzle','🌦️'],55:['Drizzle','🌦️'],61:['Light rain','🌧️'],63:['Rain','🌧️'],65:['Heavy rain','🌧️'],71:['Light snow','🌨️'],73:['Snow','🌨️'],75:['Heavy snow','❄️'],80:['Showers','🌦️'],81:['Showers','🌧️'],82:['Heavy showers','⛈️'],95:['Thunderstorm','⛈️'],96:['Thunderstorm','⛈️'],99:['Thunderstorm','⛈️']};return m[code]||['—','🌡️'];}
+// Stull (2011) wet-bulb approximation from temperature (°C) + relative humidity (%)
+function wetBulb(T,RH){return T*Math.atan(0.151977*Math.sqrt(RH+8.313659))+Math.atan(T+RH)-Math.atan(RH-1.676331)+0.00391838*Math.pow(RH,1.5)*Math.atan(0.023101*RH)-4.686035;}
+function heatRisk(wb){if(wb<10)return['Ideal','g'];if(wb<18)return['Comfortable','g'];if(wb<23)return['Caution','a'];if(wb<27)return['High heat risk','r'];return['Dangerous','r'];}
+function getLoc(){return new Promise(res=>{if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude,ok:true}),()=>res({lat:51.5074,lon:-0.1278,ok:false}),{timeout:6000,maximumAge:600000});else res({lat:51.5074,lon:-0.1278,ok:false});});}
+async function loadWeather(){
+  try{
+    const loc=await getLoc();
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code&timezone=auto&forecast_days=1`;
+    const aqUrl=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.lat}&longitude=${loc.lon}&current=european_aqi,us_aqi,pm2_5&timezone=auto`;
+    const [j,aq]=await Promise.all([fetch(url).then(r=>r.json()),fetch(aqUrl).then(r=>r.json()).catch(()=>null)]);
+    if(!j.current||!j.hourly)throw 0;
+    renderWeather(j,loc,aq);
+  }catch(e){$('#weather-card').innerHTML=`<div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Couldn’t load weather right now.</div>`;}
+}
+function bestWindow(h){
+  const now=Date.now();let best=null;
+  for(let i=0;i<h.time.length;i++){
+    const t=new Date(h.time[i]),hr=t.getHours();
+    if(t.getTime()<=now||hr<5||hr>21)continue; // today, daylight, future
+    const T=h.temperature_2m[i],RH=h.relative_humidity_2m[i],pop=h.precipitation_probability?h.precipitation_probability[i]:0,code=h.weather_code[i];
+    const wb=wetBulb(T,RH);
+    // lower wet-bulb = less heat stress = better; penalise rain; small penalty if freezing
+    const score=-wb*4-pop*1.1-(code>=61?25:0)-(wb<2?(2-wb)*2:0);
+    if(!best||score>best.score)best={i,t,T,RH,wb,pop,code,score};
+  }
+  return best;
+}
+function aqiInfo(aq){
+  if(!aq||!aq.current)return null;
+  const e=aq.current.european_aqi,u=aq.current.us_aqi,val=(e!=null?e:u);if(val==null)return null;
+  const eu=e!=null;let label,cls,warn=false;
+  if(eu){if(val<=20){label='Good';cls='g';}else if(val<=40){label='Fair';cls='g';}else if(val<=60){label='Moderate';cls='a';}else if(val<=80){label='Poor';cls='a';warn=true;}else{label='Very poor';cls='r';warn=true;}}
+  else{if(val<=50){label='Good';cls='g';}else if(val<=100){label='Moderate';cls='a';}else if(val<=150){label='Unhealthy (sensitive)';cls='a';warn=true;}else{label='Unhealthy';cls='r';warn=true;}}
+  return {val:Math.round(val),label,cls,warn,pm25:aq.current.pm2_5};
+}
+function renderWeather(j,loc,aq){
+  const c=j.current,[cd,ce]=wmo(c.weather_code),cwb=wetBulb(c.temperature_2m,c.relative_humidity_2m),[crisk,crc]=heatRisk(cwb);
+  const air=aqiInfo(aq);window._airNow=air;
+  window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc};
+  applySafetyTheme();
+  try{localStorage.setItem('stride_wx',JSON.stringify({bucket:safetyBucket(cwb),at:Date.now()}));}catch(e){}
+  if(typeof checkHeat==='function')checkHeat();
+  const b=bestWindow(j.hourly);window._weatherBest=b;
+  let bestHtml;
+  if(b){const[bd,be]=wmo(b.code),[br,brc]=heatRisk(b.wb);
+    window._weatherRec=`Best run ${b.t.getHours()}:00 — ${Math.round(b.T)}°C, ${b.RH}% RH, wet-bulb ${b.wb.toFixed(1)}°C (${br})`;
+    bestHtml=`<div class="banner ${brc}" style="margin-top:10px">🏃 <b>Best run ${b.t.getHours()}:00</b> · ${Math.round(b.T)}°C · wet-bulb ${b.wb.toFixed(1)}°C</div>
+      <button class="btn ghost" style="margin-top:10px" onclick="notifyBestRun()">🔔 Notify me at ${b.t.getHours()}:00</button>`;
+  }else{window._weatherRec=null;bestHtml=`<div class="banner a" style="margin-top:10px">No good run window left today — aim for early tomorrow.</div>`;}
+  $('#weather-card').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div class="kicker">Weather · when to run${loc.ok?'':' · London'}</div>
+        <div style="font-weight:800;font-size:17px;margin-top:5px">${ce} ${Math.round(c.temperature_2m)}°C · ${cd}</div>
+        <div class="sub">${c.relative_humidity_2m}% humidity · wet-bulb ${cwb.toFixed(1)}°C</div>
+        ${air?`<div class="sub" style="margin-top:2px">Air quality: <b class="${air.cls==='r'?'':''}">${air.label}</b> · AQI ${air.val}</div>`:''}</div>
+      <span class="pill ${crc}">${crisk}</span>
+    </div>${air&&air.warn?`<div class="banner ${air.cls}" style="margin-top:10px">😷 <b>${air.label} air quality (AQI ${air.val})</b> — consider an easier effort, indoors, or waiting for cleaner air.</div>`:''}${bestHtml}
+    <div id="weather-note"></div>`;
+}
+async function notifyBestRun(){
+  const b=window._weatherBest;if(!b)return;
+  const list=[{id:3000,at:b.t.getTime(),title:'Good time to run 🏃',body:window._weatherRec}];
+  if(window.StrideNative&&StrideNative.available){
+    const ok=await StrideNative.notify(list);
+    $('#weather-note').innerHTML=ok?`<div class="banner g" style="margin-top:8px"><span class="tick">✓</span> You’ll get a notification at ${b.t.getHours()}:00.</div>`:`<div class="banner a" style="margin-top:8px">Allow notifications in Settings to get the alert.</div>`;
+  }else{
+    $('#weather-note').innerHTML=`<div class="banner a" style="margin-top:8px">🔔 In the installed app you’ll get a push at ${b.t.getHours()}:00 — ${window._weatherRec}.</div>`;
+  }
+}
+// retint the whole app by how safe it is to run right now
+// 5 weather buckets → whole-app theme, based on wet-bulb heat stress
+function safetyBucket(wb){return wb>=27?'danger':wb>=23?'high':wb>=18?'caution':wb>=10?'good':'ideal';}
+function applySafetyTheme(){
+  const w=window._weatherNow,r=document.documentElement;
+  if(!w){r.removeAttribute('data-safety');return;}
+  r.setAttribute('data-safety',safetyBucket(w.wb));
+}
+// hydration prompts during long runs (more often in heat)
+function hydrationCheck(){
+  if(!run||!run.active||run.paused)return;
+  const hot=window._weatherNow&&window._weatherNow.wb>=23;
+  const isLong=/long/i.test(run.name||'')||run.target>=12;
+  if(!isLong&&!hot)return; // long runs, or any run in heat
+  const gap=hot?900:1200; // 15 min in heat, else 20 min
+  if(run.elapsed-(run.lastHydrate||0)>=gap){
+    run.lastHydrate=run.elapsed;
+    coach('💧 Hydration check — take a few sips.');
+    speak(hot?'Hydration check. It is hot today — take a good drink.':'Hydration check. Take a few sips of water.');
+  }
+}
+// ---- learn on the go: short coaching lessons during EASY/LONG runs ----
+const LESSONS=[
+  ['Cadence','Aim for a quick, light cadence — around 170 to 180 steps a minute. Shorter, faster steps cut the impact on your knees and hips.'],
+  ['Form','Run tall, like a string is pulling the top of your head up. A slight lean from the ankles — not the waist — keeps you efficient.'],
+  ['Foot strike','Land with your foot under your hips, not reaching out in front. Overstriding acts like a brake and spikes impact — a common injury cause.'],
+  ['Easy pace','On easy runs you should be able to hold a conversation. If you can\'t speak in full sentences, you\'re going too hard. Ease off.'],
+  ['Breathing','Breathe from your belly, not your chest. Try a rhythm: in for three steps, out for two, to stay relaxed.'],
+  ['The 10% rule','Never raise your weekly distance by more than about ten percent. That\'s exactly what Strivon\'s SafeRamp does for you automatically.'],
+  ['Recovery','Rest days aren\'t lazy — they\'re when your body actually gets stronger. Adaptation happens during recovery, not the run.'],
+  ['Fuelling','For runs over ninety minutes, take thirty to sixty grams of carbs an hour. Practise it in training — never try something new on race day.'],
+  ['Hydration','Drink to thirst on the run and rehydrate afterward. A simple check: your urine should be pale straw, not clear and not dark.'],
+  ['Strength','Two short strength sessions a week — squats, lunges, calf raises — build the resilience that prevents most running injuries.'],
+  ['Warm-up','Start every run with the first few minutes truly easy. Cold muscles get hurt; let your heart rate and joints warm up gradually.'],
+  ['Hills','Uphill, shorten your stride and pump your arms. Downhill, stay relaxed and let gravity help. Don\'t brake hard — it hammers your quads.'],
+  ['Mindset','Break a long run into chunks. Focus only on reaching the next lamppost or the next kilometre, not the whole distance.'],
+  ['Sleep','Sleep is the best recovery tool there is. Seven to nine hours lets your body repair and adapt to your training.'],
+  ['Cross-training','Swap a run for cycling or swimming now and then. You keep the fitness while giving your joints a break from impact.'],
+  ['Listen to niggles','Sharp or one-sided pain is a stop sign, not something to push through. Catching a niggle early prevents a real injury.']
+];
+function lessonsOn(){return !(S&&S.lessonsOff);}
+function lessonCheck(){
+  if(!run||!run.active||run.paused||!lessonsOn())return;
+  if(S&&S.mode==='walk')return;                                        // running-form tips don't fit walkers
+  if(window._weatherNow&&window._weatherNow.wb>=23)return;              // heat → safety audio only
+  if(/interval|tempo|hill|rep|race|trial/i.test(run.name||''))return;   // easy/long runs only
+  if(run.elapsed<90)return;                                            // let the run settle first
+  if(run.elapsed-(run.lastHydrate||0)<25)return;                       // don't collide with a hydration cue
+  if(run.elapsed-(run.lastLesson||0)<300)return;                       // ~5 min apart
+  run.lastLesson=run.elapsed;
+  const [t,m]=LESSONS[(run.lessonIdx||0)%LESSONS.length];run.lessonIdx=(run.lessonIdx||0)+1;
+  coach('📚 '+t+' — '+m);speak(m);
+}
+function toggleTips(){S=store.get()||S;S.lessonsOff=lessonsOn();store.set(S);reflectTips();coach(lessonsOn()?'📚 Coaching tips on — I\'ll teach you as you run.':'Coaching tips off.');}
+function reflectTips(){const walk=S&&S.mode==='walk';
+  const b=$('#tips-btn');if(b){b.style.display=walk?'none':'';b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}
+  const h=$('#tips-hint');if(h){h.style.display=walk?'none':'';h.textContent=lessonsOn()?'📚 Coaching tips play during easy runs':'📚 Coaching tips off';}}
+// warn on the RUN screen if current wet-bulb is unsafe
+function checkHeat(speakIt){
+  const el=$('#heat-warn');if(!el)return;
+  const w=window._weatherNow;
+  if(!w||w.wb<23){el.className='hide';el.innerHTML='';return;}
+  if(w.wb>=27){
+    el.className='banner r';el.style.marginBottom='10px';
+    el.innerHTML=`🥵 <b>Dangerous heat — wet-bulb ${w.wb.toFixed(1)}°C.</b> High heat-stroke risk. Cut the session, slow right down &amp; hydrate — or wait for a cooler window.`;
+    if(speakIt)speak(`Warning. Dangerous heat. Wet bulb ${w.wb.toFixed(0)} degrees. Slow down, hydrate, or postpone your run.`);
+  }else{
+    el.className='banner a';el.style.marginBottom='10px';
+    el.innerHTML=`🔥 <b>High heat — wet-bulb ${w.wb.toFixed(1)}°C.</b> Ease the pace, hydrate, and keep it shorter than planned.`;
+    if(speakIt)speak(`Heads up. High heat stress. Ease your pace and hydrate.`);
+  }
+}
+
+// ---- run tracker (lap-based + live audio coaching) ----
+let run=null,watchId=null,tick=null,muted=false;
+const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,race:4.4,cool:6.3,walk:11.0,wwarm:12.5,brisk:9.0};
+function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=0;}return `${m}:${String(s).padStart(2,'0')}`;}
+function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy run',km:5,kind:'easy',note:''};}
+function actWord(){return S&&S.mode==='walk'?'walk':'run';}
+function buildLaps(se){
+  const t=se.t||'',km=se.km||5,kind=se.kind;
+  if(/walk/i.test(t)){
+    if(/brisk/i.test(t))return[{d:500,pace:'wwarm',lab:'Warm-up'},{d:Math.max(500,(km-1)*1000),pace:'brisk',lab:'Brisk walk'},{d:500,pace:'wwarm',lab:'Ease down'}];
+    return[{d:km*1000,pace:'walk',lab:t}];
+  }
+  if(kind==='quality'&&/interval|rep|400|800/i.test(t)){
+    const laps=[{d:1000,pace:'warm',lab:'Warm-up'}];
+    for(let i=0;i<6;i++){laps.push({d:400,pace:'hard',lab:`Rep ${i+1}`});laps.push({d:200,pace:'jog',lab:'Recovery'});}
+    laps.push({d:1000,pace:'cool',lab:'Cool-down'});return laps;
+  }
+  if(/tempo/i.test(t))return[{d:1500,pace:'warm',lab:'Warm-up'},{d:Math.max(1000,(km-3)*1000),pace:'tempo',lab:'Tempo'},{d:1500,pace:'cool',lab:'Cool-down'}];
+  if(/hill/i.test(t)){const l=[{d:1000,pace:'warm',lab:'Warm-up'}];for(let i=0;i<6;i++){l.push({d:200,pace:'hill',lab:`Hill ${i+1}`});l.push({d:200,pace:'jog',lab:'Jog down'});}l.push({d:1000,pace:'cool',lab:'Cool-down'});return l;}
+  return[{d:km*1000,pace:kind==='long'?'long':/race|trial|parkrun/i.test(t)?'race':'easy',lab:t||'Run'}];
+}
+function speak(t){if(muted||!window.speechSynthesis)return;try{const u=new SpeechSynthesisUtterance(t);u.rate=1.05;window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}catch(e){}}
+function toggleMute(){muted=!muted;$('#mute-btn').textContent=muted?'🔇 Muted':'🔊 Voice';$('#mute-btn').classList.toggle('off',muted);if(muted&&window.speechSynthesis)window.speechSynthesis.cancel();}
+function toggleRun(){
+  if(run&&run.active){pauseRun();return;}
+  if(!run){const cs=window._chosen||curSession();window._chosen=null;
+    run={active:true,dist:0,elapsed:0,moving:0,last:null,paused:false,pts:[],name:cs.t,target:cs.km,
+      laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now(),lastHydrate:0,lessonIdx:0,lastLesson:0};}
+  else run.active=true;
+  $('#r-start').textContent='Pause';$('#rpe-card').classList.add('hide');
+  $('#r-next').classList.toggle('show',run.laps.length>1);
+  checkHeat(true);
+  const L=run.laps[run.lap];
+  speak(`Starting ${run.name}. ${L.lab}: ${L.d} metres at ${paceStr(lapPace(L))} per kilometre.`);
+  coach(`${L.lab} — ${L.d}m @ ${paceStr(lapPace(L))}/km`);
+  if(treadmillMode){
+    run.speed=tSpeed;run.incline=tIncline;
+    coach('Treadmill mode — set your speed with ± .');
+    tick=setInterval(()=>{if(run.active&&!run.paused){run.elapsed++;run.moving++;addDist((run.speed||tSpeed)/3.6);render();}},1000);
+  }else if(window.StrideNative&&StrideNative.available&&StrideNative.startGeo(onPos)){
+    coach('Native GPS tracking — auto-pause armed.');
+    tick=setInterval(()=>{if(run.active&&!run.paused&&!run.demo){run.elapsed++;render();}},1000);
+  }else{
+    if(!navigator.geolocation){run.demo=true;demoRun();}
+    else watchId=navigator.geolocation.watchPosition(onPos,()=>{if(watchId)navigator.geolocation.clearWatch(watchId);if(!run.demo){run.demo=true;demoRun();}},{enableHighAccuracy:true,maximumAge:1000,timeout:8000});
+    tick=setInterval(()=>{if(run.active&&!run.paused&&!run.demo){run.elapsed++;render();}},1000);
+  }
+  render();
+}
+// ---- treadmill mode ----
+let treadmillMode=false,tSpeed=8.0,tIncline=0;
+function toggleMode(){
+  if(run&&run.active){coach('Finish the current run to switch mode.');return;}
+  treadmillMode=!treadmillMode;
+  $('#mode-btn').textContent=treadmillMode?'🏢 Treadmill':'🛰️ Outdoor';
+  $('#mode-btn').classList.toggle('on',treadmillMode);
+  $('#tread-panel').classList.toggle('hide',!treadmillMode);
+  ['#map-tiles','#r-route','#r-marker','#r-gps','.attrib'].forEach(s=>{const el=$(s);if(el)el.style.display=treadmillMode?'none':'';});
+  updateTread();
+  coach(treadmillMode?'Treadmill mode on — GPS off, you control the speed.':'Outdoor mode — GPS tracking on.');
+}
+function setSpeed(d){tSpeed=Math.min(25,Math.max(0.5,+(tSpeed+d).toFixed(1)));if(run)run.speed=tSpeed;updateTread();}
+function setIncline(d){tIncline=Math.min(15,Math.max(0,+(tIncline+d).toFixed(1)));updateTread();}
+function updateTread(){$('#t-speed').textContent=tSpeed.toFixed(1);$('#t-incline').textContent=tIncline.toFixed(1);}
+function addDist(d){run.dist+=d;run.lapDist+=d;
+  const L=run.laps[run.lap];
+  if(run.lapDist>=L.d&&run.lap<run.laps.length-1)advanceLap(false);}
+function advanceLap(manual){
+  if(run.lap>=run.laps.length-1){if(manual)coach('Final lap — finish strong!');return;}
+  run.lap++;run.lapDist=0;run.lapStart=run.elapsed;
+  const L=run.laps[run.lap];
+  speak(`${L.lab}. ${L.d} metres at ${paceStr(lapPace(L))} pace.`);
+  coach(`${L.lab} — ${L.d}m @ ${paceStr(lapPace(L))}/km`);render();
+}
+function nextLap(){if(run&&run.active)advanceLap(true);}
+function onPos(p){
+  const {latitude:la,longitude:lo,speed}=p.coords,now=p.timestamp;
+  if(run.last){
+    const d=haversine(run.last.la,run.last.lo,la,lo),dt=(now-run.last.t)/1000;
+    const spd=speed!=null&&speed>=0?speed:(dt>0?d/dt:0);
+    if(spd<0.6){if(!run.paused){run.paused=true;coach('Auto-paused ⏸ — no nagging.');}}
+    else{if(run.paused){run.paused=false;coach('Moving again ▶');}
+      if(d>1&&d<40){addDist(d);run.moving+=dt;run.pts.push([la,lo]);}}
+  } else run.pts.push([la,lo]);
+  run.last={la,lo,t:now};drawRoute();render();
+}
+function render(){
+  if(!run)return;
+  hydrationCheck();lessonCheck();
+  const L=run.laps[run.lap],rem=Math.max(0,L.d-run.lapDist),lapT=run.elapsed-run.lapStart;
+  $('#r-lap').textContent=`Lap ${run.lap+1} / ${run.laps.length} · ${L.lab}`;
+  $('#r-target').textContent=`${Math.round(rem)}m @ ${paceStr(lapPace(L))}/km`;
+  const nx=run.laps[run.lap+1];
+  $('#r-up').textContent=nx?`${nx.d}m @ ${paceStr(lapPace(nx))}/km — ${nx.lab}`:'Final lap — finish strong';
+  $('#r-ldist').textContent=`${Math.round(run.lapDist)}m`;
+  $('#r-ltime').textContent=fmt(lapT);
+  const lapKm=run.lapDist/1000,lp=lapKm>0.02?lapT/60/lapKm:0;
+  $('#r-lpace').textContent=lp>0?paceStr(lp):'--:--';
+  const km=run.dist/1000;
+  $('#r-tdist').textContent=km.toFixed(2);
+  $('#r-ttime').textContent=fmt(run.elapsed);
+  const avg=km>0.02?run.moving/60/km:0;
+  $('#r-tpace').textContent=avg>0?paceStr(avg):'--:--';
+  const pct=Math.min(1,run.lapDist/L.d);
+  $('#r-segbar').innerHTML=Array.from({length:10},(_,i)=>`<i class="${i<pct*10?'on':''}"></i>`).join('');
+}
+// real slippy-map: CartoDB dark tiles + web-mercator projection
+const MAP_Z=16;
+function project(lat,lon,z){const s=256*Math.pow(2,z),x=(lon+180)/360*s,sl=Math.sin(lat*Math.PI/180),y=(0.5-Math.log((1+sl)/(1-sl))/(4*Math.PI))*s;return{x,y};}
+function drawRoute(){
+  if(!run||!run.pts.length)return;
+  const el=$('#map-tiles'),svg=$('#r-route'),Z=MAP_Z,n=Math.pow(2,Z);
+  const W=el.clientWidth||360,H=el.clientHeight||220;
+  const ctr=run.pts[run.pts.length-1],c=project(ctr[0],ctr[1],Z);
+  const ox=c.x-W/2,oy=c.y-H/2;
+  const key=Math.floor(c.x/256)+'_'+Math.floor(c.y/256)+'_'+W+'x'+H;
+  if(run._tk!==key){run._tk=key;
+    const t0x=Math.floor(ox/256),t1x=Math.floor((ox+W)/256),t0y=Math.floor(oy/256),t1y=Math.floor((oy+H)/256);
+    let html='';
+    for(let tx=t0x;tx<=t1x;tx++)for(let ty=t0y;ty<=t1y;ty++){
+      if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n;
+      html+=`<img src="https://basemaps.cartocdn.com/dark_all/${Z}/${wx}/${ty}.png" style="left:${Math.round(tx*256-ox)}px;top:${Math.round(ty*256-oy)}px" onerror="this.style.visibility='hidden'">`;
+    }
+    el.innerHTML=html;
+  }
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  $('#r-line').setAttribute('points',run.pts.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' '));
+  $('#r-marker').classList.add('on');
+}
+function clearMap(){$('#map-tiles').innerHTML='';$('#r-marker').classList.remove('on');$('#r-line').setAttribute('points','');}
+function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();coach('Paused.');}
+function stopRun(){
+  if(!run)return;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();
+  $('#r-start').textContent='Start '+actWord();$('#r-next').classList.remove('show');$('#r-lap').textContent='Finished';
+  speak(`Workout complete. ${(run.dist/1000).toFixed(1)} kilometres. Nice work.`);
+  $('#rpe-card').classList.remove('hide');coach(`Nice — ${(run.dist/1000).toFixed(2)}km done. How'd it feel?`);
+}
+function demoRun(){let ang=0;run.pts=[[51.5,-0.12]];tick&&clearInterval(tick);
+  tick=setInterval(()=>{if(!run.active)return;run.elapsed++;run.moving++;addDist(2.9+Math.random());
+    ang+=0.25;const last=run.pts[run.pts.length-1];run.pts.push([last[0]+Math.sin(ang)*0.0006,last[1]+Math.cos(ang*0.7)*0.0006]);
+    drawRoute();render();},1000);}
+function saveRPE(){
+  const rpe=$('#rpe-seg .on').dataset.v;
+  const km=+(run.dist/1000).toFixed(2),secs=run.moving||run.elapsed,pace=km>0.02?Math.max(2.8,secs/60/km):6;
+  S.history=S.history||[];S.history.push({km,rpe,at:Date.now()});
+  S.activities=S.activities||[];S.activities.unshift({id:uuid(),km,secs,pace,name:run.name||'Run',at:Date.now(),rpe,hr:run.hr||null,startAt:run.startedAt||Date.now()-secs*1000,pts:(run.pts||[]).slice()});
+  const factor=rpe==='painful'?0.82:rpe==='hard'?0.93:rpe==='easy'?1.05:1.0;
+  const ni=S.curWeek%S.plan.length,nw=S.plan[ni];
+  if(nw&&!nw.isDeload&&!nw.isTaper){const cap=S.plan[ni-1]?S.plan[ni-1].vol*1.10:nw.vol;
+    nw.vol=Math.floor(Math.min(nw.vol*factor,cap)*10)/10;nw.sessions=makeSessions(nw.vol,S.days,S.goal,nw.w,S.weeks);nw.days=assignDays(nw.sessions);}
+  S.curWeek++;store.set(S);run=null;$('#rpe-card').classList.add('hide');renderAll();
+  coach(rpe==='painful'||rpe==='hard'?'Logged — next week eased off to protect you. ✅':'Logged & recalibrated. ✅');
+  $('#r-lap').textContent='Session · not started';$('#r-target').textContent=curSession().t;$('#r-up').textContent='Pick a workout, then hit start';
+  ['r-ldist','r-tdist'].forEach(id=>$('#'+id).textContent=id==='r-ldist'?'0m':'0.00');
+  ['r-ltime','r-ttime'].forEach(id=>$('#'+id).textContent='0:00');['r-lpace','r-tpace'].forEach(id=>$('#'+id).textContent='--:--');
+  $('#r-segbar').innerHTML='';clearMap();$('#heat-warn').className='hide';
+}
+function coach(t){$('#r-coach-q').textContent='“'+t+'”';}
+
+// ---- Bluetooth heart-rate (Web Bluetooth) + HR zones ----
+let hrDevice=null,hrSim=null;
+async function connectHR(){
+  if(window.StrideNative&&StrideNative.available){try{if(await StrideNative.connectHR(setHR)){coach('Heart-rate strap connected.');return;}}catch(e){}}
+  if(!navigator.bluetooth){coach('No Bluetooth here — showing simulated HR.');startHRSim();return;}
+  try{
+    const dev=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}]});
+    hrDevice=dev;const server=await dev.gatt.connect();
+    const svc=await server.getPrimaryService('heart_rate');
+    const ch=await svc.getCharacteristic('heart_rate_measurement');
+    await ch.startNotifications();
+    ch.addEventListener('characteristicvaluechanged',e=>{const v=e.target.value,flags=v.getUint8(0);
+      const bpm=(flags&1)?v.getUint16(1,true):v.getUint8(1);setHR(bpm,false);});
+    dev.addEventListener('gattserverdisconnected',()=>{coach('HR strap disconnected.');});
+    coach(`HR connected: ${dev.name||'strap'}.`);
+  }catch(err){coach('HR pairing cancelled — showing simulated HR.');startHRSim();}
+}
+function hrZone(bpm){const max=(S&&S.maxHR)||190,p=bpm/max;return p>=.9?5:p>=.8?4:p>=.7?3:p>=.6?2:1;}
+function setHR(bpm,sim){
+  if(run)run.hr=bpm;
+  const z=hrZone(bpm),cols=['','#5b8cff','#2fe3a0','#ffb84d','#ff8a4c','#ff5d6b'];
+  const el=$('#hr-pill');el.innerHTML=`❤️ ${bpm||'--'} <b>Z${z}</b>${sim?' <span style="opacity:.55;font-weight:600">sim</span>':''}`;
+  el.style.color=bpm?cols[z]:'';el.style.borderColor=bpm?cols[z]:'';
+}
+function startHRSim(){if(hrSim)clearInterval(hrSim);let h=95;
+  hrSim=setInterval(()=>{const L=run&&run.laps?run.laps[run.lap]:null;
+    let tgt=100;if(run&&run.active){tgt=L&&L.pace==='hard'?176:L&&L.pace==='tempo'?163:L&&L.pace==='hill'?172:148;}else tgt=92;
+    h+=(tgt-h)*0.14+(Math.random()*4-2);setHR(Math.round(Math.max(70,h)),true);},1500);}
+function stopHR(){if(hrSim){clearInterval(hrSim);hrSim=null;}try{if(hrDevice&&hrDevice.gatt.connected)hrDevice.gatt.disconnect();}catch(e){}
+  $('#hr-pill').innerHTML='❤️ Connect HR';$('#hr-pill').style.color='';$('#hr-pill').style.borderColor='';}
+
+// ---- GPX export (upload to Strava/Garmin manually — no OAuth needed) ----
+function xesc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));}
+function buildGPX(act){
+  const pts=act.pts||[],start=act.startAt||(act.at-(act.secs||0)*1000),dur=(act.secs||0)*1000,n=pts.length;
+  const trk=pts.map((p,i)=>{const t=new Date(start+(n>1?i/(n-1):0)*dur).toISOString();
+    return `  <trkpt lat="${(+p[0]).toFixed(6)}" lon="${(+p[1]).toFixed(6)}"><time>${t}</time></trkpt>`;}).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Strivon" xmlns="http://www.topografix.com/GPX/1/1">
+ <metadata><name>${xesc(act.name)}</name><time>${new Date(start).toISOString()}</time></metadata>
+ <trk><name>${xesc(act.name)}</name><type>running</type><trkseg>
+${trk}
+ </trkseg></trk>
+</gpx>`;
+}
+function dlSlug(ms){const d=new Date(ms);return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;}
+function downloadGPX(act){
+  const blob=new Blob([buildGPX(act)],{type:'application/gpx+xml'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`stride-${dlSlug(act.at)}-${(act.name||'run').replace(/\s+/g,'-').toLowerCase()}.gpx`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function exportActivity(i){const a=(S.activities||[])[i];if(a)downloadGPX(a);}
+function exportCurrentRun(){if(!run)return;
+  downloadGPX({name:run.name,at:Date.now(),secs:run.moving||run.elapsed,km:run.dist/1000,startAt:run.startedAt,pts:run.pts,hr:run.hr});
+  coach('GPX saved — upload it to Strava or Garmin.');}
+
+// ---- PWA: register service worker ----
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+
+// ---- PWA install prompt ----
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;maybeShowInstall();});
+window.addEventListener('appinstalled',function(){deferredPrompt=null;hideInstall();});
+function isStandalone(){return (window.matchMedia&&window.matchMedia('(display-mode:standalone)').matches)||window.navigator.standalone===true;}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent);}
+function hideInstall(){var b=document.getElementById('install-banner');if(b)b.classList.add('hide');}
+function dismissInstall(){try{localStorage.setItem('stride_install_dismissed','1');}catch(e){}hideInstall();}
+function maybeShowInstall(){
+  var b=document.getElementById('install-banner');if(!b)return;
+  if(isStandalone()||localStorage.getItem('stride_install_dismissed'))return;
+  if(deferredPrompt){document.getElementById('install-btn').style.display='';document.getElementById('install-text').textContent='📲 Install Strivon for the full experience';b.classList.remove('hide');}
+  else if(isIOS()){document.getElementById('install-btn').style.display='none';document.getElementById('install-text').textContent='📲 Add to Home Screen — tap Share, then “Add to Home Screen”';b.classList.remove('hide');}
+}
+async function doInstall(){if(!deferredPrompt)return;deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;hideInstall();}
+
+// ---- workout library ----
+const WORKOUTS_RUN=[
+  {n:'Easy Run',i:'🟢',km:5,kind:'easy',t:'Easy run',c:'#2e7d46'},
+  {n:'Tempo Run',i:'🟧',km:6,kind:'quality',t:'Tempo',c:'#c46a2e'},
+  {n:'Intervals',i:'🟥',km:6,kind:'quality',t:'400m Intervals',c:'#b23b3b'},
+  {n:'Hill Run',i:'⛰️',km:5,kind:'quality',t:'Hill repeats',c:'#3a6b8f'},
+  {n:'Long Run',i:'🟣',km:12,kind:'long',t:'Long run',c:'#5b46b0'},
+  {n:'Time Trial',i:'⏱️',km:5,kind:'quality',t:'Time trial',c:'#8f6b1f'},
+  {n:'Parkrun',i:'🅿️',km:5,kind:'quality',t:'Parkrun 5K',c:'#2e78c4'},
+  {n:'Race',i:'🏁',km:10,kind:'quality',t:'Race',c:'#b23b6b'}];
+const WORKOUTS_X=[{n:'Strength',i:'💪',c:'#3b6b8f'},{n:'Pilates',i:'🧘',c:'#5b46b0'},{n:'Mobility',i:'🤸',c:'#2e7d46'}];
+function openLib(){
+  $('#lib-run').innerHTML=WORKOUTS_RUN.map((w,i)=>`<button class="wtile" style="background:${w.c}" onclick="pickWorkout(${i})"><div class="wi">${w.i}</div><div class="wn">${w.n}</div></button>`).join('');
+  $('#lib-x').innerHTML=WORKOUTS_X.map(w=>`<button class="wtile" style="background:${w.c}" onclick="pickX('${w.n}')"><div class="wi">${w.i}</div><div class="wn">${w.n}</div></button>`).join('');
+  $('#lib').classList.remove('hide');
+}
+function closeLib(){$('#lib').classList.add('hide');}
+function pickWorkout(i){const w=WORKOUTS_RUN[i];if(run&&run.active){closeLib();coach('Finish the current run first.');return;}
+  run=null;window._chosen={t:w.t,km:w.km,kind:w.kind,note:'Chosen from library'};closeLib();go('run');
+  $('#r-lap').textContent='Ready';$('#r-target').textContent=w.t;$('#r-up').textContent=`Target ${w.km}km · hit start`;
+  coach(`${w.t} loaded — hit start.`);}
+function pickX(n){closeLib();go('run');coach(`${n} lives in Pro — this prototype is running-focused.`);}
+
+// ---- stats + PRs ----
+function synthRoute(km){const pts=[];let la=51.5074,lo=-0.1278,ang=Math.random()*6,steps=Math.max(8,Math.round(km*8));
+  for(let i=0;i<steps;i++){ang+=0.25;la+=Math.sin(ang)*0.0004;lo+=Math.cos(ang*0.7)*0.0005;pts.push([+la.toFixed(6),+lo.toFixed(6)]);}return pts;}
+function seedActivities(){
+  const now=Date.now(),day=86400000,names=['Easy run','Tempo','400m Intervals','Long run','Easy run'],paces=[6.1,5.0,5.2,6.3,6.2],acts=[];
+  for(let w=6;w>=1;w--){const nRuns=w%4===0?2:4;
+    for(let r=0;r<nRuns;r++){const i=r%names.length;
+      const km=+((4+(6-w)*0.4)+(i===3?4:i===2?1.5:0)+Math.random()).toFixed(1);
+      const secs=Math.round(paces[i]*60*km),at=now-Math.round((w*7-r*1.7)*day);
+      acts.push({id:uuid(),km,secs,pace:paces[i],name:names[i],at,rpe:'right',startAt:at-secs*1000,pts:synthRoute(km)});}}
+  return acts.sort((a,b)=>b.at-a.at);
+}
+function kindOf(n){return /interval|rep|tempo|hill|race|parkrun|trial/i.test(n)?'quality':/long/i.test(n)?'long':'easy';}
+// ---- BMI (body mass index) ----
+function bmiCat(b){return b<18.5?['Underweight','b']:b<25?['Healthy','g']:b<30?['Overweight','a']:['Obese','r'];}
+// BMI-aware easy-pace suggestion (heavier + beginner = slower, lower impact)
+function paceSuggestion(){
+  const h=S.heightCm,w=S.weightKg;if(!h||!w)return null;
+  const bmi=w/Math.pow(h/100,2),beginner=S.exp==='new',walk=S.mode==='walk';
+  let base=walk?11.0:(beginner?7.0:6.2),runwalk=false,tip='';
+  if(bmi>=30){base+=walk?0.6:(beginner?1.5:1.0);runwalk=beginner&&!walk;tip=walk?'Keep it comfortable — build your minutes up gradually.':'Higher BMI means more joint impact. Start slow and use run-walk intervals to build safely.';}
+  else if(bmi>=25){base+=walk?0.3:(beginner?0.75:0.5);tip='Ease in a little slower while your body adapts.';}
+  else if(bmi<18.5){tip='You\'re light — focus on consistency and fuelling well.';}
+  else{tip=beginner?'A relaxed, conversational pace is perfect to start.':'Keep easy efforts truly easy.';}
+  return {bmi,pace:base,ps:paceStr(base),runwalk,tip,beginner,walk};
+}
+// use the BMI-suggested easy pace for beginners' easy/long laps
+function lapPace(lap){
+  if(lap&&(lap.pace==='easy'||lap.pace==='long')){const s=paceSuggestion();if(s&&s.beginner)return s.pace;}
+  return PACES[lap?lap.pace:'easy'];
+}
+function renderBMI(){
+  const el=$('#bmi-card');if(!el)return;
+  const h=S.heightCm,w=S.weightKg;
+  if(!h||!w){
+    el.innerHTML=`<div class="kicker">Body · BMI</div><div class="sub" style="margin:4px 0 10px">Add your height &amp; weight to track BMI.</div>
+      <div class="row"><input id="bmi-h" type="number" placeholder="Height cm" min="100" max="230"><input id="bmi-w" type="number" placeholder="Weight kg" min="30" max="250"></div>
+      <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;
+    return;
+  }
+  const bmi=w/Math.pow(h/100,2),[cat,cls]=bmiCat(bmi);
+  const pos=Math.max(2,Math.min(98,(Math.min(40,Math.max(15,bmi))-15)/25*100));
+  el.innerHTML=`<div class="risk-hd"><div class="kicker">Body · BMI</div><span class="pill ${cls}">${cat}</span></div>
+    <div class="risk-hd" style="margin-top:6px">
+      <div class="risk-num ${cls==='g'?'tick':''}">${bmi.toFixed(1)}</div>
+      <div class="sub" style="text-align:right">${h}cm · ${w}kg<br><span onclick="editBMI()" style="color:var(--accent);cursor:pointer;font-weight:700">Edit</span></div>
+    </div>
+    <div class="gauge" style="background:linear-gradient(90deg,#5b8cff 0 14%,var(--safe-dim) 14% 40%,#7a5a1e 40% 60%,#7a2634 60% 100%)"><div class="mk" style="left:calc(${pos}% - 2px)"></div></div>
+    <div class="gscale"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+    ${(()=>{const s=paceSuggestion();return s?`<div class="banner g" style="margin-top:12px">${s.walk?'🚶':'🏃'} Suggested easy ${s.walk?'walk':'run'} pace <b>${s.ps}/km</b>${s.runwalk?' · <b>run-walk</b>':''}<div class="sub" style="margin-top:3px">${s.tip}</div></div>`:'';})()}`;
+}
+function saveBMI(){
+  const h=+$('#bmi-h').value,w=+$('#bmi-w').value,m=$('#bmi-msg');
+  if(h>=100&&h<=230&&w>=30&&w<=250){S.heightCm=h;S.weightKg=w;store.set(S);renderBMI();}
+  else if(m)m.innerHTML='<div class="banner a" style="margin-top:8px">Enter a valid height (100–230cm) and weight (30–250kg).</div>';
+}
+function editBMI(){$('#bmi-card').innerHTML=`<div class="kicker">Body · BMI</div>
+  <div class="row" style="margin-top:8px"><input id="bmi-h" type="number" value="${S.heightCm||''}" placeholder="Height cm"><input id="bmi-w" type="number" value="${S.weightKg||''}" placeholder="Weight kg"></div>
+  <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;}
+function renderStats(){
+  renderBMI();
+  if(typeof renderInsights==='function')renderInsights();
+  const acts=S.activities||[],now=Date.now(),wkms=7*86400000;
+  const tw=acts.filter(a=>now-a.at<wkms);
+  $('#st-km').textContent=tw.reduce((s,a)=>s+a.km,0).toFixed(1);
+  const secs=tw.reduce((s,a)=>s+a.secs,0);
+  $('#st-time').textContent=`${Math.floor(secs/3600)}h ${Math.round(secs%3600/60)}m`;
+  $('#st-runs').textContent=tw.length;
+  const weeks=Array(6).fill(0);acts.forEach(a=>{const d=Math.floor((now-a.at)/wkms);if(d>=0&&d<6)weeks[d]+=a.km;});
+  const arr=weeks.reverse(),mx=Math.max(1,...arr);
+  $('#st-chart').innerHTML=arr.map((v,i)=>`<div class="cb" style="height:${Math.round(v/mx*100)}%"><small>${i===5?'now':'-'+(5-i)+'w'}</small></div>`).join('');
+  const defs=[{d:1,lab:'1K',m:'🥉'},{d:5,lab:'5K',m:'🥈'},{d:10,lab:'10K',m:'🥇'}];
+  $('#st-prs').innerHTML=defs.map(p=>{let best=null;acts.filter(a=>a.km>=p.d*0.98&&a.pace>=2.8).forEach(a=>{const t=a.pace*p.d;if(best===null||t<best)best=t;});
+    return `<div class="pr"><div class="medal">${p.m}</div><div class="pd">${p.lab}</div><div class="pt ${best===null?'empty':''}">${best===null?'—':fmt(Math.round(best*60))}</div></div>`;}).join('');
+  $('#st-acts').innerHTML=acts.slice(0,6).map((a,i)=>{const dd=new Date(a.at);
+    return `<div class="act"><span class="dot ${kindOf(a.name)}" style="width:11px;height:11px"></span>
+      <div><div style="font-weight:700;font-size:14px">${a.name}</div><div class="sub">${DOW[dd.getDay()]} ${dd.getDate()} ${MON[dd.getMonth()]}</div></div>
+      <div class="ad"><div style="font-weight:800" class="tick">${a.km.toFixed(1)}km</div><div class="sub">${paceStr(a.pace)}/km</div></div>
+      ${(a.pts&&a.pts.length>1)?`<button class="gpxbtn" onclick="exportActivity(${i})" title="Export GPX">⬇</button>`:''}</div>`;}).join('')||'<div class="sub">No runs yet — complete a run to see it here.</div>';
+}
+
+// ---- calendar editing ----
+function assignDays(sessions){const slots=Array(7).fill(null),order=[0,3,5,2,4,1,6];sessions.forEach((s,i)=>{slots[order[i%7]]={...s};});return slots;}
+function toggleDone(wi,d){const s=S.plan[wi].days[d];if(!s)return;s.done=!s.done;store.set(S);renderCalendar();}
+function addToDay(wi,d){S.plan[wi].days[d]={t:'Easy run',km:4,kind:'easy',note:'Added by you',added:true};store.set(S);renderCalendar();}
+function resetWeek(wi){S.plan[wi].days=assignDays(S.plan[wi].sessions);store.set(S);renderCalendar();}
+
+// ---- helpers ----
+function haversine(la1,lo1,la2,lo2){const R=6371000,r=x=>x*Math.PI/180,dla=r(la2-la1),dlo=r(lo2-lo1);
+  const a=Math.sin(dla/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(dlo/2)**2;return 2*R*Math.asin(Math.sqrt(a));}
+function fmt(s){const m=Math.floor(s/60);return `${m}:${String(s%60).padStart(2,'0')}`;}
+function fmtHMS(s){s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${m}:${String(ss).padStart(2,'0')}`;}
+// ---- on-device intelligence (no server, uses your own runs) ----
+function eligibleRuns(){return (S.activities||[]).filter(a=>a.km>=1.5&&a.secs>90&&a.pace>=2.6&&a.pace<=12);}
+function predictRaces(){                                          // Riegel: T2 = T1·(D2/D1)^1.06, anchored on your best effort
+  const acts=eligibleRuns();if(acts.length<1)return null;
+  let best=null,bestEq=Infinity;acts.forEach(a=>{const eq=a.secs*Math.pow(5/a.km,1.06);if(eq<bestEq){bestEq=eq;best=a;}});
+  const D={'5K':5,'10K':10,'Half':21.0975,'Marathon':42.195};const out={};
+  for(const k in D)out[k]={secs:best.secs*Math.pow(D[k]/best.km,1.06),km:D[k]};
+  return {out,ref:best,n:acts.length};
+}
+function vdotEstimate(){                                          // Daniels VDOT from best effort
+  const p=predictRaces();if(!p)return null;const b=p.ref;
+  const t=b.secs/60, v=(b.km*1000)/t;                            // minutes, m/min
+  const pct=0.8+0.1894393*Math.exp(-0.012778*t)+0.2989558*Math.exp(-0.1932605*t);
+  const vo2=-4.60+0.182258*v+0.000104*v*v;
+  return Math.round((vo2/pct)*10)/10;
+}
+function trainingForm(){                                          // CTL(42d)/ATL(7d)/TSB — fitness/fatigue/form
+  const acts=(S.activities||[]).filter(a=>a.secs>60&&a.pace>=2.6).slice().sort((a,b)=>a.at-b.at);
+  if(acts.length<3)return null;
+  const thr=(typeof PACES!=='undefined'?PACES.tempo:5.0),day={};
+  acts.forEach(a=>{const d=new Date(a.at);d.setHours(0,0,0,0);const IF=Math.min(1.5,thr/(a.pace||thr));day[+d]=(day[+d]||0)+(a.secs/60)*IF*IF;});
+  const keys=Object.keys(day).map(Number),start=Math.min(...keys);
+  const today=new Date();today.setHours(0,0,0,0);
+  let ctl=0,atl=0;const series=[];
+  for(let t=start;t<=+today;t+=86400000){const L=day[t]||0;ctl+=(L-ctl)/42;atl+=(L-atl)/7;series.push(ctl-atl);}
+  return {ctl:Math.round(ctl),atl:Math.round(atl),tsb:Math.round(ctl-atl),series};
+}
+function formVerdict(tsb){
+  if(tsb>=10)return['Fresh / tapered','g'];
+  if(tsb>=-10)return['Balanced — good to train','g'];
+  if(tsb>=-25)return['Building fatigue — watch recovery','a'];
+  return['Overreaching — ease off','r'];
+}
+function renderInsights(){
+  const el=$('#insights-card');if(!el)return;
+  const p=predictRaces();
+  if(!p){el.innerHTML=`<div class="kicker">🧠 Smart insights</div><div class="sub" style="margin-top:4px">Log a couple of runs (1.5km+) and Strivon will predict your race times, VO₂max and training form — all computed on your device.</div>`;return;}
+  const vo2=vdotEstimate(),form=trainingForm();
+  const rt=Object.keys(p.out).map(k=>`<div class="stat"><div class="v tick" style="font-size:18px">${fmtHMS(p.out[k].secs)}</div><div class="k">${k}</div></div>`).join('');
+  let formHtml='';
+  if(form){const[txt,cls]=formVerdict(form.tsb);
+    const mn=Math.min(...form.series),mx=Math.max(...form.series),rng=(mx-mn)||1;
+    const spark=form.series.slice(-42).map(v=>`<div style="flex:1;min-width:1px;height:${Math.round((v-mn)/rng*100)}%;background:${v>=0?'var(--brand,#4be3c3)':'#ff6a3d'};border-radius:1px"></div>`).join('');
+    formHtml=`<div style="margin-top:14px"><div class="kicker" style="display:flex;justify-content:space-between">Training form <span class="pill ${cls}">${txt}</span></div>
+      <div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px">
+        <div class="stat"><div class="v" style="font-size:18px">${form.ctl}</div><div class="k">Fitness</div></div>
+        <div class="stat"><div class="v" style="font-size:18px">${form.atl}</div><div class="k">Fatigue</div></div>
+        <div class="stat"><div class="v" style="font-size:18px">${form.tsb>0?'+':''}${form.tsb}</div><div class="k">Form</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:1px;height:34px;margin-top:8px">${spark}</div></div>`;
+  }
+  el.innerHTML=`<div class="kicker" style="display:flex;justify-content:space-between;align-items:center">🧠 Race predictions ${vo2?`<span class="pill">VO₂max ~${vo2}</span>`:''}</div>
+    <div class="sub" style="margin-top:4px">From your best recent effort (${p.ref.km.toFixed(1)}km @ ${paceStr(p.ref.pace)}/km) · Riegel model.</div>
+    <div class="stats" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:10px">${rt}</div>
+    ${formHtml}
+    <div class="sub" style="margin-top:10px;opacity:.7">Estimates from your own runs — not medical advice. More runs = sharper predictions.</div>`;
+}
+function go(v){['today','plan','run','stats','atlas','why'].forEach(x=>$('#s-'+x).classList.add('hide'));
+  const s=$('#s-'+v);s.classList.remove('hide');
+  s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
+  $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='stats')renderStats();
+  if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
+  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();if(typeof renderPlans==='function')renderPlans();if(typeof renderCoach==='function')renderCoach();}
+  if(v==='atlas'&&typeof renderAtlas==='function')renderAtlas();
+  s.scrollTop=0;}
+
+// ---- account + cloud sync UI ----
+function timeAgo(iso){const s=(Date.now()-new Date(iso))/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function renderAccount(st){
+  const el=$('#account-card');if(!el)return;
+  if(!st||!st.configured){el.innerHTML=`<div class="kicker">☁️ Cloud sync</div><div class="sub" style="margin-top:4px">Runs fully offline. To back up &amp; sync across devices, add your Supabase keys in <b>config.js</b> (see BACKEND.md).</div>`;return;}
+  if(st.signedIn){
+    el.innerHTML=`<div class="kicker">☁️ Account</div>
+      <div style="margin-top:8px"><div style="font-weight:800">${st.email}</div><div class="sub">${st.lastSync?'Synced '+timeAgo(st.lastSync):'Not synced yet'}</div></div>
+      <div class="row" style="margin-top:12px"><button class="btn p" onclick="acctSync()">Sync now</button><button class="btn ghost" style="flex:.6" onclick="acctSignOut()">Sign out</button></div>
+      <div id="acct-msg"></div>`;
+  }else{
+    el.innerHTML=`<div class="kicker">☁️ Back up &amp; sync</div>
+      <div class="sub" style="margin-top:4px">Sign in to save your plan &amp; runs to the cloud and sync across devices.</div>
+      <label>Email</label><input id="acct-email" type="email" autocomplete="email" placeholder="you@email.com">
+      <label>Password</label><input id="acct-pw" type="password" autocomplete="current-password" placeholder="at least 6 characters">
+      <div class="row" style="margin-top:12px"><button class="btn p" onclick="acctAuth('in')">Sign in</button><button class="btn ghost" onclick="acctAuth('up')">Create account</button></div>
+      <div id="acct-msg"></div>`;
+  }
+}
+async function acctAuth(mode){
+  const email=($('#acct-email').value||'').trim(),pw=$('#acct-pw').value||'',m=$('#acct-msg');
+  if(!email||pw.length<6){m.innerHTML='<div class="banner a" style="margin-top:10px">Enter an email and a 6+ character password.</div>';return;}
+  m.innerHTML='<div class="sub" style="margin-top:10px">Working…</div>';
+  try{if(mode==='up'){await StrideSync.signUp(email,pw);m.innerHTML='<div class="banner g" style="margin-top:10px">Account created. If email confirmation is on, confirm then sign in.</div>';}
+      else await StrideSync.signIn(email,pw);}
+  catch(e){m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Sign-in failed.'}</div>`;}
+}
+async function acctSync(){const m=$('#acct-msg');m.innerHTML='<div class="sub" style="margin-top:10px">Syncing…</div>';try{await StrideSync.syncNow();m.innerHTML='<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Synced.</div>';}catch(e){m.innerHTML='<div class="banner r" style="margin-top:10px">Sync failed — check connection.</div>';}}
+async function acctSignOut(){await StrideSync.signOut();}
+
+// ---- Pro subscription (Stripe) ----
+function isPro(){return !!(S&&(S.pro||(S.subscription&&S.subscription.tier==='pro')));}
+function goPro(){
+  if(isPro())return;
+  const cfg=window.STRIDE_CONFIG||{},link=cfg.STRIPE_PAYMENT_LINK;
+  if(!link){const n=$('#trial-note');if(n)n.classList.remove('hide');return;}
+  const st=(window.StrideSync&&StrideSync.state())||{};
+  if(st.configured&&!st.signedIn){                                        // sign in first so the payment maps to the account (server-verified unlock)
+    go('why');
+    const m=$('#acct-msg');if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Create a free account or sign in first — it links your subscription to you so Pro unlocks on every device.</div>';
+    return;
+  }
+  const uid=st.userId||'';                                                // so the webhook can unlock the right account
+  const ret=location.origin+location.pathname+'?pro=success';
+  const q=[];if(uid)q.push('client_reference_id='+encodeURIComponent(uid));q.push('success_url='+encodeURIComponent(ret));
+  location.href=link+(link.includes('?')?'&':'?')+q.join('&');
+}
+function reflectPro(){const b=$('#pro-btn');if(!b)return;if(isPro()){b.textContent='✓ Pro active';b.disabled=true;b.style.opacity='.7';}else{b.textContent='Go Pro — £6.99/mo';b.disabled=false;b.style.opacity='';}}
+function proInit(){
+  try{const p=new URLSearchParams(location.search);if(p.get('pro')==='success'){
+    if(S){S.pro=true;store.set(S);}                                     // optimistic unlock; webhook confirms server-side
+    history.replaceState(null,'',location.pathname);
+    if(window.StrideSync&&StrideSync.state().signedIn)StrideSync.syncNow();
+    go('why');coach&&0;
+  }}catch(e){}
+}
+
+// ---- Strava auto-import (Pro) ----
+function stravaConfigured(){const c=window.STRIDE_CONFIG||{};return !!(c.STRAVA_CLIENT_ID&&window.StrideSync&&StrideSync.state().configured);}
+async function renderStrava(){
+  const el=$('#strava-card');if(!el)return;
+  if(!stravaConfigured()){el.style.display='none';return;}
+  const st=StrideSync.state();
+  el.style.display='';
+  if(!isPro()){
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import <span class="pill">PRO</span></div>
+      <div class="sub" style="margin-top:4px">Pull your Strava runs &amp; history straight into Strivon — no manual logging. Included with Pro.</div>
+      <button class="btn ghost" style="margin-top:12px" onclick="go('why');document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">See Pro</button>`;
+    return;
+  }
+  if(!st.signedIn){
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import</div><div class="sub" style="margin-top:4px">Sign in to your Strivon account above to connect Strava.</div>`;
+    return;
+  }
+  let status={connected:false};try{status=await StrideSync.stravaStatus();}catch(e){}
+  if(status.connected){
+    el.innerHTML=`<div class="kicker">🔗 Strava <span class="pill g">connected</span></div>
+      <div class="sub" style="margin-top:4px">${status.updated?'Last import '+timeAgo(status.updated):'Ready to import your latest runs.'}</div>
+      <div class="row" style="margin-top:12px"><button class="btn p" id="strava-import-btn" onclick="importStrava()">Import runs</button></div>
+      <div id="strava-msg"></div>`;
+  }else{
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import <span class="pill g">PRO</span></div>
+      <div class="sub" style="margin-top:4px">Connect once — Strivon pulls in your Strava runs and keeps your stats &amp; PRs complete.</div>
+      <button class="btn p" style="margin-top:12px;background:#fc4c02" onclick="connectStrava()">Connect Strava</button>
+      <div id="strava-msg"></div>`;
+  }
+}
+function connectStrava(){
+  const c=window.STRIDE_CONFIG||{};const jwt=(window.StrideSync&&StrideSync.token())||'';
+  if(!jwt){const m=$('#strava-msg');if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Sign in first, then connect.</div>';return;}
+  const redirect=StrideSync.fnBase()+'/strava-sync';
+  const u='https://www.strava.com/oauth/authorize'
+    +'?client_id='+encodeURIComponent(c.STRAVA_CLIENT_ID)
+    +'&response_type=code&approval_prompt=auto&scope=activity:read_all'
+    +'&redirect_uri='+encodeURIComponent(redirect)
+    +'&state='+encodeURIComponent(jwt);
+  location.href=u;
+}
+async function importStrava(){
+  const btn=$('#strava-import-btn'),m=$('#strava-msg');const jwt=(window.StrideSync&&StrideSync.token())||'';
+  if(!jwt){if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Sign in first.</div>';return;}
+  if(btn){btn.disabled=true;btn.textContent='Importing…';}
+  if(m)m.innerHTML='<div class="sub" style="margin-top:10px">Fetching from Strava…</div>';
+  try{
+    const r=await fetch(StrideSync.fnBase()+'/strava-sync?action=import',{method:'POST',headers:{'Authorization':'Bearer '+jwt}});
+    const d=await r.json();
+    if(!r.ok||d.error){throw new Error(d.error==='not_connected'?'Strava not connected.':(d.detail||d.error||'Import failed'));}
+    if(m)m.innerHTML=`<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Imported ${d.imported} run${d.imported===1?'':'s'} from Strava.</div>`;
+    try{await StrideSync.syncNow();}catch(e){}                           // pull the new activities into local + refresh stats
+    renderStrava();
+  }catch(e){if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Import failed.'}</div>`;}
+  finally{if(btn){btn.disabled=false;btn.textContent='Import runs';}}
+}
+function stravaInit(){
+  try{const p=new URLSearchParams(location.search);const s=p.get('strava');if(!s)return;
+    history.replaceState(null,'',location.pathname);
+    let tries=0;
+    const run=()=>{
+      go('why');
+      const ready=window.StrideSync&&StrideSync.state().signedIn&&StrideSync.token();
+      if(s==='connected'&&!ready&&tries++<20){return setTimeout(run,300);}   // wait ≤6s for session restore
+      renderStrava().then(()=>setTimeout(()=>{const m=$('#strava-msg');
+        if(s==='connected'){if(m)m.innerHTML='<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Strava connected! Importing your runs…</div>';importStrava();}
+        else{const why={denied:'Strava connection was cancelled.',autherror:'Session expired — sign in and try again.',exchangefail:'Strava handshake failed — try again.'}[s]||'Something went wrong connecting Strava.';if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${why}</div>`;}
+      },60));
+    };
+    run();
+  }catch(e){}
+}
+// ---- Import a run from a GPX / TCX file (Pro, offline, no paywall) ----
+function renderImport(){
+  const el=$('#import-card');if(!el)return;
+  if(!isPro()){el.style.display='none';return;}
+  el.style.display='';
+  el.innerHTML=`<div class="kicker">📥 Import a run <span class="pill g">PRO</span></div>
+    <div class="sub" style="margin-top:4px">Add runs from a <b>GPX</b> or <b>TCX</b> file — export them free from Strava, Garmin Connect or Apple Health. They land in your Stats &amp; PRs.</div>
+    <label class="btn p" style="margin-top:12px;display:inline-block;cursor:pointer">Choose file
+      <input type="file" accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" style="display:none" onchange="importFile(this.files&&this.files[0]);this.value=''"></label>
+    <div id="import-msg"></div>`;
+}
+function haversine(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r,la1=a.lat*r,la2=b.lat*r;const h=Math.sin(dLa/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+function parseTrack(xml){
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)throw new Error('That file isn’t valid GPX/TCX.');
+  const pts=[],hrs=[];let name=null,cumDist=null;
+  const gpx=doc.getElementsByTagName('trkpt');
+  if(gpx.length){
+    const nm=doc.getElementsByTagName('name')[0];if(nm)name=nm.textContent.trim();
+    for(const p of gpx){const lat=+p.getAttribute('lat'),lon=+p.getAttribute('lon');const t=p.getElementsByTagName('time')[0];const hr=p.getElementsByTagName('gpxtpx:hr')[0]||p.getElementsByTagName('hr')[0];
+      if(!isFinite(lat)||!isFinite(lon))continue;pts.push({lat,lon,time:t?Date.parse(t.textContent):null});if(hr)hrs.push(+hr.textContent);}
+  }else{
+    const tps=doc.getElementsByTagName('Trackpoint');
+    if(!tps.length)throw new Error('No track points found in that file.');
+    for(const tp of tps){const pos=tp.getElementsByTagName('Position')[0];const t=tp.getElementsByTagName('Time')[0];const d=tp.getElementsByTagName('DistanceMeters')[0];const hr=tp.getElementsByTagName('HeartRateBpm')[0];
+      let lat=null,lon=null;if(pos){const la=pos.getElementsByTagName('LatitudeDegrees')[0],lo=pos.getElementsByTagName('LongitudeDegrees')[0];if(la&&lo){lat=+la.textContent;lon=+lo.textContent;}}
+      if(d)cumDist=+d.textContent;if(hr){const v=hr.getElementsByTagName('Value')[0];if(v)hrs.push(+v.textContent);}
+      pts.push({lat,lon,time:t?Date.parse(t.textContent):null});}
+  }
+  const timed=pts.filter(p=>p.time);const secs=timed.length>1?Math.round((timed[timed.length-1].time-timed[0].time)/1000):0;
+  let km=0;const geo=pts.filter(p=>isFinite(p.lat)&&isFinite(p.lon));
+  if(cumDist&&cumDist>0)km=cumDist/1000;else for(let i=1;i<geo.length;i++)km+=haversine(geo[i-1],geo[i]);
+  if(km<=0)throw new Error('Couldn’t read a distance from that file.');
+  const startAt=timed.length?timed[0].time:Date.now();
+  const hr=hrs.length?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length):null;
+  return {name,km:+km.toFixed(3),secs,pace:secs>0?+((secs/60)/km).toFixed(3):0,hr,startAt,pts:geo.slice(0,300).map(p=>[p.lat,p.lon])};
+}
+async function importFile(file){
+  const m=$('#import-msg');if(!file){return;}
+  if(m)m.innerHTML='<div class="sub" style="margin-top:10px">Reading '+file.name+'…</div>';
+  try{
+    const text=await file.text();const a=parseTrack(text);
+    S.activities=S.activities||[];
+    a.id=(crypto.randomUUID?crypto.randomUUID():'file-'+Date.now());
+    S.activities.unshift({id:a.id,name:a.name||file.name.replace(/\.(gpx|tcx)$/i,'')||'Imported run',km:a.km,secs:a.secs,pace:a.pace,hr:a.hr,rpe:null,source:'file',startAt:a.startAt,at:a.startAt+(a.secs*1000||0),pts:a.pts});
+    store.set(S);
+    if(m)m.innerHTML=`<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Imported <b>${a.km.toFixed(2)} km</b>${a.secs?' · '+Math.round(a.secs/60)+' min':''}. Added to your stats.</div>`;
+    if(window.StrideSync&&StrideSync.state().signedIn){try{await StrideSync.syncNow();}catch(e){}}
+  }catch(e){if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Could not import that file.'}</div>`;}
+}
+
+document.addEventListener('stride-synced',()=>{
+  const fresh=store.get();
+  if(fresh){S=fresh;
+    if($('#nav').classList.contains('hide')&&S.plan){const sp=$('#splash');if(sp)sp.style.display='none';enterApp();}
+    else if(!$('#nav').classList.contains('hide')){renderAll();const on=$$('#nav button').find(b=>b.classList.contains('on'));if(on&&on.dataset.v==='stats')renderStats();}
+  }
+  if(window.StrideSync)renderAccount(StrideSync.state());
+  if(typeof renderStrava==='function')renderStrava();
+  if(typeof renderImport==='function')renderImport();
+  if(typeof renderPlans==='function')renderPlans();
+  if(typeof renderCoach==='function')renderCoach();
+});
+
+// ---- tint the welcome splash to the last-known weather bucket ----
+function tintSplash(){
+  try{
+    const wx=JSON.parse(localStorage.getItem('stride_wx')||'null');
+    if(!wx||Date.now()-wx.at>18*3600*1000)return;   // only if recent (today-ish)
+    const map={ideal:['#2fe0c8','#18b8ff','#22d3c4'],good:['#ff7a45','#ff4d6b','#ff6a3d'],caution:['#ffbb4d','#ff8a2e','#ffab3d'],high:['#ff8a3d','#ff5a1e','#ff7a2e'],danger:['#ff6a6a','#ff3b46','#ff5555']};
+    const c=map[wx.bucket];if(!c)return;
+    const stops=document.querySelectorAll('#sg stop');if(stops[0])stops[0].setAttribute('stop-color',c[0]);if(stops[1])stops[1].setAttribute('stop-color',c[1]);
+    const dot=document.querySelector('.splash-word .d');if(dot)dot.style.color=c[2];
+  }catch(e){}
+}
+// ---- boot (welcome splash → app) ----
+function runBoot(){if(S&&S.plan)enterApp();else playStep($('#ob1'));}
+function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dataset.done='1';runBoot();s.classList.add('gone');setTimeout(()=>{s.style.display='none';},650);}
+(function(){
+  const s=$('#splash');if(!s){runBoot();return;}
+  tintSplash();
+  try{const p=s.querySelector('.route');const L=p.getTotalLength();if(L)p.style.setProperty('--L',L);}catch(e){}
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  s.addEventListener('click',dismissSplash);
+  setTimeout(dismissSplash,reduce?600:2700);
+})();
+
+// ---- start cloud sync (completely inert without Supabase config) ----
+if(window.StrideSync)StrideSync.init(renderAccount);
+</script>
+</body>
+</html>
