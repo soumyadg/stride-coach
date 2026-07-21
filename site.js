@@ -20,4 +20,9 @@
   window.addEventListener('scroll',measure,{passive:true});
   window.addEventListener('resize',measure);
   measure();
+  var nav=document.querySelector(".topnav");
+  if(nav){var tg=nav.querySelector(".nav-toggle");
+    if(tg)tg.addEventListener("click",function(){nav.classList.toggle("open");});
+    nav.querySelectorAll(".nav-links a").forEach(function(a){a.addEventListener("click",function(){nav.classList.remove("open");});});
+  }
 })();
