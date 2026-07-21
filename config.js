@@ -3,5 +3,9 @@
 // Leave BOTH blank to run the app fully offline (no accounts / no sync) — everything still works.
 window.STRIDE_CONFIG = {
   SUPABASE_URL: '',        // e.g. https://xxxxxxxx.supabase.co
-  SUPABASE_ANON_KEY: ''    // the public "anon" key (safe to ship; RLS protects data)
+  SUPABASE_ANON_KEY: '',   // the public "anon" key (safe to ship; RLS protects data)
+
+  // Pro subscription (Stripe). Web only — the App Store requires Apple IAP instead. See PRO.md.
+  // Create a recurring Payment Link in the Stripe dashboard (£6.99/mo) and paste its URL here.
+  STRIPE_PAYMENT_LINK: ''  // e.g. https://buy.stripe.com/xxxxxxxx
 };
