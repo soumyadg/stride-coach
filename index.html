@@ -48,6 +48,14 @@
   .mic-btn.listening{color:#fff;border-color:#ff4d6b;background:rgba(255,77,107,.16);animation:micpulse 1s ease-in-out infinite}
   @keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,107,.5)}50%{box-shadow:0 0 0 8px rgba(255,77,107,0)}}
   @media (prefers-reduced-motion:reduce){.mic-btn.listening{animation:none}}
+  .atlas-pin{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:rgba(18,15,32,.92);display:grid;place-items:center;font-size:15px;cursor:pointer;box-shadow:0 2px 9px rgba(0,0,0,.55);padding:0;z-index:2}
+  .atlas-pin.cap{border-color:#2ee6c6}
+  .atlas-mem{display:flex;gap:12px;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,.06);cursor:pointer}
+  .atlas-mem:first-child{border-top:0}
+  .am-thumb{width:46px;height:46px;border-radius:11px;object-fit:cover;flex:0 0 auto;background:rgba(255,255,255,.05);display:grid;place-items:center;font-size:20px}
+  .feelrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .feelrow .feel{width:42px;height:42px;border-radius:11px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);font-size:20px;cursor:pointer;padding:0}
+  .feelrow .feel.on{border-color:#ff6a3d;background:rgba(255,106,61,.15)}
   @media (prefers-reduced-motion:reduce){#splash-logo{animation:none;opacity:1;transform:none}}
   .splash-art{width:min(76vw,300px);height:130px;position:relative}
   .splash-art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -569,6 +577,37 @@
     </div>
   </div>
 
+  <!-- ================= ATLAS — life story map ================= -->
+  <div id="s-atlas" class="screen hide">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px">
+      <h1>Atlas</h1><span class="sub">Your life, in motion</span>
+    </div>
+    <div id="atlas-reveal"></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="atlas-map" style="position:relative;height:280px;background:#0c0e16">
+        <div id="atlas-tiles" style="position:absolute;inset:0"></div>
+        <svg id="atlas-routes" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" preserveAspectRatio="none"></svg>
+        <div id="atlas-pins" style="position:absolute;inset:0"></div>
+        <div class="attrib" style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · CARTO</div>
+        <div id="atlas-empty" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);font-size:14px">Your map is empty.<br>Add your first moment below — every memory pins to where it happened.</div>
+      </div>
+      <div class="row" style="gap:8px;padding:12px">
+        <button class="btn p" onclick="addMoment()">＋ Add a moment</button>
+        <button class="btn ghost" style="flex:0 0 auto;width:auto;padding:12px 14px" onclick="sealCapsule()">⏳ Capsule</button>
+      </div>
+    </div>
+    <div class="card"><div class="kicker">🧵 Your story</div><div id="atlas-memories" style="margin-top:6px"></div></div>
+    <div class="card" id="atlas-caps-card"><div class="kicker">⏳ Time capsules</div><div id="atlas-capsules" style="margin-top:6px"></div></div>
+  </div>
+
+  <!-- Atlas modal (add moment / seal capsule / view memory) -->
+  <div id="atlas-modal" class="modal hide">
+    <div class="sheet">
+      <div class="sheet-hd"><h2 id="am-title">Add a moment</h2><button class="xbtn" onclick="closeAtlasModal()">✕</button></div>
+      <div id="am-body" style="margin-top:8px"></div>
+    </div>
+  </div>
+
   <!-- ================= WORKOUT LIBRARY (modal) ================= -->
   <div id="lib" class="modal hide">
     <div class="sheet">
@@ -591,6 +630,7 @@
     <button data-v="plan" onclick="go('plan')"><span class="ni">🗓️</span>Plan</button>
     <button data-v="run" onclick="go('run')"><span class="ni">🏃</span>Run</button>
     <button data-v="stats" onclick="go('stats')"><span class="ni">📊</span>Stats</button>
+    <button data-v="atlas" onclick="go('atlas')"><span class="ni">🗺️</span>Atlas</button>
     <button data-v="why" onclick="go('why')"><span class="ni">✨</span>Why</button>
   </nav>
 </div>
@@ -758,6 +798,95 @@ async function askCoach(preset){
   }catch(e){coachMsgs.pop();coachMsgs.push({role:'assistant',content:'Network error — try again.'});}
   renderCoach();const t2=$('#coach-thread');if(t2)t2.scrollTop=t2.scrollHeight;
 }
+// ---- ATLAS: life story map (memories + time capsules) ----
+const ATLAS_Z=14;
+function ensureAtlas(){if(!S)return;if(!Array.isArray(S.memories))S.memories=[];if(!Array.isArray(S.capsules))S.capsules=[];}
+function feelings(){return[['🤩','Elated'],['😊','Happy'],['😌','Calm'],['💪','Strong'],['😤','Determined'],['😮‍💨','Drained'],['😰','Anxious'],['😢','Low'],['🧠','Reflective'],['❤️','Grateful']];}
+function atlasPoints(){ensureAtlas();const pts=[];S.memories.forEach(m=>{if(isFinite(m.lat)&&isFinite(m.lon))pts.push([m.lat,m.lon]);});S.capsules.forEach(c=>{if(isFinite(c.lat)&&isFinite(c.lon))pts.push([c.lat,c.lon]);});if(!pts.length)(S.activities||[]).forEach(a=>{if(a.pts&&a.pts.length)pts.push(a.pts[Math.floor(a.pts.length/2)]);});return pts;}
+function atlasCenter(){const pts=atlasPoints();if(!pts.length)return null;let la=0,lo=0;pts.forEach(p=>{la+=p[0];lo+=p[1];});return[la/pts.length,lo/pts.length];}
+async function drawAtlasMap(){
+  ensureAtlas();
+  const wrap=$('#atlas-map'),tiles=$('#atlas-tiles'),svg=$('#atlas-routes'),pinsEl=$('#atlas-pins'),empty=$('#atlas-empty');if(!wrap)return;
+  const hasContent=S.memories.length||S.capsules.length||(S.activities||[]).some(a=>a.pts&&a.pts.length);
+  if(empty)empty.style.display=hasContent?'none':'flex';
+  let ctr=atlasCenter();if(!ctr){try{const l=await getLoc();ctr=[l.lat,l.lon];}catch(e){ctr=[51.5074,-0.1278];}}
+  const Z=ATLAS_Z,n=Math.pow(2,Z),W=wrap.clientWidth||360,H=wrap.clientHeight||280;
+  const c=project(ctr[0],ctr[1],Z),ox=c.x-W/2,oy=c.y-H/2;
+  const t0x=Math.floor(ox/256),t1x=Math.floor((ox+W)/256),t0y=Math.floor(oy/256),t1y=Math.floor((oy+H)/256);
+  let html='';for(let tx=t0x;tx<=t1x;tx++)for(let ty=t0y;ty<=t1y;ty++){if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n;html+=`<img src="https://basemaps.cartocdn.com/dark_all/${Z}/${wx}/${ty}.png" style="position:absolute;width:256px;height:256px;left:${Math.round(tx*256-ox)}px;top:${Math.round(ty*256-oy)}px" onerror="this.style.visibility='hidden'">`;}
+  tiles.innerHTML=html;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  let rHtml='';(S.activities||[]).forEach(a=>{if(a.pts&&a.pts.length>1){const pp=a.pts.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' ');rHtml+=`<polyline points="${pp}" fill="none" stroke="#ff6a3d" stroke-opacity=".5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;}});
+  svg.innerHTML=rHtml;
+  let pHtml='';
+  S.memories.forEach(m=>{if(!isFinite(m.lat))return;const w=project(m.lat,m.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-20||x>W+20||y<-20||y>H+20)return;pHtml+=`<button class="atlas-pin" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px" onclick="viewMemory('${m.id}')">${m.feeling||'📍'}</button>`;});
+  S.capsules.forEach(c2=>{if(!isFinite(c2.lat))return;const w=project(c2.lat,c2.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-20||x>W+20||y<-20||y>H+20)return;pHtml+=`<button class="atlas-pin cap" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px" onclick="viewCapsule('${c2.id}')">⏳</button>`;});
+  pinsEl.innerHTML=pHtml;
+}
+function checkCapsules(){ensureAtlas();const now=Date.now();let any=false;(S.capsules||[]).forEach(c=>{if(!c.revealed&&(!c.unlockAt||c.unlockAt<=now)){c.revealed=true;c.seenReveal=false;any=true;}});if(any)store.set(S);}
+function renderAtlas(){
+  ensureAtlas();
+  checkCapsules();
+  const rev=(S.capsules||[]).find(c=>c.revealed&&c.seenReveal===false),rv=$('#atlas-reveal');
+  if(rv)rv.innerHTML=rev?`<div class="card" style="border-color:rgba(46,230,198,.45);cursor:pointer" onclick="viewCapsule('${rev.id}')"><div class="kicker">⏳ A capsule just opened</div><div style="margin-top:6px;font-weight:700">A message you left for yourself</div><div class="sub" style="margin-top:4px">“${(rev.message||'').replace(/</g,'&lt;')}” — tap to read</div></div>`:'';
+  drawAtlasMap();
+  const mem=$('#atlas-memories'),ms=(S.memories||[]).slice().sort((a,b)=>b.at-a.at);
+  mem.innerHTML=ms.length?ms.map(m=>{const d=new Date(m.at),f=feelings().find(x=>x[0]===m.feeling);
+    return `<div class="atlas-mem" onclick="viewMemory('${m.id}')">${m.photo?`<img src="${m.photo}" class="am-thumb">`:`<div class="am-thumb">${m.feeling||'📍'}</div>`}<div style="min-width:0;flex:1"><div style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(m.note||'A moment').replace(/</g,'&lt;')}</div><div class="sub">${f?f[1]+' · ':''}${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}</div></div></div>`;}).join(''):'<div class="sub">No moments yet. Tap “Add a moment” to begin your map.</div>';
+  const cap=$('#atlas-capsules'),cs=(S.capsules||[]).slice().sort((a,b)=>(a.unlockAt||0)-(b.unlockAt||0));
+  cap.innerHTML=cs.length?cs.map(c=>{const sealed=!c.revealed&&c.unlockAt>Date.now(),dd=new Date(c.unlockAt);
+    return `<div class="atlas-mem" onclick="viewCapsule('${c.id}')"><div class="am-thumb">${sealed?'🔒':'⏳'}</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${sealed?'Sealed capsule':'Opened capsule'}</div><div class="sub">${sealed?'Unlocks '+DOW[dd.getDay()]+' '+dd.getDate()+' '+MON[dd.getMonth()]+' '+dd.getFullYear():'“'+((c.message||'').slice(0,42).replace(/</g,'&lt;'))+'”'}</div></div></div>`;}).join(''):'<div class="sub">Seal a message to your future self — it reopens on the date you choose.</div>';
+}
+function openAtlasModal(t,b){$('#am-title').textContent=t;$('#am-body').innerHTML=b;$('#atlas-modal').classList.remove('hide');}
+function closeAtlasModal(){$('#atlas-modal').classList.add('hide');}
+function addMoment(){
+  window._amPhoto=null;
+  const fl=feelings().map((f,i)=>`<button type="button" class="feel${i===1?' on':''}" data-f="${f[0]}" onclick="[...this.parentElement.children].forEach(x=>x.classList.remove('on'));this.classList.add('on')">${f[0]}</button>`).join('');
+  openAtlasModal('Add a moment',`<label>How did it feel?</label><div class="feelrow" id="am-feel">${fl}</div>
+    <label style="margin-top:12px">A note</label><input id="am-note" placeholder="e.g. The run before my big interview" maxlength="140">
+    <label style="margin-top:12px">Photo (optional)</label><br><label class="btn ghost" style="display:inline-block;width:auto;cursor:pointer;margin-top:4px;padding:9px 14px">Choose photo<input id="am-photo" type="file" accept="image/*" style="display:none" onchange="amPreview(this)"></label>
+    <div id="am-photo-prev"></div><div id="am-msg" class="sub" style="margin-top:8px">📍 Pins to your current location.</div>
+    <button class="btn p" style="margin-top:14px" onclick="saveMoment()">Save moment</button>`);
+}
+function downscaleImg(file,max,q){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;const sc=Math.min(1,max/Math.max(w,h));w=Math.round(w*sc);h=Math.round(h*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',q));};img.onerror=rej;img.src=URL.createObjectURL(file);});}
+async function amPreview(inp){const f=inp.files&&inp.files[0];if(!f)return;const msg=$('#am-msg');if(msg)msg.textContent='Processing photo…';try{const d=await downscaleImg(f,640,.62);window._amPhoto=d;$('#am-photo-prev').innerHTML=`<img src="${d}" style="width:100%;max-height:170px;object-fit:cover;border-radius:12px;margin-top:8px">`;if(msg)msg.textContent='📍 Pins to your current location.';}catch(e){if(msg)msg.textContent='Could not read that image.';}}
+async function saveMoment(){
+  const fe=$('#am-feel .on'),feel=fe?fe.dataset.f:'📍',note=($('#am-note').value||'').trim(),msg=$('#am-msg');
+  if(msg)msg.textContent='📍 Finding your location…';
+  let loc;try{loc=await getLoc();}catch(e){loc={lat:51.5074,lon:-0.1278,ok:false};}
+  ensureAtlas();
+  S.memories.unshift({id:(crypto.randomUUID?crypto.randomUUID():'m'+Date.now()),at:Date.now(),lat:loc.lat,lon:loc.lon,feeling:feel,note:note,photo:window._amPhoto||null});
+  try{store.set(S);}catch(e){S.memories.shift();if(msg)msg.textContent='Storage full — try a moment without a photo.';return;}
+  window._amPhoto=null;closeAtlasModal();renderAtlas();
+}
+function sealCapsule(){
+  const d=new Date();d.setFullYear(d.getFullYear()+1);const def=d.toISOString().slice(0,10),min=new Date(Date.now()+86400000).toISOString().slice(0,10);
+  openAtlasModal('Seal a time capsule',`<div class="sub" style="margin-bottom:8px">Write to your future self. It stays sealed until the date you pick, then reopens here.</div>
+    <label>Your message</label><textarea id="cap-msg" rows="4" placeholder="Remember why you started…" maxlength="600" style="width:100%;resize:vertical"></textarea>
+    <label style="margin-top:12px">Reopen on</label><input id="cap-date" type="date" value="${def}" min="${min}">
+    <div id="cap-out" class="sub" style="margin-top:8px">📍 Pins to your current location.</div>
+    <button class="btn p" style="margin-top:14px" onclick="saveCapsule()">Seal it 🔒</button>`);
+}
+async function saveCapsule(){
+  const message=($('#cap-msg').value||'').trim(),date=$('#cap-date').value,out=$('#cap-out');
+  if(!message){if(out)out.textContent='Write a message first.';return;}
+  if(out)out.textContent='📍 Finding your location…';
+  let loc;try{loc=await getLoc();}catch(e){loc={lat:51.5074,lon:-0.1278,ok:false};}
+  ensureAtlas();
+  const unlockAt=date?new Date(date+'T09:00:00').getTime():Date.now()+365*86400000;
+  S.capsules.unshift({id:(crypto.randomUUID?crypto.randomUUID():'c'+Date.now()),createdAt:Date.now(),lat:loc.lat,lon:loc.lon,message,unlockAt,revealed:false});
+  try{store.set(S);}catch(e){S.capsules.shift();if(out)out.textContent='Storage full.';return;}
+  closeAtlasModal();renderAtlas();
+}
+function viewMemory(id){ensureAtlas();const m=(S.memories||[]).find(x=>x.id===id);if(!m)return;const d=new Date(m.at),f=feelings().find(x=>x[0]===m.feeling);
+  openAtlasModal('Moment',`${m.photo?`<img src="${m.photo}" style="width:100%;max-height:240px;object-fit:cover;border-radius:14px">`:''}<div style="font-size:34px;margin-top:${m.photo?'12px':'0'}">${m.feeling||'📍'}</div><div style="font-weight:800;font-size:18px;margin-top:4px">${(m.note||'A moment').replace(/</g,'&lt;')}</div><div class="sub" style="margin-top:4px">${f?f[1]+' · ':''}${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}</div><button class="btn ghost" style="margin-top:16px" onclick="deleteMemory('${m.id}')">Delete moment</button>`);
+}
+function deleteMemory(id){ensureAtlas();if(!confirm('Delete this moment?'))return;S.memories=S.memories.filter(x=>x.id!==id);store.set(S);closeAtlasModal();renderAtlas();}
+function viewCapsule(id){ensureAtlas();const c=(S.capsules||[]).find(x=>x.id===id);if(!c)return;const sealed=!c.revealed&&c.unlockAt>Date.now(),dd=new Date(c.unlockAt);
+  if(c.revealed&&c.seenReveal===false){c.seenReveal=true;store.set(S);const rv=$('#atlas-reveal');if(rv)rv.innerHTML='';}
+  openAtlasModal(sealed?'Sealed capsule':'Time capsule',sealed?`<div style="font-size:40px;text-align:center">🔒</div><div class="sub" style="text-align:center;margin-top:8px">Sealed until <b style="color:#fff">${DOW[dd.getDay()]} ${dd.getDate()} ${MON[dd.getMonth()]} ${dd.getFullYear()}</b>.<br>Come back then to read what you wrote.</div><button class="btn ghost" style="margin-top:16px" onclick="deleteCapsule('${c.id}')">Delete capsule</button>`:`<div class="kicker">A message you left yourself</div><div style="font-size:16px;margin-top:8px;line-height:1.5">“${(c.message||'').replace(/</g,'&lt;')}”</div><button class="btn ghost" style="margin-top:16px" onclick="deleteCapsule('${c.id}')">Delete capsule</button>`);
+}
+function deleteCapsule(id){ensureAtlas();if(!confirm('Delete this capsule?'))return;S.capsules=S.capsules.filter(x=>x.id!==id);store.set(S);closeAtlasModal();renderAtlas();}
 // ---- multiple race-specific plans (Pro) ----
 function planSnapshot(src){src=src||S;return{planId:src.planId,goal:src.goal,goalName:src.goalName,mode:src.mode,base:src.base,days:src.days,exp:src.exp,pref:src.pref,weeks:src.weeks,plan:src.plan,created:src.created,curWeek:src.curWeek,_mut:Date.now()};}
 function ensurePlans(){if(!S)return;if(!Array.isArray(S.plans)||!S.plans.length){S.plans=S.plan?[planSnapshot()]:[];if(S.plan)store.set(S);}else if(S.plan&&!S.plans.some(p=>p.planId===S.planId)){S.plans.push(planSnapshot());store.set(S);}}
@@ -804,7 +933,7 @@ function makeSessions(vol,days,goal,w,total,mode){
 }
 
 // ---- render ----
-function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');if(typeof ensurePlans==='function')ensurePlans();renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();if(typeof stravaInit==='function')stravaInit();}
+function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');if(typeof ensurePlans==='function')ensurePlans();renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();if(typeof stravaInit==='function')stravaInit();if(typeof checkCapsules==='function')checkCapsules();}
 function renderAll(){if(!S)return;renderCurve();renderCalendar();renderToday();}
 function renderCurve(){
   const max=Math.max(...S.plan.map(x=>x.vol));
@@ -1480,13 +1609,14 @@ function renderInsights(){
     ${formHtml}
     <div class="sub" style="margin-top:10px;opacity:.7">Estimates from your own runs — not medical advice. More runs = sharper predictions.</div>`;
 }
-function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classList.add('hide'));
+function go(v){['today','plan','run','stats','atlas','why'].forEach(x=>$('#s-'+x).classList.add('hide'));
   const s=$('#s-'+v);s.classList.remove('hide');
   s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
   if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();if(typeof renderPlans==='function')renderPlans();if(typeof renderCoach==='function')renderCoach();}
+  if(v==='atlas'&&typeof renderAtlas==='function')renderAtlas();
   s.scrollTop=0;}
 
 // ---- account + cloud sync UI ----
