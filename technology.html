@@ -36,44 +36,14 @@
   </table></div>
   <div class="callout reveal"><b>The learning loop:</b> every agent writes back to a per-user profile of motivations, triggers and preferred adventures. The companion gets more “you” every week — the compounding data moat.</div>
 </div></section>
-<section id="db"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">12 — DATABASE DESIGN</div><h2>Postgres + PostGIS + pgvector</h2></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Table</th><th>Key columns</th><th>Purpose</th></tr>
-    <tr><td><code class="k">users</code></td><td>id, personality_type, motivations jsonb, twin_state jsonb</td><td>Identity + learned model</td></tr>
-    <tr><td><code class="k">journeys</code></td><td>id, user_id, path <i>geography(LineString)</i>, started_at, mode, stats</td><td>Every walk/run/ride</td></tr>
-    <tr><td><code class="k">memories</code></td><td>id, journey_id, point <i>geography</i>, media_url, transcript, embedding <i>vector</i>, life_event</td><td>Pinned moments (RAG source)</td></tr>
-    <tr><td><code class="k">capsules</code></td><td>id, user_id, point, media_url, unlock_rule, revealed_at</td><td>Future-self messages</td></tr>
-    <tr><td><code class="k">moods</code></td><td>id, user_id, journey_id, before, after, dims jsonb</td><td>Emotional Fitness Engine</td></tr>
-    <tr><td><code class="k">missions</code></td><td>id, user_id, spec jsonb, status, xp, completed_at</td><td>AI adventures</td></tr>
-    <tr><td><code class="k">places</code></td><td>id, point, type, note, dropped_by, votes</td><td>Living treasure map</td></tr>
-    <tr><td><code class="k">legacy_routes</code></td><td>id, owner_id, path, stories jsonb, heirs[]</td><td>Cross-generation preservation</td></tr>
-    <tr><td><code class="k">progression</code></td><td>user_id, xp, level, class, titles[], skills jsonb</td><td>City RPG</td></tr>
-    <tr><td><code class="k">crossings</code></td><td>geohash, day, hashed_user, count</td><td>Anonymous network (k-anonymous)</td></tr>
-    <tr><td><code class="k">twin_snapshots</code></td><td>user_id, at, projections jsonb</td><td>Digital-twin history</td></tr>
-  </table></div>
-  <p style="margin-top:14px;color:var(--muted);font-size:14px">Row-Level Security on every table; media in object storage; the <code class="k">crossings</code> grid never stores exact coordinates — only coarse, hashed, k-anonymised cells.</p>
-</div></section>
-<section id="backend"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">13 — BACKEND · FLASK ML SERVICE</div><h2>A Python brain beside the realtime spine</h2>
-    <p class="lead">You asked for Flask — and it's exactly right for the ML/agent layer. The honest architecture is <b style="color:#fff">hybrid</b>: keep Supabase for auth, data, realtime and low-latency LLM edge calls; add a Flask service where Python earns its keep — forecasting, embeddings, agents.</p></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Layer</th><th>Tech</th><th>Responsibility</th></tr>
-    <tr><td>API</td><td>Flask + Gunicorn</td><td>/coach /mission /route /twin /story /insights endpoints</td></tr>
-    <tr><td>Async jobs</td><td>Celery + Redis</td><td>Story films, twin recompute, weekly behavioural analysis</td></tr>
-    <tr><td>Data</td><td>Postgres (Supabase) + PostGIS + pgvector</td><td>Shared source of truth; geospatial + embeddings</td></tr>
-    <tr><td>ML</td><td>scikit-learn · Prophet/torch · sentence-transformers</td><td>Behaviour models, forecasting twin, memory embeddings</td></tr>
-    <tr><td>LLM</td><td>Claude via Anthropic API</td><td>Coach, missions, story narration, RAG answers</td></tr>
-    <tr><td>Deploy</td><td>Docker → Fly.io / Render / Cloud Run</td><td>Autoscale the ML service independently of the app</td></tr>
-  </table></div>
-  <div class="callout reveal"><b>Migration path:</b> Strivon's live Deno edge functions (coach, strava, stripe) stay. The Flask service is added only when the twin/embeddings need Python — no rewrite, incremental.</div>
-</div></section>
+
+
 </main>
 <div class="pager"><a class="pg-prev" href="./experience.html">← Experience</a><a class="pg-next" href="./business.html">Business →</a></div>
 <footer><div class="wrap">
   <div class="logo" style="margin-bottom:16px"><b style="font-family:var(--disp);font-weight:800">Strivon</b></div>
   <p style="color:var(--faint);max-width:60ch">Product vision & strategy — a geographical autobiography, an emotional-wellbeing OS, a real-world RPG, and a legacy that outlives its user. Built to layer onto Strivon's live PWA + Supabase + on-device intelligence + Claude edge functions. Designed as a category, not a feature.</p>
-</div></footer>
+</div><div class="wrap"><p class="axiomar">A product of <a href="https://www.axiomarcapital.com" target="_blank" rel="noopener">Axiomar Capital</a> — building the fund that trades every market, and the tools that get there.</p></div></footer>
 <script>
   (function(){
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
