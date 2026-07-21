@@ -1,4 +1,4 @@
-# STATE — Stride Coach (the leading app clone, improved)
+# STATE — Strivon (the leading app clone, improved)
 
 **App #1 of 30.** Autonomous build. This file = my resume point. Read it first on every wake-up.
 

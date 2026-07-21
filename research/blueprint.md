@@ -1,4 +1,4 @@
-# Stride Coach — Build Blueprint
+# Strivon — Build Blueprint
 
 A running-coach app **like the leading app, but injury-safe, honestly adaptive, and fair-priced.**
 

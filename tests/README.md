@@ -1,6 +1,6 @@
 # 🧪 Tests
 
-Stride Coach is a single-file vanilla app, so the suite runs against the **real in-page functions** (no mocks or replicas → no drift).
+Strivon is a single-file vanilla app, so the suite runs against the **real in-page functions** (no mocks or replicas → no drift).
 
 ## Run it
 Open the app (local `python3 -m http.server` in `app/`, or the live site), then in the **DevTools Console**:

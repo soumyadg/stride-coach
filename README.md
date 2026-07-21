@@ -1,4 +1,4 @@
-# 🏃 Stride Coach
+# 🏃 Strivon
 
 > **The running coach that won't get you injured.**
 > An adaptive running-plan & coaching app built around injury-safety: load that can't ramp too fast, a real feedback loop, accurate GPS, wet-bulb heat awareness, and honest pricing.
@@ -54,9 +54,9 @@ App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no 
 
 ## Why it exists
 
-Most running apps optimise for a plan; **Stride optimises so the plan won't injure you.** Every design choice targets a real, documented failure mode in mainstream running apps:
+Most running apps optimise for a plan; **Strivon optimises so the plan won't injure you.** Every design choice targets a real, documented failure mode in mainstream running apps:
 
-| Common failure mode | Stride's fix |
+| Common failure mode | Strivon's fix |
 |---|---|
 | Load ramps too fast → injuries | **SafeRamp** — load mathematically cannot jump >10%/week |
 | One-time plan, no feedback loop | **Daily readiness** + **post-run RPE** recalibration |
@@ -71,7 +71,7 @@ Most running apps optimise for a plan; **Stride optimises so the plan won't inju
 
 ```mermaid
 mindmap
-  root((Stride Coach))
+  root((Strivon))
     Plan
       SafeRamp generator
       Deload + taper
@@ -123,7 +123,7 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     actor U as Runner
-    participant A as Stride
+    participant A as Strivon
     participant E as SafeRamp + ACWR engine
     U->>A: Daily readiness (sleep/soreness/energy)
     A->>E: score
@@ -218,4 +218,4 @@ stride-coach/
 
 ---
 
-*Prototype built autonomously as app #1 of a 30-app sprint. Stride Coach is its own brand and product.*
+*Prototype built autonomously as app #1 of a 30-app sprint. Strivon is its own brand and product.*

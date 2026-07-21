@@ -1,9 +1,9 @@
 # 📱 Native app (Capacitor)
 
-Stride Coach is wrapped with [Capacitor](https://capacitorjs.com) so the **same `app/` web code** builds as a real **iOS + Android** app for the App Store / Play Store. No rewrite.
+Strivon is wrapped with [Capacitor](https://capacitorjs.com) so the **same `app/` web code** builds as a real **iOS + Android** app for the App Store / Play Store. No rewrite.
 
 - **App ID:** `com.stridecoach.app`
-- **App name:** Stride Coach
+- **App name:** Strivon
 - **Web source:** `app/` (Capacitor `webDir`)
 - Native projects: `ios/` (Xcode, uses Swift Package Manager — no CocoaPods needed) and `android/` (Gradle).
 

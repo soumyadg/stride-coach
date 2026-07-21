@@ -1,6 +1,6 @@
 {
-  "name": "Stride Coach",
-  "short_name": "Stride",
+  "name": "Strivon",
+  "short_name": "Strivon",
   "description": "The running coach that won't get you injured.",
   "start_url": "./index.html",
   "scope": "./",

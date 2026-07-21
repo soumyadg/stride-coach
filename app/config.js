@@ -1,4 +1,4 @@
-// Stride Coach — cloud config.
+// Strivon — cloud config.
 // Create a free Supabase project → Project Settings → API, then paste the two values below.
 // Leave BOTH blank to run the app fully offline (no accounts / no sync) — everything still works.
 window.STRIDE_CONFIG = {

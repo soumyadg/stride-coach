@@ -1,4 +1,4 @@
-/* Stride Coach — test battery (unit + stress + smoke).
+/* Strivon — test battery (unit + stress + smoke).
    The app is a single-file vanilla app, so tests run against the REAL functions in-page
    (no mocks/replicas → no drift). Run it from DevTools on the app:
 

@@ -1,4 +1,4 @@
-/* Stride Coach — accounts + cloud sync (offline-first).
+/* Strivon — accounts + cloud sync (offline-first).
    No config → this whole module is inert and the app runs exactly as before.
    Emits a 'stride-synced' DOM event after any sync so the UI can re-render. */
 window.StrideSync = (function () {

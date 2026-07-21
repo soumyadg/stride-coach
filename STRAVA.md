@@ -1,6 +1,6 @@
 # 🔗 Strava auto-import (Pro feature)
 
-Pulls a signed-in Pro user's Strava runs & walks straight into Stride — populating their stats, history and personal records with no manual logging. This is the #1 thing users say competitors get wrong (broken sync), so it's our flagship Pro feature.
+Pulls a signed-in Pro user's Strava runs & walks straight into Strivon — populating their stats, history and personal records with no manual logging. This is the #1 thing users say competitors get wrong (broken sync), so it's our flagship Pro feature.
 
 **Requires the Supabase backend** (accounts + `integrations` table) to be live — see [BACKEND.md](BACKEND.md). Free/offline users simply don't see the Strava card.
 
@@ -19,7 +19,7 @@ The Strava **client secret** and all tokens live **only** server-side in the edg
 
 ### 1. Create a Strava API application
 1. Go to **https://www.strava.com/settings/api**
-2. Fill in: Application Name `Stride Coach`, Category `Training`, Website your app URL.
+2. Fill in: Application Name `Strivon`, Category `Training`, Website your app URL.
 3. **Authorization Callback Domain:** `fvgtetbtppcxspvjbfie.supabase.co`  *(host only — no `https://`, no path)*
 4. Create → note your **Client ID** (public) and **Client Secret** (keep private).
 

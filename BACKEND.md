@@ -1,6 +1,6 @@
 # ☁️ Backend blueprint — Supabase schema + sync
 
-> **Status: design only. Nothing is built.** Stride Coach runs 100% on-device today. This is the ready-to-go plan for the first backend (accounts + cloud sync), to stand up *after* the free app proves retention.
+> **Status: design only. Nothing is built.** Strivon runs 100% on-device today. This is the ready-to-go plan for the first backend (accounts + cloud sync), to stand up *after* the free app proves retention.
 
 ## Principles
 1. **Offline-first.** `localStorage` (`S`) stays the working copy; the backend is a sync target, not a dependency. The app must work with zero connectivity.
