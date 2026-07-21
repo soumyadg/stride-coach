@@ -24,7 +24,7 @@ Tier 1 = blockers (no product without them). Working top-down.
 - [ ] #2 Apple Watch / Garmin-Coros support
 - [ ] #3 App Store / Play Store submission (needs Apple Dev acct + review)
 - [ ] #4 100 real users + retention (D1/D7/D30)
-- [ ] #5 Health import (Apple Health / Health Connect) — also replaces the broken Cap-4 `@perfood/capacitor-healthkit`
+- [x] **#5 Health import (bulk)** — single GPX/TCX import already existed; upgraded to **batch multi-file import** (Apple Health/Watch, Garmin, Coros, Strava exports at once) with **de-dupe** (±2min + <50m dist), progress, per-file error surfacing, auto-sort newest-first; imported activities feed CTL/ATL/ACWR. Copy updated everywhere. Keyless, works web + native. `[BLOCKED-on-device]` native direct-HealthKit read (broken Cap-4 `@perfood/capacitor-healthkit` still to be swapped for a Cap-8 plugin — needs device to verify, low priority since file import covers the value).
 - [ ] #6 AI coach turnkey server-side · #7 self-hosted routing · #8 social layer · #9 build ONE Atlas feature fully · #10 modularise
 See full 21-point table in chat 2026-07-21.
 

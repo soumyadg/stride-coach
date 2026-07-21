@@ -22,3 +22,8 @@ ios/App/Pods/
 ios/App/DerivedData/
 **/xcuserdata/
 DerivedData/
+
+# autonomous-resume runtime
+auto-resume.log
+.autoresume.lock/
+.autoresume-stop
