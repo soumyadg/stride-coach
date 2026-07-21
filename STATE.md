@@ -78,3 +78,13 @@ Next: keep improving app #1 (candidates: embed fonts offline, treadmill calibrat
 - the5krunner injury article specifics
 - Strava-acquisition backlash / price changes
 - Missing features users beg for (treadmill mode, heart-rate zones, nutrition, social)
+
+## 💷☁️ ACCOUNTS + CLOUD SYNC + LIVE PRO SUBSCRIPTION (2026-07-21) — backend #1 LIVE
+Soumya connected his real Stripe + Supabase accounts; full stack now live + verified end-to-end.
+- **Stripe**: live Payment Link (Stride Pro £6.99/mo recurring) wired into app/config.js → "Go Pro" opens real checkout.
+- **Supabase**: real project `fvgtetbtppcxspvjbfie` (eu-west-2 London, Free plan). URL+anon key in config.js. Migration 0001 run → 7 tables + RLS + auto-profile/free-sub on signup. Auth handshake verified live from deployed site.
+- **Server-verified Pro**: edge function deployed (dashboard, slug came out `swift-processor` not `stripe-webhook` — endpoint = /functions/v1/swift-processor), JWT verification OFF. Secrets set: STRIPE_SECRET_KEY (rolled fresh — original was reveal-once), STRIPE_WEBHOOK_SECRET. Stripe webhook `whimsical-inspiration` Active, listening to checkout.session.completed + customer.subscription.updated/deleted. Smoke-tested: POST w/o sig → 400 "bad signature" = deployed + JWT-off + verifying. ✅
+- **App**: goPro() now requires sign-in first when Supabase configured (so payment maps to account for server unlock + cross-device). sync.js pull() reads subscriptions.tier → drives isPro(). SW v17.
+- PENDING (optional, Soumya's to do): Payment Link "After payment" redirect → https://soumyadg.github.io/stride-coach/?pro=success (instant return-to-app; without it Pro still unlocks on next sync via webhook). 
+- HONEST: Pro features themselves still mostly aspirational (auto-sync Strava/Garmin, multiple plans, advanced analytics not built). Pro = supporter/early-access tier today; gate real Pro value with isPro() as it ships. Free app fully functional.
+- Live URL: https://soumyadg.github.io/stride-coach/  · reinstall PWA to get v17.
