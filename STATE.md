@@ -18,8 +18,28 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 - [x] P4 — Build the app in `app/index.html` — MVP built + browser-verified (onboarding, SafeRamp plan w/ proven ≤10% cap, readiness, run tracker + auto-pause, adaptive RPE recalibration, persistence)
 - [x] P5 — Updated root TRACKER.md, app #1 = DONE (MVP)
 
+## ⚡ USER DIRECTIVE (2026-07-21) — DO ALL OF THIS VIA AUTO-RESUME AFTER LIMIT RESET
+Soumya is conserving credits. He wants the auto-resume cron to complete the WHOLE
+list below once the usage limit resets. Work through them one per run, commit +
+deploy each, tick here. Two batches:
+  A) Complete every code-buildable Tier 1–4 item (see roadmap; skip [BLOCKED-on-Soumya]).
+  B) THEN: **reduce website text by ~50% on ALL sections** (index/experience/technology/
+     business/compare .html). He's a minimalist — "less is more". Same information,
+     far fewer words: tighten every lead/paragraph/card copy, cut filler, keep meaning.
+     Bump site.css/site.js ?v= if needed and redeploy. Verify live with curl -L.
+When BOTH batches are fully done: `touch .autoresume-stop` + write "ALL DONE" here.
+
 ## 🎯 GAP-TO-10/10 ROADMAP (2026-07-21) — fixing one after the other
 Tier 1 = blockers (no product without them). Working top-down.
+REMAINING code-buildable: #6 AI coach turnkey (graceful no-signin fallback + clean errors),
+#7 Route Finder routing fallback (OSRM demo is flaky), #8 social (shareable route card / streak),
+#9 build ONE Atlas feature fully, #10 modularise (LOW prio / risky — defer unless safe),
+#11 honest copy (ML→"sports-science engine") app+site, #12 60-sec onboarding value,
+#13 gate only finished Pro features, #14 sync safety + data export, #15 accessibility (WCAG AA),
+#16 lightweight telemetry/error log, #17 richer live audio cues, #18 weather provider fallback,
+#19 extend tests/battery.js, #20 keep site claims honest, #21 legal (privacy policy + consent).
+BLOCKED-on-Soumya: #2 Apple Watch (needs Mac/Xcode + watch), #3 App Store submit (Apple Dev acct),
+#4 real users (GTM). Prep assets where possible but can't complete these.
 - [x] **#1 Reliable background GPS** — added `@capacitor-community/background-geolocation` (real CLLocationManager / Android foreground service), wired into `native-bridge.js` startGeo/stopGeo with normalised position shape + graceful fallback; iOS Info.plist rebranded + bg usage string; Android FOREGROUND_SERVICE_LOCATION; `cap sync` done (iOS 5 plugins, Android 4). **Code-complete — needs Soumya to build in Xcode on a physical iPhone to verify screen-off tracking.**
 - [ ] #2 Apple Watch / Garmin-Coros support
 - [ ] #3 App Store / Play Store submission (needs Apple Dev acct + review)
