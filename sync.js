@@ -55,6 +55,8 @@ window.StrideSync = (function () {
   // ---- row mappers (local S <-> DB) ----
   function profileRow(s) { return { id: user.id, email: user.email, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days_per_week: s.days, experience: s.exp, pref: s.pref, max_hr: s.maxHR || 190, height_cm: s.heightCm || null, weight_kg: s.weightKg || null, reminders_on: !!(s.reminders && s.reminders.on), current_week: s.curWeek }; }
   function planRow(s) { if (!s.planId) { s.planId = uuid(); saveS(s); } return { id: s.planId, user_id: user.id, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days: s.days, experience: s.exp, pref: s.pref, mode: s.mode || 'run', start_date: (s.created || '').slice(0, 10) || null, data: s.plan, cur_week: s.curWeek, is_active: true, updated_at: new Date(s._mut || Date.now()).toISOString() }; }
+  function planRowFrom(p, activeId) { return { id: p.planId, user_id: user.id, goal: p.goal, goal_name: p.goalName, weeks: p.weeks, days: p.days, experience: p.exp, pref: p.pref, mode: p.mode || 'run', start_date: (p.created || '').slice(0, 10) || null, data: p.plan, cur_week: p.curWeek, is_active: p.planId === activeId, updated_at: new Date(p._mut || Date.now()).toISOString() }; }
+  function planRowToSnap(r) { return { planId: r.id, goal: r.goal, goalName: r.goal_name, mode: r.mode || 'run', days: r.days, exp: r.experience, pref: r.pref, weeks: r.weeks, plan: r.data, created: (r.start_date || '') + 'T00:00:00.000Z', curWeek: r.cur_week || 1, _mut: +new Date(r.updated_at || 0) }; }
   function actRows(s) { return (s.activities || []).map(a => { if (!a.id) a.id = uuid(); return { id: a.id, user_id: user.id, name: a.name, started_at: new Date(a.startAt || a.at).toISOString(), duration_s: a.secs, distance_km: a.km, avg_pace: a.pace, avg_hr: a.hr || null, rpe: a.rpe, wet_bulb: a.wb || null, source: a.source || 'gps', route: a.pts && a.pts.length ? a.pts : null }; }); }
   function fromActRow(a) { const start = +new Date(a.started_at); return { id: a.id, name: a.name, km: +a.distance_km, secs: a.duration_s, pace: +a.avg_pace, hr: a.avg_hr, rpe: a.rpe, wb: a.wet_bulb, source: a.source, startAt: start, at: start + (a.duration_s * 1000 || 0), pts: a.route || [] }; }
   function rebuildLocal(prof, plan, acts) {
@@ -73,7 +75,8 @@ window.StrideSync = (function () {
     if (!user || syncing) return; const s = getS(); if (!s) return; syncing = true;
     try {
       await sb.from('profiles').upsert(profileRow(s));
-      if (s.plan) await sb.from('plans').upsert(planRow(s));
+      if (s.plans && s.plans.length) await sb.from('plans').upsert(s.plans.map(p => planRowFrom(p, s.planId)));  // back up every plan
+      else if (s.plan) await sb.from('plans').upsert(planRow(s));
       const rows = actRows(s); saveS(s); // saveS to persist any new activity ids
       if (rows.length) await sb.from('activities').upsert(rows);
       localStorage.setItem(OUTBOX, '');
@@ -94,6 +97,17 @@ window.StrideSync = (function () {
       if (acts && acts.length) { const have = new Set((s.activities || []).map(a => a.id)); const add = acts.filter(a => !have.has(a.id)).map(fromActRow); if (add.length) s.activities = (s.activities || []).concat(add).sort((a, b) => b.at - a.at); } // union runs
       saveS(s);
     }
+    // multi-plan: restore/merge EVERY plan (the active plan is already reconciled above)
+    try {
+      const { data: allPlans } = await sb.from('plans').select('*').eq('user_id', user.id);
+      if (allPlans && allPlans.length) {
+        const sp = getS() || {}; const byId = {};
+        (sp.plans || []).forEach(p => { byId[p.planId] = p; });
+        allPlans.forEach(r => { const snap = planRowToSnap(r); const cur = byId[snap.planId]; if (!cur || snap._mut > (cur._mut || 0)) byId[snap.planId] = snap; });  // LWW per plan
+        if (sp.planId && sp.plan) byId[sp.planId] = { planId: sp.planId, goal: sp.goal, goalName: sp.goalName, mode: sp.mode, base: sp.base, days: sp.days, exp: sp.exp, pref: sp.pref, weeks: sp.weeks, plan: sp.plan, created: sp.created, curWeek: sp.curWeek, _mut: Date.now() };  // local active stays authoritative
+        sp.plans = Object.values(byId); saveS(sp);
+      }
+    } catch (e) { console.warn('[StrideSync] plans', e && e.message); }
     // subscription status (server truth) → drives Pro gating
     const s3 = getS(); if (s3) { s3.subscription = sub ? { tier: sub.tier, status: sub.status, period_end: sub.current_period_end } : (s3.subscription || { tier: 'free' }); if (s3.subscription.tier === 'pro') s3.pro = true; saveS(s3); }
     stamp();
