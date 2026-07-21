@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Strivon">
-<link rel="apple-touch-icon" href="icon.svg">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -39,9 +39,13 @@
   #app::before{content:"";position:absolute;top:0;left:0;right:0;height:0;background:var(--accent);z-index:200;transition:height .35s ease,background .35s ease}
   :root[data-safety="ideal"] #app::before,:root[data-safety="caution"] #app::before,:root[data-safety="high"] #app::before,:root[data-safety="danger"] #app::before{height:4px}
   /* welcome splash — a route draws itself, a runner-dot leads, wordmark reveals */
-  #splash{position:absolute;inset:0;z-index:300;background:radial-gradient(circle at 50% 40%,#1a1330,#08070e);
+  #splash{position:absolute;inset:0;z-index:300;background:radial-gradient(circle at 50% 42%,#141024,#05050a 78%);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .55s ease}
   #splash.gone{opacity:0;pointer-events:none}
+  #splash-logo{width:min(82vw,360px);height:auto;mix-blend-mode:screen;
+    opacity:0;transform:scale(.93) translateY(10px);animation:splashIn 1s cubic-bezier(.2,.75,.25,1) .15s forwards}
+  @keyframes splashIn{to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){#splash-logo{animation:none;opacity:1;transform:none}}
   .splash-art{width:min(76vw,300px);height:130px;position:relative}
   .splash-art svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
   .route-bg{fill:none;stroke:rgba(255,106,61,.13);stroke-width:3}
@@ -302,16 +306,7 @@
 <body>
 <div id="app">
   <div id="splash">
-    <div class="splash-art">
-      <svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true">
-        <defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#ff4d6b"/></linearGradient></defs>
-        <path class="route-bg" d="M12,96 C70,18 120,120 168,62 S262,14 292,74"/>
-        <path class="route" style="--L:360" d="M12,96 C70,18 120,120 168,62 S262,14 292,74"/>
-        <circle class="lead" r="5.5"/>
-      </svg>
-    </div>
-    <div class="splash-word">Strivon</div>
-    <div class="splash-tag">Train smarter. Stay injury-free.</div>
+    <img id="splash-logo" src="splash-logo.png" alt="Strivon — Train smarter" decoding="async">
   </div>
   <div class="statusbar"><span>9:41</span><span class="ic">● ●●● ▮</span></div>
   <div id="install-banner" class="hide">
