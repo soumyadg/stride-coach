@@ -1341,7 +1341,13 @@ function goPro(){
   if(isPro())return;
   const cfg=window.STRIDE_CONFIG||{},link=cfg.STRIPE_PAYMENT_LINK;
   if(!link){const n=$('#trial-note');if(n)n.classList.remove('hide');return;}
-  const uid=(window.StrideSync&&StrideSync.state().userId)||'';           // so the webhook can unlock the right account
+  const st=(window.StrideSync&&StrideSync.state())||{};
+  if(st.configured&&!st.signedIn){                                        // sign in first so the payment maps to the account (server-verified unlock)
+    go('why');
+    const m=$('#acct-msg');if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Create a free account or sign in first — it links your subscription to you so Pro unlocks on every device.</div>';
+    return;
+  }
+  const uid=st.userId||'';                                                // so the webhook can unlock the right account
   const ret=location.origin+location.pathname+'?pro=success';
   const q=[];if(uid)q.push('client_reference_id='+encodeURIComponent(uid));q.push('success_url='+encodeURIComponent(ret));
   location.href=link+(link.includes('?')?'&':'?')+q.join('&');
