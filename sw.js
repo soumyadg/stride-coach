@@ -1,5 +1,5 @@
 /* Strivon service worker — offline shell + cached map tiles */
-const CACHE = 'stride-v28';
+const CACHE = 'stride-v29';
 const TILES = 'stride-tiles-v1';
 const ASSETS = ['./app.html', './manifest.webmanifest', './icon.svg', './icon-512.png', './splash-logo.png',
   './config.js', './sync.js', './native-bridge.js', './vendor/supabase.js'];

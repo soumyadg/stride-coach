@@ -1,7 +1,7 @@
 {
   "name": "Strivon",
   "short_name": "Strivon",
-  "description": "The running coach that won't get you injured.",
+  "description": "Walk or run — plans, safety and stories that adapt to how you move.",
   "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",

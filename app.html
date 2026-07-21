@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Strivon — the running coach that won't get you injured</title>
+<title>Strivon — walk or run, your way</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0a0912">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -332,10 +332,21 @@
   <div id="s-onboard" class="screen">
     <div class="prog" id="ob-prog"><i style="width:33%"></i></div>
 
-    <!-- step 1: goal -->
-    <div id="ob1">
+    <!-- step 0: how do you move -->
+    <div id="ob0">
       <div class="brand">Strivon</div>
-      <h2 style="margin-top:22px">What's your goal?</h2>
+      <h2 style="margin-top:22px">How do you like to move?</h2>
+      <div class="sub">Strivon adapts to you — walking or running.</div>
+      <div class="rows">
+        <div class="opt modeopt" onclick="setMode('walk')"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Explore, wander &amp; de-stress. For casual walkers, dog walkers, hikers, families &amp; explorers.</div></div><div class="chev">›</div></div>
+        <div class="opt modeopt" onclick="setMode('run')"><div class="tile">🏃</div><div><div class="t">Running</div><div class="d">Train, race and get faster — safely, without injury.</div></div><div class="chev">›</div></div>
+      </div>
+    </div>
+
+    <!-- step 1: goal -->
+    <div id="ob1" class="hide">
+      <div class="brand">Strivon</div>
+      <h2 id="ob1-h" style="margin-top:22px">What's your goal?</h2>
       <div class="sub">Pick the one that fits you best.</div>
       <div class="rows" id="goal-rows">
         <div class="opt on" data-v="race"><div class="tile">🏁</div><div><div class="t">Race</div><div class="d">A plan built around an upcoming race date.</div></div><div class="chev">›</div></div>
@@ -350,25 +361,25 @@
 
     <!-- step 2: about you -->
     <div id="ob2" class="hide">
-      <h2>Your running now</h2>
+      <h2 id="ob2-h">Your running now</h2>
       <div class="sub">So we set a safe, honest starting point.</div>
       <div class="row">
-        <div><label>Race distance</label>
+        <div><label id="lbl-dist">Race distance</label>
           <select id="o-goal">
             <option value="5k">5K</option><option value="10k">10K</option>
             <option value="half" selected>Half marathon</option><option value="marathon">Marathon</option>
           </select></div>
-        <div><label>Weeks to race</label><input id="o-weeks" type="number" value="12" min="4" max="24"></div>
+        <div><label id="lbl-weeks">Weeks to race</label><input id="o-weeks" type="number" value="12" min="4" max="24"></div>
       </div>
       <div class="row">
-        <div><label>Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
+        <div><label id="lbl-base">Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
         <div><label>Longest run (km)</label><input id="o-long" type="number" value="7" min="0"></div>
       </div>
       <div class="row">
         <div><label>Height (cm)</label><input id="o-height" type="number" value="" placeholder="175" min="100" max="230"></div>
         <div><label>Weight (kg)</label><input id="o-weight" type="number" value="" placeholder="70" min="30" max="250"></div>
       </div>
-      <label>Runs per week</label>
+      <label id="lbl-perweek">Runs per week</label>
       <div class="seg" id="o-days"><button data-v="3">3</button><button data-v="4" class="on">4</button><button data-v="5">5</button></div>
       <label>Experience</label>
       <div class="seg" id="o-exp"><button data-v="new" class="on">New</button><button data-v="return">Returning</button><button data-v="regular">Regular</button></div>
@@ -685,6 +696,29 @@ function runBuildLoader(){
 }
 
 // ---- SafeRamp plan generator ----
+var RUN_GOALS='<div class="opt on" data-v="race"><div class="tile">🏁</div><div><div class="t">Race</div><div class="d">A plan built around an upcoming race date.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="distance"><div class="tile">📏</div><div><div class="t">Run a specific distance</div><div class="d">5K all the way up to an ultramarathon.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="first5k"><div class="tile">🐣</div><div><div class="t">Run a first 5K</div><div class="d">Couch-to-5K, gently and safely.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="general"><div class="tile">❤️</div><div><div class="t">General training</div><div class="d">Stay fit, build a consistent habit.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="injury"><div class="tile">🩹</div><div><div class="t">Post-injury recovery</div><div class="d">Return-to-run with extra load caution.</div></div><div class="chev">›</div></div>';
+var WALK_GOALS='<div class="opt on" data-v="wgeneral"><div class="tile">🌿</div><div><div class="t">Daily walking habit</div><div class="d">A gentle, consistent daily walk for body &amp; mind.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="explore"><div class="tile">🧭</div><div><div class="t">Explore &amp; wellbeing</div><div class="d">Wander, discover, de-stress — movement for the mind.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="w5k"><div class="tile">🎯</div><div><div class="t">Walk a 5K / 10K</div><div class="d">Work up to walking a distance, comfortably.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="dog"><div class="tile">🐕</div><div><div class="t">Walk the dog</div><div class="d">Routes &amp; habits built around your dog walks.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="hike"><div class="tile">⛰️</div><div><div class="t">Hiking &amp; long walks</div><div class="d">Build up to longer walks &amp; weekend hikes.</div></div><div class="chev">›</div></div>';
+function setMode(m){
+  window._mode=m;
+  var gr=$('#goal-rows');if(gr){gr.innerHTML=(m==='walk'?WALK_GOALS:RUN_GOALS);wireSelect('#goal-rows');}
+  var set=function(id,t){var e=$('#'+id);if(e)e.textContent=t;};
+  set('ob1-h', m==='walk'?'What brings you walking?':"What's your goal?");
+  set('ob2-h', m==='walk'?'Your walking now':'Your running now');
+  set('lbl-dist', m==='walk'?'Target distance (optional)':'Race distance');
+  set('lbl-weeks', m==='walk'?'Weeks to build':'Weeks to race');
+  set('lbl-base', m==='walk'?'Weekly km now (walking)':'Weekly km now');
+  set('lbl-perweek', m==='walk'?'Walks per week':'Runs per week');
+  if(m==='walk'){var og=$('#o-goal');if(og)og.value='5k';}
+  $('#ob0').classList.add('hide');$('#ob1').classList.remove('hide');obStep(1);
+}
 function buildPlan(){
   const goal=$('#o-goal').value;
   const base=Math.max(5,+$('#o-base').value||10);
@@ -694,7 +728,7 @@ function buildPlan(){
   const exp=$('#o-exp .on').dataset.v;
   const pref=$('#pref-grid .on').dataset.v;
   const goalName=$('#goal-rows .on .t').textContent;
-  const mode=$('#goal-rows .on').dataset.v==='walk'?'walk':'run';
+  const mode=window._mode||(($('#goal-rows .on')&&$('#goal-rows .on').dataset.v==='walk')?'walk':'run');
   const peak=(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
   let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
   if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
@@ -751,9 +785,9 @@ function buildCoachContext(){
   try{const cs=curSession();if(cs)L.push(`Today's planned session: ${cs.t}${cs.km?' '+cs.km+'km':''}.`);}catch(e){}
   if(S.readiness)L.push(`Latest readiness: ${S.readiness.level} (score ${S.readiness.score}/6).`);
   const acts=(S.activities||[]).slice(0,6);
-  if(acts.length)L.push('Recent runs: '+acts.map(a=>`${a.km.toFixed(1)}km @ ${paceStr(a.pace)}/km${a.hr?' HR'+a.hr:''}`).join('; ')+'.');
+  if(acts.length)L.push((S.mode==='walk'?'Recent walks: ':'Recent runs: ')+acts.map(a=>`${a.km.toFixed(1)}km @ ${paceStr(a.pace)}/km${a.hr?' HR'+a.hr:''}`).join('; ')+'.');
   try{const f=trainingForm();if(f)L.push(`Training form: fitness ${f.ctl}, fatigue ${f.atl}, form ${f.tsb>0?'+':''}${f.tsb} (${formVerdict(f.tsb)[0]}).`);}catch(e){}
-  try{const p=predictRaces();if(p)L.push('Predicted races: '+Object.keys(p.out).map(k=>`${k} ${fmtHMS(p.out[k].secs)}`).join(', ')+'.');const v=vdotEstimate();if(v)L.push(`Est. VO2max ${v}.`);}catch(e){}
+  try{const p=predictRaces();if(p)L.push((S.mode==='walk'?'Predicted walk times: ':'Predicted races: ')+Object.keys(p.out).map(k=>`${k} ${fmtHMS(p.out[k].secs)}`).join(', ')+'.');if(S.mode!=='walk'){const v=vdotEstimate();if(v)L.push(`Est. VO2max ${v}.`);}}catch(e){}
   if(window._weatherRec)L.push('Weather today: '+window._weatherRec+'.');
   if(window._airNow)L.push(`Air quality: ${window._airNow.label} (AQI ${window._airNow.val}).`);
   if(S.heightCm&&S.weightKg)L.push(`Height ${S.heightCm}cm, weight ${S.weightKg}kg.`);
@@ -894,7 +928,7 @@ function saveActiveToPlans(){if(!S||!S.plan)return;S.plans=S.plans||[];const i=S
 function loadSnapshot(p){Object.assign(S,{planId:p.planId,goal:p.goal,goalName:p.goalName,mode:p.mode,base:p.base,days:p.days,exp:p.exp,pref:p.pref,weeks:p.weeks,plan:p.plan,created:p.created,curWeek:p.curWeek});}
 function switchPlan(id){if(!S||id===S.planId)return;saveActiveToPlans();const p=(S.plans||[]).find(x=>x.planId===id);if(!p)return;loadSnapshot(p);store.set(S);renderAll();go('today');}
 function deletePlan(id){const plans=S.plans||[];if(plans.length<=1)return;if(!confirm('Delete this plan? This can’t be undone.'))return;const wasActive=id===S.planId;S.plans=plans.filter(p=>p.planId!==id);if(wasActive)loadSnapshot(S.plans[0]);store.set(S);renderAll();renderPlans();}
-function startNewPlan(){if(!isPro())return;saveActiveToPlans();store.set(S);S._addPlan=true;$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');obStep(1);}
+function startNewPlan(){if(!isPro())return;saveActiveToPlans();store.set(S);S._addPlan=true;$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');window._mode=null;['ob1','ob2','ob3'].forEach(function(id){$('#'+id).classList.add('hide');});$('#ob0').classList.remove('hide');playStep($('#ob0'));}
 function distLabel(g){return({'5k':'5K','10k':'10K','half':'Half','marathon':'Marathon'})[g]||g||'';}
 function renderPlans(){
   const el=$('#plans-card');if(!el||!S){if(el)el.style.display='none';return;}
@@ -1554,11 +1588,12 @@ function fmt(s){const m=Math.floor(s/60);return `${m}:${String(s%60).padStart(2,
 function fmtHMS(s){s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${m}:${String(ss).padStart(2,'0')}`;}
 // ---- on-device intelligence (no server, uses your own runs) ----
 function eligibleRuns(){return (S.activities||[]).filter(a=>a.km>=1.5&&a.secs>90&&a.pace>=2.6&&a.pace<=12);}
-function predictRaces(){                                          // Riegel: T2 = T1·(D2/D1)^1.06, anchored on your best effort
+function predictRaces(){                                          // Riegel-style; gentler exponent for walkers
   const acts=eligibleRuns();if(acts.length<1)return null;
-  let best=null,bestEq=Infinity;acts.forEach(a=>{const eq=a.secs*Math.pow(5/a.km,1.06);if(eq<bestEq){bestEq=eq;best=a;}});
+  const E=(S&&S.mode==='walk')?1.02:1.06;
+  let best=null,bestEq=Infinity;acts.forEach(a=>{const eq=a.secs*Math.pow(5/a.km,E);if(eq<bestEq){bestEq=eq;best=a;}});
   const D={'5K':5,'10K':10,'Half':21.0975,'Marathon':42.195};const out={};
-  for(const k in D)out[k]={secs:best.secs*Math.pow(D[k]/best.km,1.06),km:D[k]};
+  for(const k in D)out[k]={secs:best.secs*Math.pow(D[k]/best.km,E),km:D[k]};
   return {out,ref:best,n:acts.length};
 }
 function vdotEstimate(){                                          // Daniels VDOT from best effort
@@ -1588,8 +1623,8 @@ function formVerdict(tsb){
 function renderInsights(){
   const el=$('#insights-card');if(!el)return;
   const p=predictRaces();
-  if(!p){el.innerHTML=`<div class="kicker">🧠 Smart insights</div><div class="sub" style="margin-top:4px">Log a couple of runs (1.5km+) and Strivon will predict your race times, VO₂max and training form — all computed on your device.</div>`;return;}
-  const vo2=vdotEstimate(),form=trainingForm();
+  if(!p){el.innerHTML=`<div class="kicker">🧠 Smart insights</div><div class="sub" style="margin-top:4px">Log a couple of ${(S&&S.mode==='walk')?'walks':'runs'} (1.5km+) and Strivon will show your ${(S&&S.mode==='walk')?'walk times':'race times, VO₂max'} and training form — all on your device.</div>`;return;}
+  const walk=S&&S.mode==='walk';const vo2=walk?null:vdotEstimate(),form=trainingForm();
   const rt=Object.keys(p.out).map(k=>`<div class="stat"><div class="v tick" style="font-size:18px">${fmtHMS(p.out[k].secs)}</div><div class="k">${k}</div></div>`).join('');
   let formHtml='';
   if(form){const[txt,cls]=formVerdict(form.tsb);
@@ -1603,11 +1638,11 @@ function renderInsights(){
       </div>
       <div style="display:flex;align-items:flex-end;gap:1px;height:34px;margin-top:8px">${spark}</div></div>`;
   }
-  el.innerHTML=`<div class="kicker" style="display:flex;justify-content:space-between;align-items:center">🧠 Race predictions ${vo2?`<span class="pill">VO₂max ~${vo2}</span>`:''}</div>
-    <div class="sub" style="margin-top:4px">From your best recent effort (${p.ref.km.toFixed(1)}km @ ${paceStr(p.ref.pace)}/km) · Riegel model.</div>
+  el.innerHTML=`<div class="kicker" style="display:flex;justify-content:space-between;align-items:center">${walk?'🚶 Walk-time predictions':'🧠 Race predictions'} ${vo2?`<span class="pill">VO₂max ~${vo2}</span>`:''}</div>
+    <div class="sub" style="margin-top:4px">From your best ${walk?'walk':'effort'} (${p.ref.km.toFixed(1)}km @ ${paceStr(p.ref.pace)}/km).</div>
     <div class="stats" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:10px">${rt}</div>
     ${formHtml}
-    <div class="sub" style="margin-top:10px;opacity:.7">Estimates from your own runs — not medical advice. More runs = sharper predictions.</div>`;
+    <div class="sub" style="margin-top:10px;opacity:.7">Estimates from your own ${walk?'walks':'runs'} — not medical advice. More activity = sharper predictions.</div>`;
 }
 function go(v){['today','plan','run','stats','atlas','why'].forEach(x=>$('#s-'+x).classList.add('hide'));
   const s=$('#s-'+v);s.classList.remove('hide');
@@ -1824,7 +1859,7 @@ function tintSplash(){
   }catch(e){}
 }
 // ---- boot (welcome splash → app) ----
-function runBoot(){if(S&&S.plan)enterApp();else playStep($('#ob1'));}
+function runBoot(){if(S&&S.plan)enterApp();else{$('#ob1').classList.add('hide');$('#ob0').classList.remove('hide');playStep($('#ob0'));}}
 function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dataset.done='1';runBoot();s.classList.add('gone');setTimeout(()=>{s.style.display='none';},650);}
 (function(){
   const s=$('#splash');if(!s){runBoot();return;}
