@@ -1,18 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 120" width="660" height="120" role="img" aria-label="Stride">
-  <defs><linearGradient id="g" x1="20" y1="180" x2="180" y2="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#ff4d6b"/></linearGradient></defs>
-  <g transform="translate(5.70,19.30) scale(0.45)" fill="url(#g)">
-    <circle cx="119.1" cy="35.1" r="17"/>
-    <rect x="90.0" y="103.0" width="65.0" height="24.0" rx="12.0" transform="rotate(-70 90.0 115.0)"/>
-    <rect x="90.0" y="104.0" width="50.0" height="22.0" rx="11.0" transform="rotate(-20 90.0 115.0)"/>
-    <rect x="137.0" y="89.4" width="48.0" height="17.0" rx="8.5" transform="rotate(60 137.0 97.9)"/>
-    <rect x="90.0" y="104.0" width="48.0" height="22.0" rx="11.0" transform="rotate(150 90.0 115.0)"/>
-    <rect x="48.4" y="131.0" width="42.0" height="16.0" rx="8.0" transform="rotate(110 48.4 139.0)"/>
-    <rect x="105.4" y="65.2" width="32.0" height="15.0" rx="7.5" transform="rotate(-30 105.4 72.7)"/>
-    <rect x="133.1" y="50.7" width="30.0" height="12.0" rx="6.0" transform="rotate(20 133.1 56.7)"/>
-    <rect x="105.4" y="65.2" width="30.0" height="15.0" rx="7.5" transform="rotate(160 105.4 72.7)"/>
-    <rect x="77.2" y="77.5" width="28.0" height="11.0" rx="5.5" transform="rotate(100 77.2 83.0)"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 535 120" width="535" height="120" role="img" aria-label="Stride">
+  <defs><linearGradient id="g" x1="30" y1="210" x2="200" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff7a45"/><stop offset="1" stop-color="#ff4d6b"/></linearGradient></defs>
+  <g transform="translate(5.07,-5.13) scale(0.6208)">
+    <path d="M18 92 H66" stroke="url(#g)" stroke-width="13" stroke-linecap="round" fill="none" opacity="0.5"/>
+    <path d="M8 122 H54" stroke="url(#g)" stroke-width="13" stroke-linecap="round" fill="none" opacity="0.32"/>
+    <path d="M22 152 H60" stroke="url(#g)" stroke-width="13" stroke-linecap="round" fill="none" opacity="0.2"/>
+    <g fill="url(#g)">
+      <circle cx="148.8" cy="46.6" r="19"/>
+      <rect x="108.0" y="107.0" width="62.0" height="26.0" rx="13.0" transform="rotate(-62 108.0 120.0)"/>
+      <rect x="108.0" y="108.0" width="52.0" height="24.0" rx="12.0" transform="rotate(-8 108.0 120.0)"/>
+      <rect x="159.5" y="103.8" width="50.0" height="18.0" rx="9.0" transform="rotate(52 159.5 112.8)"/>
+      <rect x="108.0" y="108.0" width="50.0" height="24.0" rx="12.0" transform="rotate(158 108.0 120.0)"/>
+      <rect x="61.6" y="130.2" width="46.0" height="17.0" rx="8.5" transform="rotate(122 61.6 138.7)"/>
+      <rect x="129.6" y="71.4" width="34.0" height="16.0" rx="8.0" transform="rotate(-18 129.6 79.4)"/>
+      <rect x="161.9" y="62.4" width="30.0" height="13.0" rx="6.5" transform="rotate(42 161.9 68.9)"/>
+      <rect x="129.6" y="71.4" width="32.0" height="16.0" rx="8.0" transform="rotate(168 129.6 79.4)"/>
+      <rect x="98.3" y="80.0" width="28.0" height="12.0" rx="6.0" transform="rotate(128 98.3 86.0)"/>
+    </g>
   </g>
   <text font-family="'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif" font-weight="800" font-size="64" letter-spacing="-2">
-    <tspan x="112" y="87" fill="#0a0912">Stride</tspan><tspan fill="#ff6a3d">.</tspan><tspan fill="#0a0912">Coach</tspan>
+    <tspan x="146" y="87" fill="#0a0912">Stride</tspan><tspan fill="#ff6a3d">.</tspan><tspan fill="#0a0912">Coach</tspan>
   </text>
 </svg>
