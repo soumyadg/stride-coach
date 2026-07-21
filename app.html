@@ -554,7 +554,7 @@
         </div>
         <div class="sub" style="margin-top:2px">Effortless &amp; serious — for when you commit to a race.</div>
         <ul class="feat">
-          <li class="lock">Import your runs — GPX/TCX files (+ Strava)</li>
+          <li class="lock">Import your history — Apple Health · Watch · Garmin · Strava (bulk GPX/TCX)</li>
           <li class="lock">Live audio coaching (voice)</li>
           <li class="lock">HR-zone training + full workout library</li>
           <li class="lock">Race-specific &amp; multiple plans</li>
@@ -1859,11 +1859,16 @@ function renderImport(){
   const el=$('#import-card');if(!el)return;
   if(!isPro()){el.style.display='none';return;}
   el.style.display='';
-  el.innerHTML=`<div class="kicker">📥 Import a run <span class="pill g">PRO</span></div>
-    <div class="sub" style="margin-top:4px">Add runs from a <b>GPX</b> or <b>TCX</b> file — export them free from Strava, Garmin Connect or Apple Health. They land in your Stats &amp; PRs.</div>
-    <label class="btn p" style="margin-top:12px;display:inline-block;cursor:pointer">Choose file
-      <input type="file" accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" style="display:none" onchange="importFile(this.files&&this.files[0]);this.value=''"></label>
+  el.innerHTML=`<div class="kicker">📥 Import your history <span class="pill g">PRO</span></div>
+    <div class="sub" style="margin-top:4px">Bring in runs &amp; walks from <b>Apple Health / Apple Watch</b>, <b>Garmin</b>, <b>Coros</b> or <b>Strava</b> — export your workouts and drop the <b>GPX/TCX</b> files here (select as many as you like at once). They feed your fitness, form &amp; injury radar.</div>
+    <label class="btn p" style="margin-top:12px;display:inline-block;cursor:pointer">Choose files
+      <input type="file" multiple accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" style="display:none" onchange="importFiles(this.files);this.value=''"></label>
+    <div class="sub" style="margin-top:8px;font-size:12px;opacity:.7">Tip: on iPhone, Apple Health → your workout → share the route as GPX. Garmin/Strava → export original. Multiple files import in one go.</div>
     <div id="import-msg"></div>`;
+}
+// De-dupe guard: same start time (±2 min) and near-identical distance = already have it.
+function activityExists(a){
+  return (S.activities||[]).some(x=>Math.abs((x.startAt||x.at||0)-(a.startAt||0))<120000 && Math.abs((x.km||0)-(a.km||0))<0.05);
 }
 function haversine(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r,la1=a.lat*r,la2=b.lat*r;const h=Math.sin(dLa/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
 function parseTrack(xml){
@@ -1891,18 +1896,40 @@ function parseTrack(xml){
   const hr=hrs.length?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length):null;
   return {name,km:+km.toFixed(3),secs,pace:secs>0?+((secs/60)/km).toFixed(3):0,hr,startAt,pts:geo.slice(0,300).map(p=>[p.lat,p.lon])};
 }
-async function importFile(file){
-  const m=$('#import-msg');if(!file){return;}
-  if(m)m.innerHTML='<div class="sub" style="margin-top:10px">Reading '+file.name+'…</div>';
-  try{
-    const text=await file.text();const a=parseTrack(text);
-    S.activities=S.activities||[];
-    a.id=(crypto.randomUUID?crypto.randomUUID():'file-'+Date.now());
-    S.activities.unshift({id:a.id,name:a.name||file.name.replace(/\.(gpx|tcx)$/i,'')||'Imported run',km:a.km,secs:a.secs,pace:a.pace,hr:a.hr,rpe:null,source:'file',startAt:a.startAt,at:a.startAt+(a.secs*1000||0),pts:a.pts});
-    store.set(S);
-    if(m)m.innerHTML=`<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Imported <b>${a.km.toFixed(2)} km</b>${a.secs?' · '+Math.round(a.secs/60)+' min':''}. Added to your stats.</div>`;
-    if(window.StrideSync&&StrideSync.state().signedIn){try{await StrideSync.syncNow();}catch(e){}}
-  }catch(e){if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Could not import that file.'}</div>`;}
+async function importFile(file){ if(file) return importFiles([file]); }
+// Batch import — the whole Apple Health / Garmin / Strava export dump at once.
+async function importFiles(fileList){
+  const files=Array.from(fileList||[]);const m=$('#import-msg');
+  if(!files.length)return;
+  S.activities=S.activities||[];
+  let added=0,dupes=0,failed=0;const errs=[];
+  for(let i=0;i<files.length;i++){
+    const f=files[i];
+    if(m)m.innerHTML=`<div class="sub" style="margin-top:10px">Reading ${i+1}/${files.length} — ${f.name}…</div>`;
+    try{
+      const a=parseTrack(await f.text());
+      if(activityExists(a)){dupes++;continue;}
+      S.activities.unshift({id:(crypto.randomUUID?crypto.randomUUID():'file-'+Date.now()+'-'+i),
+        name:a.name||f.name.replace(/\.(gpx|tcx)$/i,'')||'Imported activity',
+        km:a.km,secs:a.secs,pace:a.pace,hr:a.hr,rpe:null,source:'file',
+        startAt:a.startAt,at:a.startAt+(a.secs*1000||0),pts:a.pts});
+      added++;
+    }catch(e){failed++;if(errs.length<3)errs.push(f.name+': '+((e&&e.message)||'unreadable'));}
+  }
+  // keep newest-first so Stats/last-run logic stays correct
+  S.activities.sort((x,y)=>(y.startAt||y.at||0)-(x.startAt||x.at||0));
+  store.set(S);
+  if(typeof renderStats==='function')renderStats();
+  if(m){
+    const parts=[];
+    if(added)parts.push(`<b>${added}</b> imported`);
+    if(dupes)parts.push(`${dupes} already had`);
+    if(failed)parts.push(`${failed} skipped`);
+    const cls=added?'g':(failed&&!added?'r':'a');
+    m.innerHTML=`<div class="banner ${cls}" style="margin-top:10px">${added?'<span class="tick">✓</span> ':''}${parts.join(' · ')||'Nothing to import'}.${added?' Folded into your fitness &amp; injury radar.':''}</div>`
+      +(errs.length?`<div class="sub" style="margin-top:6px;font-size:12px;opacity:.7">${errs.join('<br>')}</div>`:'');
+  }
+  if(added&&window.StrideSync&&StrideSync.state().signedIn){try{await StrideSync.syncNow();}catch(e){}}
 }
 
 document.addEventListener('stride-synced',()=>{
