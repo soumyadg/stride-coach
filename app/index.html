@@ -394,6 +394,7 @@
     <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px">
       <h1>Today</h1><span class="sub" id="today-date"></span>
     </div>
+    <div id="today-plan"></div>
     <div class="card" id="risk-card"></div>
     <div class="card glow">
       <div class="kicker">Daily readiness check</div>
@@ -487,6 +488,7 @@
     <div class="card" id="account-card"></div>
     <div class="card" id="strava-card" style="display:none"></div>
     <div class="card" id="import-card" style="display:none"></div>
+    <div class="card" id="plans-card"></div>
     <div class="card">
       <div class="kicker">What makes Stride different</div>
       <table>
@@ -671,8 +673,44 @@ function buildPlan(){
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
   const heightCm=+$('#o-height').value||null, weightKg=+$('#o-weight').value||null;
-  S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:uuid(),heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
+  const p={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1};
+  if(S&&S.plan&&S._addPlan){                                    // Pro: adding an extra race plan — keep account data + existing plans
+    saveActiveToPlans();
+    S.plans=S.plans||[]; S.plans.push({...p,_mut:Date.now()});
+    loadSnapshot(p);
+    if(heightCm)S.heightCm=heightCm; if(weightKg)S.weightKg=weightKg;
+    delete S._addPlan;
+    store.set(S); runBuildLoader(); return;
+  }
+  S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[]};
+  S.plans=[planSnapshot()];
   store.set(S); runBuildLoader();
+}
+// ---- multiple race-specific plans (Pro) ----
+function planSnapshot(src){src=src||S;return{planId:src.planId,goal:src.goal,goalName:src.goalName,mode:src.mode,base:src.base,days:src.days,exp:src.exp,pref:src.pref,weeks:src.weeks,plan:src.plan,created:src.created,curWeek:src.curWeek,_mut:Date.now()};}
+function ensurePlans(){if(!S)return;if(!Array.isArray(S.plans)||!S.plans.length){S.plans=S.plan?[planSnapshot()]:[];if(S.plan)store.set(S);}else if(S.plan&&!S.plans.some(p=>p.planId===S.planId)){S.plans.push(planSnapshot());store.set(S);}}
+function saveActiveToPlans(){if(!S||!S.plan)return;S.plans=S.plans||[];const i=S.plans.findIndex(p=>p.planId===S.planId),snap=planSnapshot();if(i>=0)S.plans[i]=snap;else S.plans.push(snap);}
+function loadSnapshot(p){Object.assign(S,{planId:p.planId,goal:p.goal,goalName:p.goalName,mode:p.mode,base:p.base,days:p.days,exp:p.exp,pref:p.pref,weeks:p.weeks,plan:p.plan,created:p.created,curWeek:p.curWeek});}
+function switchPlan(id){if(!S||id===S.planId)return;saveActiveToPlans();const p=(S.plans||[]).find(x=>x.planId===id);if(!p)return;loadSnapshot(p);store.set(S);renderAll();go('today');}
+function deletePlan(id){const plans=S.plans||[];if(plans.length<=1)return;if(!confirm('Delete this plan? This can’t be undone.'))return;const wasActive=id===S.planId;S.plans=plans.filter(p=>p.planId!==id);if(wasActive)loadSnapshot(S.plans[0]);store.set(S);renderAll();renderPlans();}
+function startNewPlan(){if(!isPro())return;saveActiveToPlans();store.set(S);S._addPlan=true;$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');obStep(1);}
+function distLabel(g){return({'5k':'5K','10k':'10K','half':'Half','marathon':'Marathon'})[g]||g||'';}
+function renderPlans(){
+  const el=$('#plans-card');if(!el||!S){if(el)el.style.display='none';return;}
+  ensurePlans();el.style.display='';
+  const plans=S.plans||[],canAdd=isPro();
+  const items=plans.map(p=>{const active=p.planId===S.planId,d=distLabel(p.goal);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)">
+      <div style="min-width:0"><div style="font-weight:800;display:flex;align-items:center;gap:8px">${p.goalName||d||'Plan'} ${active?'<span class="pill g">active</span>':''}</div>
+        <div class="sub">${d} · ${p.weeks}wk · ${p.mode==='walk'?'walk':'run'} · Wk ${p.curWeek}/${p.weeks}</div></div>
+      <div class="row" style="flex:0 0 auto;gap:6px;width:auto">${active?'':`<button class="btn ghost" style="padding:8px 12px;flex:0 0 auto" onclick="switchPlan('${p.planId}')">Switch</button>`}${plans.length>1?`<button class="btn ghost" style="padding:8px 10px;flex:0 0 auto" title="Delete" onclick="deletePlan('${p.planId}')">✕</button>`:''}</div>
+    </div>`;}).join('');
+  el.innerHTML=`<div class="kicker">🏁 Your training plans ${!canAdd?'<span class="pill">PRO</span>':''}</div>
+    <div class="sub" style="margin-top:4px">Train for more than one race — keep a 5K and a marathon plan side by side and switch anytime. Each keeps its own week &amp; progress.</div>
+    <div style="margin-top:8px">${items}</div>
+    ${canAdd?`<button class="btn p" style="margin-top:14px" onclick="startNewPlan()">＋ New plan</button>`
+            :`<button class="btn p" style="margin-top:14px" onclick="document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">Unlock multiple plans — Pro</button>`}
+    <div id="plans-msg"></div>`;
 }
 function makeSessions(vol,days,goal,w,total,mode){
   const longFrac=goal==='marathon'?0.34:goal==='half'?0.32:0.30;
@@ -694,7 +732,7 @@ function makeSessions(vol,days,goal,w,total,mode){
 }
 
 // ---- render ----
-function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();if(typeof stravaInit==='function')stravaInit();}
+function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');if(typeof ensurePlans==='function')ensurePlans();renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();if(typeof stravaInit==='function')stravaInit();}
 function renderAll(){if(!S)return;renderCurve();renderCalendar();renderToday();}
 function renderCurve(){
   const max=Math.max(...S.plan.map(x=>x.vol));
@@ -760,6 +798,8 @@ function renderToday(){
   const now=new Date();
   renderRisk();
   $('#today-date').textContent=`${DOW[now.getDay()]} ${now.getDate()} ${MON[now.getMonth()]}`;
+  const tp=$('#today-plan');if(tp){const n=(S.plans&&S.plans.length)||1;
+    tp.innerHTML=`<div onclick="go('why');setTimeout(()=>{const c=document.querySelector('#plans-card');c&&c.scrollIntoView({behavior:'smooth'})},80)" style="display:inline-flex;align-items:center;gap:8px;margin:2px 0 12px;padding:7px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:999px;cursor:pointer;font-size:13px">🏁 <b>${S.goalName||distLabel(S.goal)||'Plan'}</b><span class="sub">· Wk ${S.curWeek}/${S.weeks}</span>${n>1?` <span class="pill">${n} plans</span>`:''}<span class="sub">⌄</span></div>`;}
   const wk=S.plan[(S.curWeek-1)%S.plan.length], sesh=wk.sessions[0], adj=S.readiness;
   let s=sesh;
   if(adj&&adj.level==='amber')s={...sesh,km:+(sesh.km*0.8).toFixed(1),note:'Trimmed 20% — you flagged fatigue.'};
@@ -1304,7 +1344,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
-  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();}
+  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();if(typeof renderPlans==='function')renderPlans();}
   s.scrollTop=0;}
 
 // ---- account + cloud sync UI ----
@@ -1496,6 +1536,7 @@ document.addEventListener('stride-synced',()=>{
   if(window.StrideSync)renderAccount(StrideSync.state());
   if(typeof renderStrava==='function')renderStrava();
   if(typeof renderImport==='function')renderImport();
+  if(typeof renderPlans==='function')renderPlans();
 });
 
 // ---- tint the welcome splash to the last-known weather bucket ----
