@@ -486,6 +486,7 @@
     <h1 style="padding-top:6px">Why Stride</h1>
     <div class="card" id="account-card"></div>
     <div class="card" id="strava-card" style="display:none"></div>
+    <div class="card" id="import-card" style="display:none"></div>
     <div class="card">
       <div class="kicker">What makes Stride different</div>
       <table>
@@ -523,7 +524,7 @@
         </div>
         <div class="sub" style="margin-top:2px">Effortless &amp; serious — for when you commit to a race.</div>
         <ul class="feat">
-          <li class="lock">Auto-import your Strava runs &amp; history</li>
+          <li class="lock">Import your runs — GPX/TCX files (+ Strava)</li>
           <li class="lock">Live audio coaching (voice)</li>
           <li class="lock">HR-zone training + full workout library</li>
           <li class="lock">Race-specific &amp; multiple plans</li>
@@ -1303,7 +1304,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
-  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();}
+  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();}
   s.scrollTop=0;}
 
 // ---- account + cloud sync UI ----
@@ -1435,6 +1436,57 @@ function stravaInit(){
     run();
   }catch(e){}
 }
+// ---- Import a run from a GPX / TCX file (Pro, offline, no paywall) ----
+function renderImport(){
+  const el=$('#import-card');if(!el)return;
+  if(!isPro()){el.style.display='none';return;}
+  el.style.display='';
+  el.innerHTML=`<div class="kicker">📥 Import a run <span class="pill g">PRO</span></div>
+    <div class="sub" style="margin-top:4px">Add runs from a <b>GPX</b> or <b>TCX</b> file — export them free from Strava, Garmin Connect or Apple Health. They land in your Stats &amp; PRs.</div>
+    <label class="btn p" style="margin-top:12px;display:inline-block;cursor:pointer">Choose file
+      <input type="file" accept=".gpx,.tcx,application/gpx+xml,application/xml,text/xml" style="display:none" onchange="importFile(this.files&&this.files[0]);this.value=''"></label>
+    <div id="import-msg"></div>`;
+}
+function haversine(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r,la1=a.lat*r,la2=b.lat*r;const h=Math.sin(dLa/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+function parseTrack(xml){
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)throw new Error('That file isn’t valid GPX/TCX.');
+  const pts=[],hrs=[];let name=null,cumDist=null;
+  const gpx=doc.getElementsByTagName('trkpt');
+  if(gpx.length){
+    const nm=doc.getElementsByTagName('name')[0];if(nm)name=nm.textContent.trim();
+    for(const p of gpx){const lat=+p.getAttribute('lat'),lon=+p.getAttribute('lon');const t=p.getElementsByTagName('time')[0];const hr=p.getElementsByTagName('gpxtpx:hr')[0]||p.getElementsByTagName('hr')[0];
+      if(!isFinite(lat)||!isFinite(lon))continue;pts.push({lat,lon,time:t?Date.parse(t.textContent):null});if(hr)hrs.push(+hr.textContent);}
+  }else{
+    const tps=doc.getElementsByTagName('Trackpoint');
+    if(!tps.length)throw new Error('No track points found in that file.');
+    for(const tp of tps){const pos=tp.getElementsByTagName('Position')[0];const t=tp.getElementsByTagName('Time')[0];const d=tp.getElementsByTagName('DistanceMeters')[0];const hr=tp.getElementsByTagName('HeartRateBpm')[0];
+      let lat=null,lon=null;if(pos){const la=pos.getElementsByTagName('LatitudeDegrees')[0],lo=pos.getElementsByTagName('LongitudeDegrees')[0];if(la&&lo){lat=+la.textContent;lon=+lo.textContent;}}
+      if(d)cumDist=+d.textContent;if(hr){const v=hr.getElementsByTagName('Value')[0];if(v)hrs.push(+v.textContent);}
+      pts.push({lat,lon,time:t?Date.parse(t.textContent):null});}
+  }
+  const timed=pts.filter(p=>p.time);const secs=timed.length>1?Math.round((timed[timed.length-1].time-timed[0].time)/1000):0;
+  let km=0;const geo=pts.filter(p=>isFinite(p.lat)&&isFinite(p.lon));
+  if(cumDist&&cumDist>0)km=cumDist/1000;else for(let i=1;i<geo.length;i++)km+=haversine(geo[i-1],geo[i]);
+  if(km<=0)throw new Error('Couldn’t read a distance from that file.');
+  const startAt=timed.length?timed[0].time:Date.now();
+  const hr=hrs.length?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length):null;
+  return {name,km:+km.toFixed(3),secs,pace:secs>0?+((secs/60)/km).toFixed(3):0,hr,startAt,pts:geo.slice(0,300).map(p=>[p.lat,p.lon])};
+}
+async function importFile(file){
+  const m=$('#import-msg');if(!file){return;}
+  if(m)m.innerHTML='<div class="sub" style="margin-top:10px">Reading '+file.name+'…</div>';
+  try{
+    const text=await file.text();const a=parseTrack(text);
+    S.activities=S.activities||[];
+    a.id=(crypto.randomUUID?crypto.randomUUID():'file-'+Date.now());
+    S.activities.unshift({id:a.id,name:a.name||file.name.replace(/\.(gpx|tcx)$/i,'')||'Imported run',km:a.km,secs:a.secs,pace:a.pace,hr:a.hr,rpe:null,source:'file',startAt:a.startAt,at:a.startAt+(a.secs*1000||0),pts:a.pts});
+    store.set(S);
+    if(m)m.innerHTML=`<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Imported <b>${a.km.toFixed(2)} km</b>${a.secs?' · '+Math.round(a.secs/60)+' min':''}. Added to your stats.</div>`;
+    if(window.StrideSync&&StrideSync.state().signedIn){try{await StrideSync.syncNow();}catch(e){}}
+  }catch(e){if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Could not import that file.'}</div>`;}
+}
+
 document.addEventListener('stride-synced',()=>{
   const fresh=store.get();
   if(fresh){S=fresh;
@@ -1443,6 +1495,7 @@ document.addEventListener('stride-synced',()=>{
   }
   if(window.StrideSync)renderAccount(StrideSync.state());
   if(typeof renderStrava==='function')renderStrava();
+  if(typeof renderImport==='function')renderImport();
 });
 
 // ---- tint the welcome splash to the last-known weather bucket ----

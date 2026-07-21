@@ -88,3 +88,8 @@ Soumya connected his real Stripe + Supabase accounts; full stack now live + veri
 - PENDING (optional, Soumya's to do): Payment Link "After payment" redirect → https://soumyadg.github.io/stride-coach/?pro=success (instant return-to-app; without it Pro still unlocks on next sync via webhook). 
 - HONEST: Pro features themselves still mostly aspirational (auto-sync Strava/Garmin, multiple plans, advanced analytics not built). Pro = supporter/early-access tier today; gate real Pro value with isPro() as it ships. Free app fully functional.
 - Live URL: https://soumyadg.github.io/stride-coach/  · reinstall PWA to get v17.
+
+## 🔗📥 STRAVA PAYWALLED → GPX/TCX FILE IMPORT shipped (2026-07-21)
+Strava auto-import: fully BUILT (edge fn strava-sync + OAuth + token refresh + import, migration 0002, config STRAVA_CLIENT_ID, app UI) but Strava now gates ALL API access behind a PAID Strava subscription ("API available to subscribers") — free accounts can't even create an API app. Per spend-discipline: NOT paying Strava for a 0-user feature. Strava code stays dormant (UI hidden until STRAVA_CLIENT_ID set) — lights up instantly if he ever gets API access.
+PIVOT (no-paywall, serves the same "import my runs" intent): **GPX/TCX file import** — Pro card in Why → "Import a run". Client-side DOMParser: GPX (haversine distance) + TCX (cumulative DistanceMeters + HR avg), computes km/secs/pace/hr/route, adds to activities (source:'file'), syncs up if signed in. Browser-verified: GPX 1.001km@4:59, TCX 2km@5:00 HR135, 5K end-to-end add, Pro-gated, friendly errors. Offline, zero external cost. SW v19.
+Users export GPX/TCX free from Strava/Garmin/Apple Health. STRAVA.md documents the dormant Strava path.
