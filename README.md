@@ -8,10 +8,14 @@ App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no 
 ### 🔴 Live demo → **[soumyadg.github.io/stride-coach](https://soumyadg.github.io/stride-coach/)**  ·  installable PWA · works on mobile
 
 <p align="center">
-  <img src="app/screenshots/g1-goal.png" width="30%" alt="Onboarding — pick your goal">
-  <img src="app/screenshots/12-font-today.png" width="30%" alt="Today — injury-risk radar">
-  <img src="app/screenshots/g3-run.png" width="30%" alt="Live run — real map + heart rate">
+  <img src="docs/screenshots/today.png" width="24%" alt="Today — injury-risk radar + plans">
+  <img src="docs/screenshots/insights.png" width="24%" alt="On-device AI — race predictions, VO₂max, form">
+  <img src="docs/screenshots/coach.png" width="24%" alt="AI coach + race-specific plans">
+  <img src="docs/screenshots/atlas.png" width="24%" alt="Atlas — life story map + time capsules">
 </p>
+
+### 🗺️ Where this is going → **[Product vision: Strivon Atlas](docs/vision.html)**
+> Not just a tracker — a *geographical autobiography*: your journeys fused with memories, future-self time capsules, an AI companion, a real-world RPG and a legacy that outlives you. See [`docs/vision.html`](docs/vision.html) for the full 18-part strategy (open it in a browser).
 
 ---
 
@@ -19,23 +23,23 @@ App **#1 of 30**. Single self-contained web prototype (`app/index.html`) — no 
 
 <table>
   <tr>
-    <td width="33%"><img src="app/screenshots/g1-goal.png" alt="Pick your goal"></td>
-    <td width="33%"><img src="app/screenshots/12-font-today.png" alt="Injury-risk radar"></td>
-    <td width="33%"><img src="app/screenshots/g2-calendar.png" alt="Training calendar"></td>
+    <td width="33%"><img src="docs/screenshots/today.png" alt="Today"></td>
+    <td width="33%"><img src="docs/screenshots/insights.png" alt="Smart insights"></td>
+    <td width="33%"><img src="docs/screenshots/coach.png" alt="AI coach"></td>
   </tr>
   <tr>
-    <td align="center"><b>Pick your goal</b><br><sub>Animated onboarding</sub></td>
-    <td align="center"><b>Injury-risk radar</b><br><sub>Live ACWR heat-stress gauge</sub></td>
-    <td align="center"><b>Training calendar</b><br><sub>SafeRamp load + deloads</sub></td>
+    <td align="center"><b>Today</b><br><sub>Injury-risk radar + multi-plan</sub></td>
+    <td align="center"><b>Smart insights</b><br><sub>On-device race predictions · VO₂max · form</sub></td>
+    <td align="center"><b>AI coach + voice</b><br><sub>Claude, grounded in your data · mic input</sub></td>
   </tr>
   <tr>
+    <td><img src="docs/screenshots/atlas.png" alt="Atlas life story map"></td>
     <td><img src="app/screenshots/g3-run.png" alt="Live run coaching"></td>
-    <td><img src="app/screenshots/14-treadmill.png" alt="Treadmill mode"></td>
     <td><img src="app/screenshots/g4-stats.png" alt="Stats and records"></td>
   </tr>
   <tr>
+    <td align="center"><b>🗺️ Atlas</b><br><sub>Life story map · memories · time capsules</sub></td>
     <td align="center"><b>Live run coaching</b><br><sub>Real map · Bluetooth HR · voice</sub></td>
-    <td align="center"><b>Treadmill mode</b><br><sub>Speed-integrated distance</sub></td>
     <td align="center"><b>Stats &amp; records</b><br><sub>PRs + one-tap GPX export</sub></td>
   </tr>
   <tr>
