@@ -4,7 +4,7 @@
 window.StrideSync = (function () {
   const cfg = window.STRIDE_CONFIG || {};
   const OUTBOX = 'stride_outbox', LAST = 'stride_lastsync';
-  let sb = null, user = null, syncing = false, pushTimer = null, onState = null;
+  let sb = null, user = null, accessToken = null, syncing = false, pushTimer = null, onState = null;
 
   const configured = () => !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && window.supabase);
   const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2));
@@ -22,15 +22,24 @@ window.StrideSync = (function () {
       if (!configured()) { N.enabled = false; cb && cb(N.state()); return; }
       N.enabled = true;
       sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
-      sb.auth.onAuthStateChange((_e, session) => { user = session ? session.user : null; cb && cb(N.state()); if (user) firstSync(); });
-      try { const { data } = await sb.auth.getSession(); user = data.session ? data.session.user : null; } catch (e) {}
+      sb.auth.onAuthStateChange((_e, session) => { user = session ? session.user : null; accessToken = session ? session.access_token : null; cb && cb(N.state()); if (user) firstSync(); });
+      try { const { data } = await sb.auth.getSession(); user = data.session ? data.session.user : null; accessToken = data.session ? data.session.access_token : null; } catch (e) {}
       cb && cb(N.state());
       if (user) firstSync();
     },
 
     async signUp(email, pw) { const { error } = await sb.auth.signUp({ email, password: pw }); if (error) throw error; },
     async signIn(email, pw) { const { error } = await sb.auth.signInWithPassword({ email, password: pw }); if (error) throw error; },
-    async signOut() { try { await sb.auth.signOut(); } catch (e) {} user = null; onState && onState(N.state()); },
+    async signOut() { try { await sb.auth.signOut(); } catch (e) {} user = null; accessToken = null; onState && onState(N.state()); },
+
+    // --- integrations (Strava etc.) ---
+    token: () => accessToken,                                   // current Supabase JWT (for edge-function calls)
+    fnBase: () => (cfg.SUPABASE_URL || '').replace(/\/$/, '') + '/functions/v1',
+    async stravaStatus() {
+      if (!user || !sb) return { connected: false };
+      const { data } = await sb.from('integrations').select('athlete_id, updated_at').eq('user_id', user.id).eq('provider', 'strava').maybeSingle();
+      return { connected: !!data, athleteId: data ? data.athlete_id : null, updated: data ? data.updated_at : null };
+    },
 
     // called on every local save (store.set) — marks data dirty and debounces a push
     markDirty() {

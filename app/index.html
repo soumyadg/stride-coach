@@ -485,6 +485,7 @@
   <div id="s-why" class="screen hide">
     <h1 style="padding-top:6px">Why Stride</h1>
     <div class="card" id="account-card"></div>
+    <div class="card" id="strava-card" style="display:none"></div>
     <div class="card">
       <div class="kicker">What makes Stride different</div>
       <table>
@@ -522,7 +523,7 @@
         </div>
         <div class="sub" style="margin-top:2px">Effortless &amp; serious — for when you commit to a race.</div>
         <ul class="feat">
-          <li class="lock">Auto-sync to Strava &amp; Garmin</li>
+          <li class="lock">Auto-import your Strava runs &amp; history</li>
           <li class="lock">Live audio coaching (voice)</li>
           <li class="lock">HR-zone training + full workout library</li>
           <li class="lock">Race-specific &amp; multiple plans</li>
@@ -692,7 +693,7 @@ function makeSessions(vol,days,goal,w,total,mode){
 }
 
 // ---- render ----
-function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();}
+function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();if(typeof stravaInit==='function')stravaInit();}
 function renderAll(){if(!S)return;renderCurve();renderCalendar();renderToday();}
 function renderCurve(){
   const max=Math.max(...S.plan.map(x=>x.vol));
@@ -1302,7 +1303,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
-  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();}
+  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();}
   s.scrollTop=0;}
 
 // ---- account + cloud sync UI ----
@@ -1361,6 +1362,79 @@ function proInit(){
     go('why');coach&&0;
   }}catch(e){}
 }
+
+// ---- Strava auto-import (Pro) ----
+function stravaConfigured(){const c=window.STRIDE_CONFIG||{};return !!(c.STRAVA_CLIENT_ID&&window.StrideSync&&StrideSync.state().configured);}
+async function renderStrava(){
+  const el=$('#strava-card');if(!el)return;
+  if(!stravaConfigured()){el.style.display='none';return;}
+  const st=StrideSync.state();
+  el.style.display='';
+  if(!isPro()){
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import <span class="pill">PRO</span></div>
+      <div class="sub" style="margin-top:4px">Pull your Strava runs &amp; history straight into Stride — no manual logging. Included with Pro.</div>
+      <button class="btn ghost" style="margin-top:12px" onclick="go('why');document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">See Pro</button>`;
+    return;
+  }
+  if(!st.signedIn){
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import</div><div class="sub" style="margin-top:4px">Sign in to your Stride account above to connect Strava.</div>`;
+    return;
+  }
+  let status={connected:false};try{status=await StrideSync.stravaStatus();}catch(e){}
+  if(status.connected){
+    el.innerHTML=`<div class="kicker">🔗 Strava <span class="pill g">connected</span></div>
+      <div class="sub" style="margin-top:4px">${status.updated?'Last import '+timeAgo(status.updated):'Ready to import your latest runs.'}</div>
+      <div class="row" style="margin-top:12px"><button class="btn p" id="strava-import-btn" onclick="importStrava()">Import runs</button></div>
+      <div id="strava-msg"></div>`;
+  }else{
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import <span class="pill g">PRO</span></div>
+      <div class="sub" style="margin-top:4px">Connect once — Stride pulls in your Strava runs and keeps your stats &amp; PRs complete.</div>
+      <button class="btn p" style="margin-top:12px;background:#fc4c02" onclick="connectStrava()">Connect Strava</button>
+      <div id="strava-msg"></div>`;
+  }
+}
+function connectStrava(){
+  const c=window.STRIDE_CONFIG||{};const jwt=(window.StrideSync&&StrideSync.token())||'';
+  if(!jwt){const m=$('#strava-msg');if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Sign in first, then connect.</div>';return;}
+  const redirect=StrideSync.fnBase()+'/strava-sync';
+  const u='https://www.strava.com/oauth/authorize'
+    +'?client_id='+encodeURIComponent(c.STRAVA_CLIENT_ID)
+    +'&response_type=code&approval_prompt=auto&scope=activity:read_all'
+    +'&redirect_uri='+encodeURIComponent(redirect)
+    +'&state='+encodeURIComponent(jwt);
+  location.href=u;
+}
+async function importStrava(){
+  const btn=$('#strava-import-btn'),m=$('#strava-msg');const jwt=(window.StrideSync&&StrideSync.token())||'';
+  if(!jwt){if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Sign in first.</div>';return;}
+  if(btn){btn.disabled=true;btn.textContent='Importing…';}
+  if(m)m.innerHTML='<div class="sub" style="margin-top:10px">Fetching from Strava…</div>';
+  try{
+    const r=await fetch(StrideSync.fnBase()+'/strava-sync?action=import',{method:'POST',headers:{'Authorization':'Bearer '+jwt}});
+    const d=await r.json();
+    if(!r.ok||d.error){throw new Error(d.error==='not_connected'?'Strava not connected.':(d.detail||d.error||'Import failed'));}
+    if(m)m.innerHTML=`<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Imported ${d.imported} run${d.imported===1?'':'s'} from Strava.</div>`;
+    try{await StrideSync.syncNow();}catch(e){}                           // pull the new activities into local + refresh stats
+    renderStrava();
+  }catch(e){if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${(e&&e.message)||'Import failed.'}</div>`;}
+  finally{if(btn){btn.disabled=false;btn.textContent='Import runs';}}
+}
+function stravaInit(){
+  try{const p=new URLSearchParams(location.search);const s=p.get('strava');if(!s)return;
+    history.replaceState(null,'',location.pathname);
+    let tries=0;
+    const run=()=>{
+      go('why');
+      const ready=window.StrideSync&&StrideSync.state().signedIn&&StrideSync.token();
+      if(s==='connected'&&!ready&&tries++<20){return setTimeout(run,300);}   // wait ≤6s for session restore
+      renderStrava().then(()=>setTimeout(()=>{const m=$('#strava-msg');
+        if(s==='connected'){if(m)m.innerHTML='<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Strava connected! Importing your runs…</div>';importStrava();}
+        else{const why={denied:'Strava connection was cancelled.',autherror:'Session expired — sign in and try again.',exchangefail:'Strava handshake failed — try again.'}[s]||'Something went wrong connecting Strava.';if(m)m.innerHTML=`<div class="banner r" style="margin-top:10px">${why}</div>`;}
+      },60));
+    };
+    run();
+  }catch(e){}
+}
 document.addEventListener('stride-synced',()=>{
   const fresh=store.get();
   if(fresh){S=fresh;
@@ -1368,6 +1442,7 @@ document.addEventListener('stride-synced',()=>{
     else if(!$('#nav').classList.contains('hide')){renderAll();const on=$$('#nav button').find(b=>b.classList.contains('on'));if(on&&on.dataset.v==='stats')renderStats();}
   }
   if(window.StrideSync)renderAccount(StrideSync.state());
+  if(typeof renderStrava==='function')renderStrava();
 });
 
 // ---- tint the welcome splash to the last-known weather bucket ----
