@@ -1,5 +1,5 @@
 /* Strivon service worker — offline shell + cached map tiles */
-const CACHE = 'stride-v27';
+const CACHE = 'stride-v28';
 const TILES = 'stride-tiles-v1';
 const ASSETS = ['./app.html', './manifest.webmanifest', './icon.svg', './icon-512.png', './splash-logo.png',
   './config.js', './sync.js', './native-bridge.js', './vendor/supabase.js'];
@@ -28,8 +28,16 @@ self.addEventListener('fetch', e => {
     }));
     return;
   }
-  // App shell: cache-first, fall back to network
-  if (e.request.method === 'GET' && url.startsWith(self.location.origin)) {
-    e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+  if (e.request.method !== 'GET' || !url.startsWith(self.location.origin)) return;
+  // HTML navigations: network-FIRST (always get fresh pages; fall back to cache only offline)
+  if (e.request.mode === 'navigate' || (e.request.headers.get('accept') || '').includes('text/html')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => { const c = res.clone(); caches.open(CACHE).then(ca => ca.put(e.request, c)); return res; })
+        .catch(() => caches.match(e.request).then(r => r || caches.match('./app.html')))
+    );
+    return;
   }
+  // Other assets: cache-first, fall back to network
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
