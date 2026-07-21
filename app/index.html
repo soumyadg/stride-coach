@@ -17,7 +17,8 @@
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
     font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+  @media(max-width:640px){.wrap{padding:0 22px}}
   .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:600}
   h1,h2,h3{font-family:var(--disp);font-weight:800;letter-spacing:-.03em;line-height:1.02;text-wrap:balance;margin:0}
   h2{font-size:clamp(30px,4.6vw,50px);letter-spacing:-.035em}
