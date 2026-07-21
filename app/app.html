@@ -89,6 +89,7 @@
   .screen::-webkit-scrollbar{display:none}
   /* desktop: present the phone app as a centered device frame instead of a floating strip */
   @media(min-width:820px){
+    #s-onboard{display:flex;flex-direction:column;justify-content:center}
     body{align-items:center;min-height:100vh;padding:22px 0;
       background:radial-gradient(120% 90% at 82% 8%,rgba(255,106,61,.10),transparent 46%),radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.11),transparent 46%),#07060c}
     #app{min-height:0;height:min(900px,94vh);border-radius:34px;
@@ -364,7 +365,7 @@
         <div class="opt" data-v="injury"><div class="tile">🩹</div><div><div class="t">Post-injury recovery</div><div class="d">Return-to-run with extra load caution.</div></div><div class="chev">›</div></div>
         <div class="opt" data-v="walk"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Build a walking habit or walk to a 5K — gently &amp; safely.</div></div><div class="chev">›</div></div>
       </div>
-      <div class="cta"><button class="btn p" onclick="obStep(2)">Continue</button></div>
+      <div class="cta"><div class="row"><button class="btn ghost" style="flex:.5" onclick="backToMode()">Back</button><button class="btn p" onclick="obStep(2)">Continue</button></div></div>
     </div>
 
     <!-- step 2: about you -->
@@ -728,6 +729,7 @@ function setMode(m){
   if(m==='walk'){var og=$('#o-goal');if(og)og.value='5k';}
   $('#ob0').classList.add('hide');$('#ob1').classList.remove('hide');obStep(1);
 }
+function backToMode(){window._mode=null;var o1=document.getElementById("ob1");if(o1)o1.classList.add("hide");var o0=document.getElementById("ob0");if(o0)o0.classList.remove("hide");if(typeof playStep=="function")playStep(o0);}
 function buildPlan(){
   const goal=$('#o-goal').value;
   const base=Math.max(5,+$('#o-base').value||10);
