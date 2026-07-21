@@ -87,6 +87,14 @@
     display:flex;flex-direction:column;overflow:hidden}
   .screen{flex:1;overflow-y:auto;padding:0 20px calc(96px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
   .screen::-webkit-scrollbar{display:none}
+  /* desktop: present the phone app as a centered device frame instead of a floating strip */
+  @media(min-width:820px){
+    body{align-items:center;min-height:100vh;padding:22px 0;
+      background:radial-gradient(120% 90% at 82% 8%,rgba(255,106,61,.10),transparent 46%),radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.11),transparent 46%),#07060c}
+    #app{min-height:0;height:min(900px,94vh);border-radius:34px;
+      box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.07)}
+    nav{position:absolute;bottom:0}
+  }
   /* iPhone/installed-app safe areas: hide the mock status bar (iOS shows its own) + clear the notch.
      Driven by a JS-added .standalone class (reliable on all iOS) plus the media query as backup. */
   @media (display-mode:standalone),(display-mode:fullscreen){
@@ -424,6 +432,7 @@
     </div>
     <div class="card" id="today-sesh"></div>
     <div class="card" id="weather-card"><div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Checking conditions…</div></div>
+    <div class="card" id="route-card"></div>
     <div class="card" id="reminder-card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div><div class="kicker">🔔 Training reminders</div><div class="sub" style="margin-top:2px">A nudge on your run days at 7:30am.</div></div>
@@ -1046,6 +1055,7 @@ function renderToday(){
       <div style="font-size:20px;font-weight:800" class="mono tick">${s.km?s.km+'km':'—'}</div></div>
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
+  if(typeof renderRouteFinder==='function')renderRouteFinder();
 }
 
 // ---- readiness ----
@@ -1346,6 +1356,63 @@ function render(){
 // real slippy-map: CartoDB dark tiles + web-mercator projection
 const MAP_Z=16;
 function project(lat,lon,z){const s=256*Math.pow(2,z),x=(lon+180)/360*s,sl=Math.sin(lat*Math.PI/180),y=(0.5-Math.log((1+sl)/(1-sl))/(4*Math.PI))*s;return{x,y};}
+// ---- Route Finder: generate a fresh loop like your last outing (keyless OSRM) ----
+function destPoint(lat,lon,brng,dKm){const R=6371,d=dKm/R,b=brng*Math.PI/180,la1=lat*Math.PI/180,lo1=lon*Math.PI/180;const la2=Math.asin(Math.sin(la1)*Math.cos(d)+Math.cos(la1)*Math.sin(d)*Math.cos(b));const lo2=lo1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la1),Math.cos(d)-Math.sin(la1)*Math.sin(la2));return [la2*180/Math.PI,((lo2*180/Math.PI+540)%360)-180];}
+function lastAct(){return (S.activities||[]).filter(a=>a.km>0)[0]||null;}
+function routeStart(){const a=lastAct();if(a&&a.pts&&a.pts.length)return[a.pts[0][0],a.pts[0][1]];return null;}
+async function osrmLoop(start,targetKm,seed){
+  const base=(seed*47)%360;let r=targetKm/6.2,last=null;
+  for(let i=0;i<3;i++){
+    const wps=[start,destPoint(start[0],start[1],base,r),destPoint(start[0],start[1],base+125,r),destPoint(start[0],start[1],base+245,r*0.92),start];
+    const coords=wps.map(p=>p[1].toFixed(5)+','+p[0].toFixed(5)).join(';');
+    try{const j=await(await fetch(`https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`)).json();
+      if(j.routes&&j.routes[0]){const rt=j.routes[0],dist=rt.distance/1000;last={km:dist,geo:rt.geometry.coordinates.map(c=>[c[1],c[0]])};
+        if(Math.abs(dist-targetKm)/targetKm<0.14)return last; r*=Math.max(.5,Math.min(1.6,targetKm/dist));}
+      else break;
+    }catch(e){break;}
+  }
+  return last;
+}
+function drawRouteMini(geo){
+  const wrap=$('#rf-map'),tiles=$('#rf-tiles'),svg=$('#rf-svg');if(!wrap||!geo||!geo.length)return;
+  const W=wrap.clientWidth||340,H=wrap.clientHeight||200;
+  let laMin=90,laMax=-90,loMin=180,loMax=-180;geo.forEach(p=>{laMin=Math.min(laMin,p[0]);laMax=Math.max(laMax,p[0]);loMin=Math.min(loMin,p[1]);loMax=Math.max(loMax,p[1]);});
+  const ctr=[(laMin+laMax)/2,(loMin+loMax)/2];
+  let Z=16;for(;Z>10;Z--){const a=project(laMin,loMin,Z),b=project(laMax,loMax,Z);if(Math.abs(b.x-a.x)<W-40&&Math.abs(a.y-b.y)<H-40)break;}
+  const n=Math.pow(2,Z),c=project(ctr[0],ctr[1],Z),ox=c.x-W/2,oy=c.y-H/2;
+  const t0x=Math.floor(ox/256),t1x=Math.floor((ox+W)/256),t0y=Math.floor(oy/256),t1y=Math.floor((oy+H)/256);
+  let html='';for(let tx=t0x;tx<=t1x;tx++)for(let ty=t0y;ty<=t1y;ty++){if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n;html+=`<img src="https://basemaps.cartocdn.com/dark_all/${Z}/${wx}/${ty}.png" style="position:absolute;width:256px;height:256px;left:${Math.round(tx*256-ox)}px;top:${Math.round(ty*256-oy)}px" onerror="this.style.visibility='hidden'">`;}
+  tiles.innerHTML=html;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const pp=geo.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' ');
+  const s0=geo[0],sw=project(s0[0],s0[1],Z);
+  svg.innerHTML=`<polyline points="${pp}" fill="none" stroke="#2ee6c6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px rgba(46,230,198,.6))"/><circle cx="${(sw.x-ox).toFixed(1)}" cy="${(sw.y-oy).toFixed(1)}" r="6" fill="#ff6a3d" stroke="#fff" stroke-width="2"/>`;
+}
+let _rfBusy=false;
+async function findRoute(){
+  if(_rfBusy)return;_rfBusy=true;
+  const el=$('#route-card');const a=lastAct();
+  const target=a?a.km:(function(){try{return curSession().km||5;}catch(e){return 5;}})();
+  el.innerHTML=`<div class="kicker">🧭 Route finder</div><div class="sub" style="margin-top:8px">Finding a fresh ${actWord()} loop near you…</div>`;
+  let start=routeStart();
+  if(!start){try{const l=await getLoc();start=[l.lat,l.lon];}catch(e){start=[51.5074,-0.1278];}}
+  const seed=Math.floor((Date.now()/1000)%997);
+  const loop=await osrmLoop(start,target,seed);
+  _rfBusy=false;
+  if(!loop){el.innerHTML=`<div class="kicker">🧭 Route finder</div><div class="sub" style="margin-top:6px">Couldn’t reach the route service just now — try again in a moment.</div><button class="btn ghost" style="margin-top:10px" onclick="findRoute()">Retry</button>`;return;}
+  const walk=S&&S.mode==='walk';const pace=walk?PACES.walk:PACES.easy;const mins=Math.round(loop.km*pace);
+  el.innerHTML=`<div class="kicker">🧭 Route finder <span class="pill g">${loop.km.toFixed(1)} km</span></div>
+    <div class="sub" style="margin-top:4px">A fresh loop from your area${a?`, like your last ${actWord()} (${a.km.toFixed(1)}km)`:''}.</div>
+    <div id="rf-map" style="position:relative;height:200px;border-radius:12px;overflow:hidden;margin-top:10px;background:#0c0e16"><div id="rf-tiles" style="position:absolute;inset:0"></div><svg id="rf-svg" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"></svg><div style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · OSRM · CARTO</div></div>
+    <div class="stats" style="grid-template-columns:1fr 1fr;margin-top:10px"><div class="stat"><div class="v tick" style="font-size:18px">${loop.km.toFixed(1)}km</div><div class="k">Distance</div></div><div class="stat"><div class="v" style="font-size:18px">~${mins}min</div><div class="k">Est. ${walk?'walk':'run'}</div></div></div>
+    <button class="btn p" style="margin-top:12px" onclick="findRoute()">🔀 Find another</button>`;
+  setTimeout(()=>drawRouteMini(loop.geo),50);
+}
+function renderRouteFinder(){
+  const el=$('#route-card');if(!el||!S)return;
+  const a=lastAct();
+  el.innerHTML=`<div class="kicker">🧭 Route finder</div><div class="sub" style="margin-top:4px">${a?`Generate a fresh ${actWord()} loop, ~${a.km.toFixed(1)}km &amp; similar to your last one.`:`I'll suggest fresh ${actWord()} loops near you — same distance as your recent outings.`}</div><button class="btn p" style="margin-top:12px" onclick="findRoute()">${a?'Find me a route →':'Find a route near me →'}</button>`;
+}
 function drawRoute(){
   if(!run||!run.pts.length)return;
   const el=$('#map-tiles'),svg=$('#r-route'),Z=MAP_Z,n=Math.pow(2,Z);
