@@ -1,0 +1,261 @@
+<meta charset="utf-8">
+<title>Strivon Atlas — Experience</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#08070e; --bg2:#0b0a14; --panel:#101220; --panel2:#0e1019;
+    --ink:#f2f0ea; --muted:#8b90a6; --faint:#5a5f74;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.05);
+    --tang:#ff6a3d; --amber:#ffb057; --teal:#2ee6c6; --mint:#5ff0d0;
+    --grad:linear-gradient(105deg,var(--tang),var(--amber) 42%,var(--teal));
+    --grad-soft:linear-gradient(105deg,rgba(255,106,61,.16),rgba(46,230,198,.14));
+    --disp:-apple-system,"SF Pro Display",system-ui,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+    font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+  @media(max-width:640px){.wrap{padding:0 22px}}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:600}
+  h1,h2,h3{font-family:var(--disp);font-weight:800;letter-spacing:-.03em;line-height:1.02;text-wrap:balance;margin:0}
+  h2{font-size:clamp(30px,4.6vw,50px);letter-spacing:-.035em}
+  h3{font-size:22px;letter-spacing:-.02em}
+  p{margin:0 0 14px;color:#d7d9e3}
+  .lead{color:var(--muted);font-size:19px;max-width:64ch}
+  a{color:var(--teal);text-decoration:none}
+  .grad-txt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ---------- hero ---------- */
+  header.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+    padding:80px 0 60px;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;z-index:0;
+    background:radial-gradient(120% 90% at 78% 8%,rgba(255,106,61,.14),transparent 46%),
+               radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.13),transparent 44%),var(--bg)}
+  .route-svg{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.6}
+  .route-svg path{fill:none;stroke:url(#rg);stroke-width:2.4;stroke-linecap:round;
+    stroke-dasharray:2600;stroke-dashoffset:2600;animation:draw 4.5s cubic-bezier(.6,.05,.2,1) .3s forwards}
+  .route-svg .node{fill:var(--teal);opacity:0;animation:pop .5s ease forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes pop{to{opacity:1}}
+  .hero-inner{position:relative;z-index:2}
+  .logo{display:flex;align-items:center;gap:12px;margin-bottom:44px}
+  .logo .mk{width:34px;height:34px;filter:drop-shadow(0 0 14px rgba(46,230,198,.4))}
+  .logo b{font-family:var(--disp);font-weight:800;letter-spacing:-.02em;font-size:20px}
+  .logo span{color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+  h1.big{font-size:clamp(44px,8.5vw,104px);letter-spacing:-.045em;margin:0 0 22px}
+  .hero .sub{font-size:clamp(19px,2.4vw,24px);color:var(--muted);max-width:44ch;margin-bottom:30px}
+  .hero .sub b{color:var(--ink);font-weight:600}
+  .chiprow{display:flex;flex-wrap:wrap;gap:9px;margin-top:8px}
+  .chip{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:8px 13px;border:1px solid var(--line);
+    border-radius:999px;color:var(--muted);background:rgba(255,255,255,.02)}
+  .scrollcue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:2;color:var(--faint);
+    font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+  .cta-launch{display:inline-block;background:var(--grad);color:#08070e;font-weight:800;font-size:17px;
+    padding:15px 30px;border-radius:14px;text-decoration:none;box-shadow:0 10px 34px rgba(255,106,61,.32);
+    transition:transform .15s ease,box-shadow .15s ease}
+  .cta-launch:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(255,106,61,.42)}
+  .cta-secondary{color:var(--muted);text-decoration:none;font-size:15px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:2px}
+  .cta-secondary:hover{color:var(--ink)}
+  .launch-fixed{position:fixed;top:18px;right:18px;z-index:50;background:rgba(16,18,32,.72);backdrop-filter:blur(10px);
+    border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:14px;padding:9px 16px;border-radius:11px;
+    text-decoration:none;transition:border-color .15s ease}
+  .launch-fixed:hover{border-color:var(--teal)}
+  @media(max-width:640px){.launch-fixed{top:12px;right:12px;padding:8px 13px;font-size:13px}}
+
+  /* ---------- sections ---------- */
+  section{padding:76px 0;position:relative;border-top:1px solid var(--line2)}
+  .num{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.2em}
+  .sec-head{max-width:70ch;margin-bottom:38px}
+  .sec-head h2{margin:12px 0 16px}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:var(--r);padding:22px}
+  .card h3{margin-bottom:8px}
+  .card p{font-size:15px;color:var(--muted);margin:0}
+  .card .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+  .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+    background:var(--grad-soft);border:1px solid var(--line);margin-bottom:14px}
+
+  .pillar{position:relative;overflow:hidden}
+  .pillar .no{position:absolute;top:16px;right:18px;font-family:var(--disp);font-weight:800;font-size:34px;
+    letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.1)}
+  .pillar .quote{margin-top:12px;font-style:italic;color:#c9cde0;font-size:14px;border-left:2px solid;
+    border-image:var(--grad) 1;padding-left:12px}
+
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0;border-top:1px solid var(--line2);color:#cfd2df;font-size:15px;display:flex;gap:11px}
+  ul.clean li:first-child{border-top:0}
+  ul.clean li .b{color:var(--teal);font-weight:700}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02)}
+  td{color:#cfd2df}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:3px 9px;border-radius:999px;font-weight:600}
+  .p-now{background:rgba(46,230,198,.14);color:var(--mint)}
+  .p-next{background:rgba(255,176,87,.14);color:var(--amber)}
+  .p-later{background:rgba(138,144,166,.14);color:var(--muted)}
+
+  .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .flow .node{padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink)}
+  .flow .ar{color:var(--teal)}
+
+  .persona{display:flex;gap:16px;align-items:flex-start}
+  .persona .av{width:54px;height:54px;border-radius:14px;flex:0 0 auto;display:grid;place-items:center;font-size:26px;background:var(--grad-soft);border:1px solid var(--line)}
+
+  .journey{counter-reset:step;display:grid;gap:0}
+  .journey .st{display:flex;gap:16px;padding:16px 0;border-top:1px solid var(--line2)}
+  .journey .st:before{counter-increment:step;content:counter(step);flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+    background:var(--grad);color:#06121a;font-weight:800;display:grid;place-items:center;font-size:14px;font-family:var(--disp)}
+  .journey .st div b{color:var(--ink)}
+  .journey .st div{color:var(--muted);font-size:15px}
+
+  .big-stat{font-family:var(--disp);font-weight:800;font-size:clamp(34px,5vw,52px);letter-spacing:-.04em;line-height:1}
+  .big-stat.grad-txt+ p{margin-top:6px}
+
+  .quotebox{border:1px solid var(--line);border-radius:var(--r);padding:30px 28px;background:var(--grad-soft);position:relative}
+  .quotebox p{font-family:var(--disp);font-weight:700;font-size:clamp(22px,3.2vw,32px);letter-spacing:-.02em;color:var(--ink);line-height:1.18;margin:0}
+
+  code.k{font-family:var(--mono);font-size:13px;background:rgba(255,255,255,.05);border:1px solid var(--line2);padding:2px 7px;border-radius:6px;color:var(--mint)}
+  .callout{border-left:2px solid;border-image:var(--grad) 1;padding:4px 0 4px 16px;color:var(--muted);font-size:15px;margin:14px 0}
+  .callout b{color:var(--ink)}
+
+  footer{padding:60px 0 90px;border-top:1px solid var(--line2);color:var(--faint);font-size:14px}
+  .honest{background:repeating-linear-gradient(135deg,rgba(255,176,87,.05),rgba(255,176,87,.05) 12px,transparent 12px,transparent 24px);
+    border:1px solid rgba(255,176,87,.25);border-radius:14px;padding:18px 20px;margin-top:18px}
+  .honest .k{color:var(--amber)}
+
+  @media (prefers-reduced-motion:reduce){
+    .route-svg path{animation:none;stroke-dashoffset:0}.route-svg .node{animation:none;opacity:1}
+    .reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}
+  }
+
+  .topnav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:18px;padding:13px 40px;
+    background:rgba(8,7,14,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .nav-brand{display:flex;align-items:center;gap:9px;color:var(--ink);text-decoration:none;font-family:var(--disp);font-weight:800;font-size:17px;letter-spacing:-.02em}
+  .nav-brand .nav-mk{width:24px;height:24px;flex:0 0 auto}
+  .nav-brand b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .nav-links{display:flex;gap:4px;margin-left:auto}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;padding:8px 14px;border-radius:9px;transition:.15s;white-space:nowrap}
+  .nav-links a:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+  .nav-links a.active{color:var(--ink);background:rgba(255,255,255,.08)}
+  .nav-launch{background:var(--grad);color:#08070e;font-weight:800;font-size:14px;padding:9px 16px;border-radius:10px;text-decoration:none;white-space:nowrap}
+  .page-hero{padding:66px 0 26px;border-bottom:1px solid var(--line2);background:radial-gradient(100% 130% at 82% 0%,rgba(255,106,61,.09),transparent 52%)}
+  .page-h1{font-size:clamp(36px,6vw,62px);letter-spacing:-.04em;margin:12px 0 16px}
+  .pager{display:flex;justify-content:space-between;gap:16px;padding:44px 40px 0;max-width:1320px;margin:0 auto;flex-wrap:wrap}
+  .pager a{color:var(--ink);text-decoration:none;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.02em;
+    border:1px solid var(--line);border-radius:14px;padding:16px 22px;transition:.15s;background:var(--panel)}
+  .pager a:hover{border-color:var(--teal)}
+  .pg-next{margin-left:auto;text-align:right}
+  @media(max-width:820px){.topnav{padding:11px 20px;gap:10px;flex-wrap:wrap}
+    .nav-links{order:3;width:100%;margin-left:0;overflow-x:auto;padding-bottom:2px}.nav-launch{margin-left:auto}
+    .pager{padding:32px 22px 0}.pager a{font-size:15px;padding:13px 16px}}
+</style>
+<nav class="topnav"><a class="nav-brand" href="./index.html"><svg class="nav-mk" viewBox="0 0 100 100"><defs><linearGradient id="nvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs><g fill="none" stroke="url(#nvg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/><path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#nvg)" stroke="none"/></g></svg><span>Strivon <b>Atlas</b></span></a><div class="nav-links"><a href="./index.html">Vision</a><a href="./experience.html" class="active">Experience</a><a href="./technology.html">Technology</a><a href="./business.html">Business</a></div><a class="nav-launch" href="./app.html">Open app&nbsp;→</a></nav>
+<header class="page-hero"><div class="wrap"><div class="eyebrow">The product</div><h1 class="page-h1">The Experience</h1><p class="lead">Twelve ways movement becomes meaning — the pillars, the people who fall in love, the journeys that hook, the screens and the play.</p></div></header>
+<main>
+<section id="pillars"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">03 — THE EXPERIENCE · 12 PILLARS</div><h2>Twelve ways movement becomes meaning</h2>
+    <p class="lead">Each pillar is a product in itself. The genius isn't building all twelve at once — it's the order (see §10). But together they define a category no one else is playing in.</p></div>
+  <div class="grid g3">
+    <div class="card pillar reveal"><div class="no">01</div><div class="k">Memory</div><h3>Life Story Map</h3><p>Pin memories, photos, voice notes and milestones to the places you moved. Replay any era of your life as a journey.</p><div class="quote">“The run before my wedding.”</div></div>
+    <div class="card pillar reveal"><div class="no">02</div><div class="k">Time</div><h3>Future-Self Messages</h3><p>Leave recordings, promises and predictions at a place. Return months later and the map surfaces your past self.</p><div class="quote">“You recorded this training for your first marathon.”</div></div>
+    <div class="card pillar reveal"><div class="no">03</div><div class="k">Exploration</div><h3>AI Adventure Generator</h3><p>Daily missions tuned to weather, time, mood and history: find a blue door, draw a star on the map, reach water.</p><div class="quote">“Discover a street you've never walked.”</div></div>
+    <div class="card pillar reveal"><div class="no">04</div><div class="k">Wellbeing</div><h3>Emotional Fitness Engine</h3><p>Log mood before/after. AI learns which places and routes lift you, and prescribes them.</p><div class="quote">“Riverside walks raise your mood 18%.”</div></div>
+    <div class="card pillar reveal"><div class="no">05</div><div class="k">Connection</div><h3>Human Movement Network</h3><p>Anonymous, privacy-first serendipity: paths you've unknowingly crossed, kindred explorers nearby.</p><div class="quote">“You crossed paths 24 times this year.”</div></div>
+    <div class="card pillar reveal"><div class="no">06</div><div class="k">Companion</div><h3>Context-Aware AI Coach</h3><p>Understands your calendar, workload, sleep and motivation cycles. Empathy, not lectures.</p><div class="quote">“This is usually when your routine breaks.”</div></div>
+    <div class="card pillar reveal"><div class="no">07</div><div class="k">Play</div><h3>City RPG System</h3><p>The real world becomes an RPG — XP, classes, titles, skill trees. Movement becomes adventure.</p><div class="quote">Bridge Walker · Sunrise Hunter · Forest Guardian</div></div>
+    <div class="card pillar reveal"><div class="no">08</div><div class="k">Legacy</div><h3>Legacy Routes</h3><p>Preserve a route forever with stories and voice. Your children walk it one day and hear you.</p><div class="quote">“Dad's favourite Sunday loop.”</div></div>
+    <div class="card pillar reveal"><div class="no">09</div><div class="k">Psychology</div><h3>Personality Challenges</h3><p>AI models your type — Explorer, Competitor, Reflector, Socialiser — and adapts every challenge.</p><div class="quote">Behavioural-psychology, not one-size-fits-all.</div></div>
+    <div class="card pillar reveal"><div class="no">10</div><div class="k">Discovery</div><h3>Living Treasure Map</h3><p>Users drop hidden viewpoints, quiet corners, photo spots. The city becomes a crowdsourced treasure hunt.</p><div class="quote">Personalised by AI to your taste.</div></div>
+    <div class="card pillar reveal"><div class="no">11</div><div class="k">Prediction</div><h3>Digital Twin</h3><p>A predictive model of you: future fitness, burnout risk, mood evolution. Test “what if I walk 20 min daily?”.</p><div class="quote">See your projected futures, visually.</div></div>
+    <div class="card pillar reveal"><div class="no">12</div><div class="k">Purpose</div><h3>Regret Minimiser</h3><p>Anchor every activity to what you want to still do at 80. Emotional motivation over numeric.</p><div class="quote">“0.001% closer to hiking Snowdon at 80.”</div></div>
+  </div>
+</div></section>
+<section id="personas"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">04 — USER PERSONAS</div><h2>Who falls in love first</h2></div>
+  <div class="grid g2">
+    <div class="card reveal"><div class="persona"><div class="av">🧭</div><div><h3>Maya — The Meaning-Seeker</h3><p style="margin:6px 0 0">32, walks to think. Bored of Strava's leaderboards. Wants her movement to <i>mean</i> something. Becomes the evangelist — she screenshots her Life Story Map to friends.</p></div></div></div>
+    <div class="card reveal"><div class="persona"><div class="av">🗺️</div><div><h3>Leo — The Explorer</h3><p style="margin:6px 0 0">27, new to a city. Lives for the AI adventures and treasure map. Turns loneliness into discovery. Highest session frequency; drives the RPG loop.</p></div></div></div>
+    <div class="card reveal"><div class="persona"><div class="av">👨‍👧</div><div><h3>David — The Legacy-Keeper</h3><p style="margin:6px 0 0">58, a new grandfather. Records Legacy Routes and Future-Self messages. Lowest churn, highest LTV — he's building something for after he's gone.</p></div></div></div>
+    <div class="card reveal"><div class="persona"><div class="av">🌱</div><div><h3>Priya — The Rebuilder</h3><p style="margin:6px 0 0">41, restarting after burnout. Needs the empathetic coach and Regret Minimiser, not a drill sergeant. Movement tied to “independent at 80”.</p></div></div></div>
+  </div>
+</div></section>
+<section id="journeys"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">05 — USER JOURNEYS</div><h2>Two moments that hook</h2></div>
+  <div class="grid g2">
+    <div class="card reveal"><div class="k">The “I've never seen this” moment · Day 1</div><div class="journey">
+      <div class="st"><div><b>Open to a map, not a form.</b> A single question: “Where did today take you?”</div></div>
+      <div class="st"><div><b>Walk a mission.</b> AI: “Find a red door within 15 minutes.” You do. +40 XP, first badge.</div></div>
+      <div class="st"><div><b>Drop a memory.</b> A photo + a 10-sec voice note pin to the map.</div></div>
+      <div class="st"><div><b>Leave a message to future-you.</b> “Remember why you started.”</div></div>
+      <div class="st"><div><b>The map glows.</b> Your first thread on the autobiography. You're in.</div></div>
+    </div></div>
+    <div class="card reveal"><div class="k">The moment you can never leave · Month 14</div><div class="journey">
+      <div class="st"><div><b>You return to a trailhead.</b> The app surfaces a message you recorded a year ago.</div></div>
+      <div class="st"><div><b>Your past self speaks.</b> You were anxious then. You made it. You cry a little.</div></div>
+      <div class="st"><div><b>Twin shows your arc.</b> “14 months of Sunday walks → mood +22%, resting HR −6.”</div></div>
+      <div class="st"><div><b>Story engine narrates your year</b> as a 90-second film.</div></div>
+      <div class="st"><div><b>You share one frame.</b> A friend downloads. The loop compounds.</div></div>
+    </div></div>
+  </div>
+</div></section>
+<section id="screens"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">14 — SCREEN-BY-SCREEN UI</div><h2>A documentary, not a dashboard</h2>
+    <p class="lead">Map-centric. Cinematic. Almost no charts. Every screen answers “what did movement mean today?”</p></div>
+  <div class="grid g3">
+    <div class="card reveal"><div class="k">Home</div><h3>The Living Map</h3><p>Full-bleed dark map of your life. Glowing threads = journeys. Tap a memory to relive it. Today's adventure floats at the base.</p></div>
+    <div class="card reveal"><div class="k">Replay</div><h3>Journey Cinema</h3><p>A journey plays back like a film — the line draws, memories bloom, your voice note plays, the season shifts.</p></div>
+    <div class="card reveal"><div class="k">Capture</div><h3>Moment</h3><p>One tap mid-walk: photo, 10-sec voice, a feeling. Frictionless — the whole product depends on this being effortless.</p></div>
+    <div class="card reveal"><div class="k">Time</div><h3>Capsules</h3><p>A quiet timeline of messages waiting in the world. A gentle notification when you near one.</p></div>
+    <div class="card reveal"><div class="k">Play</div><h3>Adventure</h3><p>Today's mission as a beautiful card. Live progress. The reveal + XP on completion.</p></div>
+    <div class="card reveal"><div class="k">Self</div><h3>Twin & Purpose</h3><p>Your projected futures as soft cinematic curves — and the one line: “today moved you closer to Snowdon at 80.”</p></div>
+    <div class="card reveal"><div class="k">Companion</div><h3>Coach chat</h3><p>An empathetic thread that already knows your week. Text or voice.</p></div>
+    <div class="card reveal"><div class="k">Legacy</div><h3>The Vault</h3><p>Routes and voices you're preserving, and who inherits them. Sacred, calm, permanent.</p></div>
+    <div class="card reveal"><div class="k">You</div><h3>Identity</h3><p>Your class, titles and skills — the RPG self, shown as a crest, not a spreadsheet.</p></div>
+  </div>
+</div></section>
+<section id="game"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">15 — GAMIFICATION FRAMEWORK</div><h2>Meaningful, not manipulative</h2></div>
+  <div class="grid g2">
+    <div class="card reveal"><div class="k">Progression</div>
+      <ul class="clean">
+        <li><span class="b">XP →</span> from movement, discovery, memories & missions — exploration rewarded over speed.</li>
+        <li><span class="b">Classes →</span> Explorer · Seeker · Guardian · Wayfarer — emerge from <i>how</i> you actually move.</li>
+        <li><span class="b">Titles →</span> Bridge Walker · Sunrise Hunter · Forest Guardian · Urban Adventurer.</li>
+        <li><span class="b">Skill trees →</span> Endurance · Curiosity · Consistency · Courage.</li>
+      </ul></div>
+    <div class="card reveal"><div class="k">Retention design (ethical)</div>
+      <ul class="clean">
+        <li><span class="b">Forgiving streaks →</span> life happens; a missed day doesn't shame you.</li>
+        <li><span class="b">Seasons →</span> fresh adventures & cosmetics quarterly, never pay-to-win.</li>
+        <li><span class="b">Intrinsic first →</span> the reward is the memory and the map, XP is the seasoning.</li>
+        <li><span class="b">No leaderboards by default →</span> we compete with your past self, not strangers.</li>
+      </ul></div>
+  </div>
+</div></section>
+</main>
+<div class="pager"><a class="pg-prev" href="./index.html">← Vision</a><a class="pg-next" href="./technology.html">Technology →</a></div>
+<footer><div class="wrap">
+  <div class="logo" style="margin-bottom:16px"><b style="font-family:var(--disp);font-weight:800">Strivon</b><span style="color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase">· Atlas</span></div>
+  <p style="color:var(--faint);max-width:60ch">Product vision & strategy — a geographical autobiography, an emotional-wellbeing OS, a real-world RPG, and a legacy that outlives its user. Built to layer onto Strivon's live PWA + Supabase + on-device intelligence + Claude edge functions. Designed as a category, not a feature.</p>
+</div></footer>
+<script>
+  (function(){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  })();
+</script>

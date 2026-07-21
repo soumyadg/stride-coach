@@ -1,4 +1,5 @@
-<title>Strivon Atlas — Your Life, In Motion</title>
+<meta charset="utf-8">
+<title>Strivon Atlas — Vision</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -141,9 +142,29 @@
     .route-svg path{animation:none;stroke-dashoffset:0}.route-svg .node{animation:none;opacity:1}
     .reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}
   }
-</style>
 
-<a href="./app.html" class="launch-fixed">Open app&nbsp;→</a>
+  .topnav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:18px;padding:13px 40px;
+    background:rgba(8,7,14,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .nav-brand{display:flex;align-items:center;gap:9px;color:var(--ink);text-decoration:none;font-family:var(--disp);font-weight:800;font-size:17px;letter-spacing:-.02em}
+  .nav-brand .nav-mk{width:24px;height:24px;flex:0 0 auto}
+  .nav-brand b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .nav-links{display:flex;gap:4px;margin-left:auto}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;padding:8px 14px;border-radius:9px;transition:.15s;white-space:nowrap}
+  .nav-links a:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+  .nav-links a.active{color:var(--ink);background:rgba(255,255,255,.08)}
+  .nav-launch{background:var(--grad);color:#08070e;font-weight:800;font-size:14px;padding:9px 16px;border-radius:10px;text-decoration:none;white-space:nowrap}
+  .page-hero{padding:66px 0 26px;border-bottom:1px solid var(--line2);background:radial-gradient(100% 130% at 82% 0%,rgba(255,106,61,.09),transparent 52%)}
+  .page-h1{font-size:clamp(36px,6vw,62px);letter-spacing:-.04em;margin:12px 0 16px}
+  .pager{display:flex;justify-content:space-between;gap:16px;padding:44px 40px 0;max-width:1320px;margin:0 auto;flex-wrap:wrap}
+  .pager a{color:var(--ink);text-decoration:none;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.02em;
+    border:1px solid var(--line);border-radius:14px;padding:16px 22px;transition:.15s;background:var(--panel)}
+  .pager a:hover{border-color:var(--teal)}
+  .pg-next{margin-left:auto;text-align:right}
+  @media(max-width:820px){.topnav{padding:11px 20px;gap:10px;flex-wrap:wrap}
+    .nav-links{order:3;width:100%;margin-left:0;overflow-x:auto;padding-bottom:2px}.nav-launch{margin-left:auto}
+    .pager{padding:32px 22px 0}.pager a{font-size:15px;padding:13px 16px}}
+</style>
+<nav class="topnav"><a class="nav-brand" href="./index.html"><svg class="nav-mk" viewBox="0 0 100 100"><defs><linearGradient id="nvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs><g fill="none" stroke="url(#nvg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/><path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#nvg)" stroke="none"/></g></svg><span>Strivon <b>Atlas</b></span></a><div class="nav-links"><a href="./index.html" class="active">Vision</a><a href="./experience.html">Experience</a><a href="./technology.html">Technology</a><a href="./business.html">Business</a></div><a class="nav-launch" href="./app.html">Open app&nbsp;→</a></nav>
 <header class="hero">
   <div class="hero-bg"></div>
   <svg class="route-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -156,10 +177,6 @@
     <circle class="node" cx="1080" cy="300" r="6" style="animation-delay:3.6s"/>
   </svg>
   <div class="wrap hero-inner">
-    <div class="logo">
-      <svg class="mk" viewBox="0 0 100 100"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs><g fill="none" stroke="url(#lg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/><path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#lg)" stroke="none"/></g></svg>
-      <b>Strivon</b><span>· Atlas</span>
-    </div>
     <div class="eyebrow">A new category — not a fitness tracker</div>
     <h1 class="big">Your life,<br><span class="grad-txt">in motion.</span></h1>
     <div class="sub">Every other app records your <b>workout</b>. Strivon remembers your <b>life</b> — the run before the wedding, the walk that changed a career, the route a father leaves for his children.</div>
@@ -176,10 +193,7 @@
   </div>
   <div class="scrollcue">Scroll — a documentary of a life ↓</div>
 </header>
-
 <main>
-
-<!-- 1. VISION -->
 <section id="vision"><div class="wrap">
   <div class="sec-head reveal">
     <div class="num">01 — PRODUCT VISION</div>
@@ -192,8 +206,6 @@
     <div class="card reveal"><div class="ic">♾️</div><h3>A moat made of memories</h3><p>The more you live, the more it holds. You can export a workout. You can never export a decade of who you were.</p></div>
   </div>
 </div></section>
-
-<!-- 2. VALUE PROP -->
 <section id="value"><div class="wrap">
   <div class="sec-head reveal"><div class="num">02 — VALUE PROPOSITION</div><h2>The one line</h2></div>
   <div class="quotebox reveal"><p>“Strava tells you how fast you ran. Strivon tells you <span class="grad-txt">who you were</span> when you ran it — and hands that story to the people you love.”</p></div>
@@ -203,8 +215,6 @@
     <div class="card reveal"><div class="k">The wedge</div><p style="color:#cfd2df;font-size:15px">Emotion is stickier than performance. We win on <b style="color:#fff">why</b> people move — a space no incumbent owns.</p></div>
   </div>
 </div></section>
-
-<!-- 2b. ALREADY SHIPPING -->
 <section id="today-app"><div class="wrap">
   <div class="sec-head reveal"><div class="num">02½ — PROOF</div><h2>This isn't a deck. It's already live.</h2>
     <p class="lead">The wedge builds on a real, shipping product — Strivon today: a PWA with on-device sports-science intelligence, injury-risk safety, an AI coach and multi-race plans. The emotional layer layers straight onto this.</p></div>
@@ -215,262 +225,6 @@
   </div>
   <div class="callout reveal" style="margin-top:20px"><b>De-risked:</b> the map, GPS, Supabase auth/data, Claude edge functions and a live subscription are already built. Atlas is the emotional expansion on top — not a from-scratch bet.</div>
 </div></section>
-
-<!-- 3. THE 12 PILLARS -->
-<section id="pillars"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">03 — THE EXPERIENCE · 12 PILLARS</div><h2>Twelve ways movement becomes meaning</h2>
-    <p class="lead">Each pillar is a product in itself. The genius isn't building all twelve at once — it's the order (see §10). But together they define a category no one else is playing in.</p></div>
-  <div class="grid g3">
-    <div class="card pillar reveal"><div class="no">01</div><div class="k">Memory</div><h3>Life Story Map</h3><p>Pin memories, photos, voice notes and milestones to the places you moved. Replay any era of your life as a journey.</p><div class="quote">“The run before my wedding.”</div></div>
-    <div class="card pillar reveal"><div class="no">02</div><div class="k">Time</div><h3>Future-Self Messages</h3><p>Leave recordings, promises and predictions at a place. Return months later and the map surfaces your past self.</p><div class="quote">“You recorded this training for your first marathon.”</div></div>
-    <div class="card pillar reveal"><div class="no">03</div><div class="k">Exploration</div><h3>AI Adventure Generator</h3><p>Daily missions tuned to weather, time, mood and history: find a blue door, draw a star on the map, reach water.</p><div class="quote">“Discover a street you've never walked.”</div></div>
-    <div class="card pillar reveal"><div class="no">04</div><div class="k">Wellbeing</div><h3>Emotional Fitness Engine</h3><p>Log mood before/after. AI learns which places and routes lift you, and prescribes them.</p><div class="quote">“Riverside walks raise your mood 18%.”</div></div>
-    <div class="card pillar reveal"><div class="no">05</div><div class="k">Connection</div><h3>Human Movement Network</h3><p>Anonymous, privacy-first serendipity: paths you've unknowingly crossed, kindred explorers nearby.</p><div class="quote">“You crossed paths 24 times this year.”</div></div>
-    <div class="card pillar reveal"><div class="no">06</div><div class="k">Companion</div><h3>Context-Aware AI Coach</h3><p>Understands your calendar, workload, sleep and motivation cycles. Empathy, not lectures.</p><div class="quote">“This is usually when your routine breaks.”</div></div>
-    <div class="card pillar reveal"><div class="no">07</div><div class="k">Play</div><h3>City RPG System</h3><p>The real world becomes an RPG — XP, classes, titles, skill trees. Movement becomes adventure.</p><div class="quote">Bridge Walker · Sunrise Hunter · Forest Guardian</div></div>
-    <div class="card pillar reveal"><div class="no">08</div><div class="k">Legacy</div><h3>Legacy Routes</h3><p>Preserve a route forever with stories and voice. Your children walk it one day and hear you.</p><div class="quote">“Dad's favourite Sunday loop.”</div></div>
-    <div class="card pillar reveal"><div class="no">09</div><div class="k">Psychology</div><h3>Personality Challenges</h3><p>AI models your type — Explorer, Competitor, Reflector, Socialiser — and adapts every challenge.</p><div class="quote">Behavioural-psychology, not one-size-fits-all.</div></div>
-    <div class="card pillar reveal"><div class="no">10</div><div class="k">Discovery</div><h3>Living Treasure Map</h3><p>Users drop hidden viewpoints, quiet corners, photo spots. The city becomes a crowdsourced treasure hunt.</p><div class="quote">Personalised by AI to your taste.</div></div>
-    <div class="card pillar reveal"><div class="no">11</div><div class="k">Prediction</div><h3>Digital Twin</h3><p>A predictive model of you: future fitness, burnout risk, mood evolution. Test “what if I walk 20 min daily?”.</p><div class="quote">See your projected futures, visually.</div></div>
-    <div class="card pillar reveal"><div class="no">12</div><div class="k">Purpose</div><h3>Regret Minimiser</h3><p>Anchor every activity to what you want to still do at 80. Emotional motivation over numeric.</p><div class="quote">“0.001% closer to hiking Snowdon at 80.”</div></div>
-  </div>
-</div></section>
-
-<!-- 4. PERSONAS -->
-<section id="personas"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">04 — USER PERSONAS</div><h2>Who falls in love first</h2></div>
-  <div class="grid g2">
-    <div class="card reveal"><div class="persona"><div class="av">🧭</div><div><h3>Maya — The Meaning-Seeker</h3><p style="margin:6px 0 0">32, walks to think. Bored of Strava's leaderboards. Wants her movement to <i>mean</i> something. Becomes the evangelist — she screenshots her Life Story Map to friends.</p></div></div></div>
-    <div class="card reveal"><div class="persona"><div class="av">🗺️</div><div><h3>Leo — The Explorer</h3><p style="margin:6px 0 0">27, new to a city. Lives for the AI adventures and treasure map. Turns loneliness into discovery. Highest session frequency; drives the RPG loop.</p></div></div></div>
-    <div class="card reveal"><div class="persona"><div class="av">👨‍👧</div><div><h3>David — The Legacy-Keeper</h3><p style="margin:6px 0 0">58, a new grandfather. Records Legacy Routes and Future-Self messages. Lowest churn, highest LTV — he's building something for after he's gone.</p></div></div></div>
-    <div class="card reveal"><div class="persona"><div class="av">🌱</div><div><h3>Priya — The Rebuilder</h3><p style="margin:6px 0 0">41, restarting after burnout. Needs the empathetic coach and Regret Minimiser, not a drill sergeant. Movement tied to “independent at 80”.</p></div></div></div>
-  </div>
-</div></section>
-
-<!-- 5. JOURNEYS -->
-<section id="journeys"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">05 — USER JOURNEYS</div><h2>Two moments that hook</h2></div>
-  <div class="grid g2">
-    <div class="card reveal"><div class="k">The “I've never seen this” moment · Day 1</div><div class="journey">
-      <div class="st"><div><b>Open to a map, not a form.</b> A single question: “Where did today take you?”</div></div>
-      <div class="st"><div><b>Walk a mission.</b> AI: “Find a red door within 15 minutes.” You do. +40 XP, first badge.</div></div>
-      <div class="st"><div><b>Drop a memory.</b> A photo + a 10-sec voice note pin to the map.</div></div>
-      <div class="st"><div><b>Leave a message to future-you.</b> “Remember why you started.”</div></div>
-      <div class="st"><div><b>The map glows.</b> Your first thread on the autobiography. You're in.</div></div>
-    </div></div>
-    <div class="card reveal"><div class="k">The moment you can never leave · Month 14</div><div class="journey">
-      <div class="st"><div><b>You return to a trailhead.</b> The app surfaces a message you recorded a year ago.</div></div>
-      <div class="st"><div><b>Your past self speaks.</b> You were anxious then. You made it. You cry a little.</div></div>
-      <div class="st"><div><b>Twin shows your arc.</b> “14 months of Sunday walks → mood +22%, resting HR −6.”</div></div>
-      <div class="st"><div><b>Story engine narrates your year</b> as a 90-second film.</div></div>
-      <div class="st"><div><b>You share one frame.</b> A friend downloads. The loop compounds.</div></div>
-    </div></div>
-  </div>
-</div></section>
-
-<!-- 6. APP ARCH -->
-<section id="arch"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">06 — CORE APP ARCHITECTURE</div><h2>Map-first, offline-first, private by design</h2>
-    <p class="lead">Built on what Strivon already runs today (PWA + Supabase + on-device intelligence + Claude edge functions) and extended with a Python ML brain.</p></div>
-  <div class="flow reveal" style="margin-bottom:22px">
-    <span class="node">📱 Client (PWA / Capacitor native)</span><span class="ar">→</span>
-    <span class="node">Supabase — Auth · Postgres+PostGIS · Realtime · Storage</span><span class="ar">→</span>
-    <span class="node">Edge Functions (Deno) — coach · missions</span><span class="ar">→</span>
-    <span class="node">🧠 Flask ML service — twin · embeddings · agents</span>
-  </div>
-  <div class="grid g3">
-    <div class="card reveal"><div class="k">Client</div><p style="color:#cfd2df;font-size:15px">Vanilla-JS PWA today → Capacitor for native GPS/Health/notifications. Map-centric UI, offline journey capture, on-device GPS smoothing & sports-science math.</p></div>
-    <div class="card reveal"><div class="k">Data & realtime</div><p style="color:#cfd2df;font-size:15px">Supabase Postgres + <b style="color:#fff">PostGIS</b> for geospatial, Storage for media, RLS for privacy, Realtime for the anonymous network.</p></div>
-    <div class="card reveal"><div class="k">Intelligence</div><p style="color:#cfd2df;font-size:15px">Deno edge functions for low-latency LLM calls; a <b style="color:#fff">Python/Flask</b> service for the digital twin, vector memory (pgvector), and the agent swarm.</p></div>
-  </div>
-</div></section>
-
-<!-- 7. AI ARCH -->
-<section id="ai"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">07 — AI ARCHITECTURE · THE AGENT SWARM</div><h2>Nine agents, one companion</h2></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Agent</th><th>Job</th><th>Inputs</th><th>Engine</th></tr>
-    <tr><td><b>Coach</b></td><td>Empathetic daily guidance & check-ins</td><td>Plan, runs, mood, calendar, weather</td><td>LLM (Claude) + RAG</td></tr>
-    <tr><td><b>Memory / RAG</b></td><td>Retrieve your past — “what was I doing last spring?”</td><td>Journeys, notes, media captions</td><td>pgvector embeddings</td></tr>
-    <tr><td><b>Mission Generator</b></td><td>Daily adventures tuned to context</td><td>Location, weather, time, fitness, history</td><td>LLM + rules + POI data</td></tr>
-    <tr><td><b>Route Generator</b></td><td>Loops by distance, mood, scenery, elevation</td><td>PostGIS, OSM, elevation, preferences</td><td>Graph routing + LLM</td></tr>
-    <tr><td><b>Behavioural Analyst</b></td><td>Detect habit cycles, break points, personality</td><td>Time-series of activity & mood</td><td>Classical ML (sklearn)</td></tr>
-    <tr><td><b>Wellbeing Insights</b></td><td>“Which places lift you” correlations</td><td>Mood deltas × place × route</td><td>Stats / causal-lite</td></tr>
-    <tr><td><b>Digital Twin</b></td><td>Predict future fitness, mood, burnout; simulate scenarios</td><td>Full history + goals</td><td>Time-series forecasting</td></tr>
-    <tr><td><b>Story Generator</b></td><td>Narrate your year / journey as a film</td><td>Journeys, memories, milestones</td><td>LLM + media pipeline</td></tr>
-    <tr><td><b>Serendipity</b></td><td>Anonymous crossings & kindred spirits</td><td>Hashed geohash grid, k-anonymity</td><td>Privacy-preserving match</td></tr>
-  </table></div>
-  <div class="callout reveal"><b>The learning loop:</b> every agent writes back to a per-user profile of motivations, triggers and preferred adventures. The companion gets more “you” every week — the compounding data moat.</div>
-</div></section>
-
-<!-- 8. PRIORITISATION -->
-<section id="prio"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">08 — FEATURE PRIORITISATION</div><h2>Emotional impact ÷ effort</h2>
-    <p class="lead">Ranked by the wedge test: does it create the “never seen this” feeling cheaply, and does it deepen the memory moat?</p></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Feature</th><th>Emotional pull</th><th>Effort</th><th>Moat</th><th>Phase</th></tr>
-    <tr><td>Life Story Map</td><td>★★★★★</td><td>Med</td><td>★★★★★</td><td><span class="pill p-now">MVP</span></td></tr>
-    <tr><td>Future-Self Messages</td><td>★★★★★</td><td>Low</td><td>★★★★☆</td><td><span class="pill p-now">MVP</span></td></tr>
-    <tr><td>AI Adventure Generator</td><td>★★★★☆</td><td>Low</td><td>★★★☆☆</td><td><span class="pill p-now">MVP</span></td></tr>
-    <tr><td>City RPG (light)</td><td>★★★★☆</td><td>Low</td><td>★★★☆☆</td><td><span class="pill p-now">MVP</span></td></tr>
-    <tr><td>Context-Aware Coach</td><td>★★★★☆</td><td>Med</td><td>★★★★☆</td><td><span class="pill p-next">V2</span></td></tr>
-    <tr><td>Emotional Fitness Engine</td><td>★★★★★</td><td>Med</td><td>★★★★★</td><td><span class="pill p-next">V2</span></td></tr>
-    <tr><td>Legacy Routes</td><td>★★★★★</td><td>Med</td><td>★★★★★</td><td><span class="pill p-next">V2</span></td></tr>
-    <tr><td>Living Treasure Map</td><td>★★★★☆</td><td>Med</td><td>★★★★☆ (network)</td><td><span class="pill p-next">V2</span></td></tr>
-    <tr><td>Digital Twin</td><td>★★★★☆</td><td>High</td><td>★★★★☆</td><td><span class="pill p-later">V3</span></td></tr>
-    <tr><td>Human Movement Network</td><td>★★★★☆</td><td>High</td><td>★★★★★ (network)</td><td><span class="pill p-later">V3</span></td></tr>
-    <tr><td>Regret Minimiser</td><td>★★★★★</td><td>Med</td><td>★★★★☆</td><td><span class="pill p-next">V2</span></td></tr>
-    <tr><td>Personality Challenges</td><td>★★★☆☆</td><td>Med</td><td>★★★☆☆</td><td><span class="pill p-later">V3</span></td></tr>
-  </table></div>
-</div></section>
-
-<!-- 9. MVP -->
-<section id="mvp"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">09 — MVP DEFINITION</div><h2>The emotional wedge</h2>
-    <p class="lead">Do not ship twelve pillars. Ship the smallest thing that makes someone say “I've never seen this” and can't delete a month later. Four features, built on Strivon's existing rails.</p></div>
-  <div class="grid g4">
-    <div class="card reveal"><div class="ic">🗺️</div><h3>Story Map</h3><p>Capture a journey, pin a photo + voice + feeling. Replay your growing map.</p></div>
-    <div class="card reveal"><div class="ic">⏳</div><h3>Time Capsules</h3><p>Record a message to future-you at a place; it resurfaces on return.</p></div>
-    <div class="card reveal"><div class="ic">🎯</div><h3>Daily Adventure</h3><p>One AI mission a day. Weather/time/mood aware. LLM we already run.</p></div>
-    <div class="card reveal"><div class="ic">🎖️</div><h3>Explorer XP</h3><p>Light RPG — XP, first titles, a streak that forgives. The habit engine.</p></div>
-  </div>
-  <div class="honest reveal"><div class="k" style="font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px">Founder's honesty</div>
-    <p style="margin:0;color:#d7d9e3;font-size:15px">The Emotional Engine, Digital Twin and Human Network are the moat — but they need <b style="color:#fff">scale and data you don't have yet</b>. Build the four wedge features, let them generate the data, then those become defensible. Anyone who ships all twelve at once ships none of them well.</p></div>
-</div></section>
-
-<!-- 10. MONETISATION -->
-<section id="money"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">10 — MONETISATION</div><h2>You don't rent a tracker. You keep a life.</h2></div>
-  <div class="grid g3">
-    <div class="card reveal"><div class="k">Free</div><h3>Explorer</h3><p style="margin-top:8px">Story Map, daily adventure, basic XP, 30 days of memory history. The habit hook.</p></div>
-    <div class="card reveal" style="border-color:rgba(46,230,198,.4)"><div class="k" style="color:var(--mint)">£6.99 / mo · already live</div><h3>Strivon Pro</h3><p style="margin-top:8px">Unlimited memories, AI coach, emotional insights, digital twin, treasure map, story films.</p></div>
-    <div class="card reveal"><div class="k">£40–80 / yr</div><h3>Legacy Vault</h3><p style="margin-top:8px">Multi-generational preservation: legacy routes, guaranteed media retention, hand-off to family. Highest LTV, lowest churn.</p></div>
-  </div>
-  <div class="grid g3" style="margin-top:16px">
-    <div class="card reveal"><div class="k">B2B / B2G</div><p style="color:#cfd2df;font-size:15px">Tourism boards & cities pay to seed adventures and treasure in their streets. Movement data (aggregate, anonymised) for urban planning.</p></div>
-    <div class="card reveal"><div class="k">Wellbeing partners</div><p style="color:#cfd2df;font-size:15px">Employers & insurers license the Emotional Fitness Engine as a mental-health benefit.</p></div>
-    <div class="card reveal"><div class="k">Why it compounds</div><p style="color:#cfd2df;font-size:15px">Emotional switching cost → sub-2% monthly churn → LTV far above any tracker. You're not paying for features; you're keeping your autobiography.</p></div>
-  </div>
-</div></section>
-
-<!-- 11. DIFFERENTIATION -->
-<section id="diff"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">11 — COMPETITIVE DIFFERENTIATION</div><h2>Everyone owns the “how fast”. Nobody owns the “why”.</h2></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Dimension</th><th>Strava / Garmin / Nike</th><th>AllTrails / Komoot</th><th>Strivon Atlas</th></tr>
-    <tr><td>Core unit</td><td>The workout</td><td>The trail</td><td><b style="color:var(--mint)">The life story</b></td></tr>
-    <tr><td>Motivation</td><td>Performance & social</td><td>Discovery</td><td><b style="color:var(--mint)">Meaning, memory, legacy</b></td></tr>
-    <tr><td>Emotional layer</td><td>None</td><td>None</td><td><b style="color:var(--mint)">The whole product</b></td></tr>
-    <tr><td>Time horizon</td><td>This week's stats</td><td>Next weekend</td><td><b style="color:var(--mint)">Your whole life → after it</b></td></tr>
-    <tr><td>Switching cost</td><td>Export your GPX</td><td>Low</td><td><b style="color:var(--mint)">Your decade of memories</b></td></tr>
-    <tr><td>Moat</td><td>Network (social)</td><td>Trail content</td><td><b style="color:var(--mint)">Personal data + emotion + legacy</b></td></tr>
-  </table></div>
-  <div class="callout reveal"><b>Category creation:</b> incumbents can copy a feature but not a repositioning. To become Strivon, Strava would have to stop being Strava.</div>
-</div></section>
-
-<!-- 12. DATABASE -->
-<section id="db"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">12 — DATABASE DESIGN</div><h2>Postgres + PostGIS + pgvector</h2></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Table</th><th>Key columns</th><th>Purpose</th></tr>
-    <tr><td><code class="k">users</code></td><td>id, personality_type, motivations jsonb, twin_state jsonb</td><td>Identity + learned model</td></tr>
-    <tr><td><code class="k">journeys</code></td><td>id, user_id, path <i>geography(LineString)</i>, started_at, mode, stats</td><td>Every walk/run/ride</td></tr>
-    <tr><td><code class="k">memories</code></td><td>id, journey_id, point <i>geography</i>, media_url, transcript, embedding <i>vector</i>, life_event</td><td>Pinned moments (RAG source)</td></tr>
-    <tr><td><code class="k">capsules</code></td><td>id, user_id, point, media_url, unlock_rule, revealed_at</td><td>Future-self messages</td></tr>
-    <tr><td><code class="k">moods</code></td><td>id, user_id, journey_id, before, after, dims jsonb</td><td>Emotional Fitness Engine</td></tr>
-    <tr><td><code class="k">missions</code></td><td>id, user_id, spec jsonb, status, xp, completed_at</td><td>AI adventures</td></tr>
-    <tr><td><code class="k">places</code></td><td>id, point, type, note, dropped_by, votes</td><td>Living treasure map</td></tr>
-    <tr><td><code class="k">legacy_routes</code></td><td>id, owner_id, path, stories jsonb, heirs[]</td><td>Cross-generation preservation</td></tr>
-    <tr><td><code class="k">progression</code></td><td>user_id, xp, level, class, titles[], skills jsonb</td><td>City RPG</td></tr>
-    <tr><td><code class="k">crossings</code></td><td>geohash, day, hashed_user, count</td><td>Anonymous network (k-anonymous)</td></tr>
-    <tr><td><code class="k">twin_snapshots</code></td><td>user_id, at, projections jsonb</td><td>Digital-twin history</td></tr>
-  </table></div>
-  <p style="margin-top:14px;color:var(--muted);font-size:14px">Row-Level Security on every table; media in object storage; the <code class="k">crossings</code> grid never stores exact coordinates — only coarse, hashed, k-anonymised cells.</p>
-</div></section>
-
-<!-- 13. BACKEND -->
-<section id="backend"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">13 — BACKEND · FLASK ML SERVICE</div><h2>A Python brain beside the realtime spine</h2>
-    <p class="lead">You asked for Flask — and it's exactly right for the ML/agent layer. The honest architecture is <b style="color:#fff">hybrid</b>: keep Supabase for auth, data, realtime and low-latency LLM edge calls; add a Flask service where Python earns its keep — forecasting, embeddings, agents.</p></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Layer</th><th>Tech</th><th>Responsibility</th></tr>
-    <tr><td>API</td><td>Flask + Gunicorn</td><td>/coach /mission /route /twin /story /insights endpoints</td></tr>
-    <tr><td>Async jobs</td><td>Celery + Redis</td><td>Story films, twin recompute, weekly behavioural analysis</td></tr>
-    <tr><td>Data</td><td>Postgres (Supabase) + PostGIS + pgvector</td><td>Shared source of truth; geospatial + embeddings</td></tr>
-    <tr><td>ML</td><td>scikit-learn · Prophet/torch · sentence-transformers</td><td>Behaviour models, forecasting twin, memory embeddings</td></tr>
-    <tr><td>LLM</td><td>Claude via Anthropic API</td><td>Coach, missions, story narration, RAG answers</td></tr>
-    <tr><td>Deploy</td><td>Docker → Fly.io / Render / Cloud Run</td><td>Autoscale the ML service independently of the app</td></tr>
-  </table></div>
-  <div class="callout reveal"><b>Migration path:</b> Strivon's live Deno edge functions (coach, strava, stripe) stay. The Flask service is added only when the twin/embeddings need Python — no rewrite, incremental.</div>
-</div></section>
-
-<!-- 14. SCREENS -->
-<section id="screens"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">14 — SCREEN-BY-SCREEN UI</div><h2>A documentary, not a dashboard</h2>
-    <p class="lead">Map-centric. Cinematic. Almost no charts. Every screen answers “what did movement mean today?”</p></div>
-  <div class="grid g3">
-    <div class="card reveal"><div class="k">Home</div><h3>The Living Map</h3><p>Full-bleed dark map of your life. Glowing threads = journeys. Tap a memory to relive it. Today's adventure floats at the base.</p></div>
-    <div class="card reveal"><div class="k">Replay</div><h3>Journey Cinema</h3><p>A journey plays back like a film — the line draws, memories bloom, your voice note plays, the season shifts.</p></div>
-    <div class="card reveal"><div class="k">Capture</div><h3>Moment</h3><p>One tap mid-walk: photo, 10-sec voice, a feeling. Frictionless — the whole product depends on this being effortless.</p></div>
-    <div class="card reveal"><div class="k">Time</div><h3>Capsules</h3><p>A quiet timeline of messages waiting in the world. A gentle notification when you near one.</p></div>
-    <div class="card reveal"><div class="k">Play</div><h3>Adventure</h3><p>Today's mission as a beautiful card. Live progress. The reveal + XP on completion.</p></div>
-    <div class="card reveal"><div class="k">Self</div><h3>Twin & Purpose</h3><p>Your projected futures as soft cinematic curves — and the one line: “today moved you closer to Snowdon at 80.”</p></div>
-    <div class="card reveal"><div class="k">Companion</div><h3>Coach chat</h3><p>An empathetic thread that already knows your week. Text or voice.</p></div>
-    <div class="card reveal"><div class="k">Legacy</div><h3>The Vault</h3><p>Routes and voices you're preserving, and who inherits them. Sacred, calm, permanent.</p></div>
-    <div class="card reveal"><div class="k">You</div><h3>Identity</h3><p>Your class, titles and skills — the RPG self, shown as a crest, not a spreadsheet.</p></div>
-  </div>
-</div></section>
-
-<!-- 15. GAMIFICATION -->
-<section id="game"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">15 — GAMIFICATION FRAMEWORK</div><h2>Meaningful, not manipulative</h2></div>
-  <div class="grid g2">
-    <div class="card reveal"><div class="k">Progression</div>
-      <ul class="clean">
-        <li><span class="b">XP →</span> from movement, discovery, memories & missions — exploration rewarded over speed.</li>
-        <li><span class="b">Classes →</span> Explorer · Seeker · Guardian · Wayfarer — emerge from <i>how</i> you actually move.</li>
-        <li><span class="b">Titles →</span> Bridge Walker · Sunrise Hunter · Forest Guardian · Urban Adventurer.</li>
-        <li><span class="b">Skill trees →</span> Endurance · Curiosity · Consistency · Courage.</li>
-      </ul></div>
-    <div class="card reveal"><div class="k">Retention design (ethical)</div>
-      <ul class="clean">
-        <li><span class="b">Forgiving streaks →</span> life happens; a missed day doesn't shame you.</li>
-        <li><span class="b">Seasons →</span> fresh adventures & cosmetics quarterly, never pay-to-win.</li>
-        <li><span class="b">Intrinsic first →</span> the reward is the memory and the map, XP is the seasoning.</li>
-        <li><span class="b">No leaderboards by default →</span> we compete with your past self, not strangers.</li>
-      </ul></div>
-  </div>
-</div></section>
-
-<!-- 16. ROADMAP -->
-<section id="road"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">16 — FUTURE ROADMAP</div><h2>From wedge to category</h2></div>
-  <div class="grid g4">
-    <div class="card reveal"><div class="k">Now · Q3</div><h3>The Wedge</h3><p>Story Map · Capsules · Daily Adventure · Explorer XP. On Strivon's live rails.</p></div>
-    <div class="card reveal"><div class="k">V2 · 6 mo</div><h3>The Companion</h3><p>Context coach · Emotional Engine · Legacy Routes · Treasure Map · Regret Minimiser.</p></div>
-    <div class="card reveal"><div class="k">V3 · 12 mo</div><h3>The Network</h3><p>Digital Twin · anonymous crossings · personality challenges · story films.</p></div>
-    <div class="card reveal"><div class="k">V4 · 24 mo</div><h3>The Platform</h3><p>B2G city partnerships · wellbeing-benefit API · generational Legacy Vault at scale.</p></div>
-  </div>
-</div></section>
-
-<!-- 17. PITCH -->
-<section id="pitch"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">17 — INVESTOR PITCH CONCEPT</div><h2>The category the $10B fitness market forgot</h2></div>
-  <div class="grid g4" style="margin-bottom:20px">
-    <div class="card reveal"><div class="big-stat grad-txt">$10B+</div><p style="color:var(--muted);font-size:14px;margin:6px 0 0">fitness-app market, all fighting over the same metric</p></div>
-    <div class="card reveal"><div class="big-stat grad-txt">0</div><p style="color:var(--muted);font-size:14px;margin:6px 0 0">incumbents own memory, meaning or legacy</p></div>
-    <div class="card reveal"><div class="big-stat grad-txt">&lt;2%</div><p style="color:var(--muted);font-size:14px;margin:6px 0 0">target churn — emotional switching cost</p></div>
-    <div class="card reveal"><div class="big-stat grad-txt">∞</div><p style="color:var(--muted);font-size:14px;margin:6px 0 0">retention horizon — a life, then a legacy</p></div>
-  </div>
-  <div class="quotebox reveal"><p>“The fitness market spent a decade optimising the <span class="grad-txt">stopwatch</span>. We're building the <span class="grad-txt">memory</span>. One is a feature. The other is a company you can't churn out of — because leaving means deleting your life.”</p></div>
-  <div class="grid g3" style="margin-top:18px">
-    <div class="card reveal"><div class="k">The ask</div><p style="color:#cfd2df;font-size:15px">Seed to prove the wedge: MVP + 10k emotionally-retained users + the memory-moat retention curve.</p></div>
-    <div class="card reveal"><div class="k">The wedge → moat</div><p style="color:#cfd2df;font-size:15px">Emotion drives day-1 love; accumulated memory drives lifetime lock-in; the network & twin make it un-catchable.</p></div>
-    <div class="card reveal"><div class="k">Why now</div><p style="color:#cfd2df;font-size:15px">LLMs finally make personal story, empathetic coaching and adventure generation cheap enough to feel magical.</p></div>
-  </div>
-</div></section>
-
-<!-- 18. EMOTIONAL ATTACHMENT -->
 <section id="love"><div class="wrap">
   <div class="sec-head reveal"><div class="num">18 — WHY USERS FALL IN LOVE</div><h2>The switching cost is your soul</h2></div>
   <div class="grid g2">
@@ -491,14 +245,12 @@
   </div>
   <div class="quotebox reveal" style="margin-top:20px"><p>You don't open Strivon to check a number.<br>You open it to <span class="grad-txt">remember who you're becoming</span>.</p></div>
 </div></section>
-
 </main>
-
+<div class="pager"><a class="pg-next" href="./experience.html">Experience →</a></div>
 <footer><div class="wrap">
   <div class="logo" style="margin-bottom:16px"><b style="font-family:var(--disp);font-weight:800">Strivon</b><span style="color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase">· Atlas</span></div>
   <p style="color:var(--faint);max-width:60ch">Product vision & strategy — a geographical autobiography, an emotional-wellbeing OS, a real-world RPG, and a legacy that outlives its user. Built to layer onto Strivon's live PWA + Supabase + on-device intelligence + Claude edge functions. Designed as a category, not a feature.</p>
 </div></footer>
-
 <script>
   (function(){
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -8% 0px'});

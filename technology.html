@@ -1,0 +1,244 @@
+<meta charset="utf-8">
+<title>Strivon Atlas — Technology</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#08070e; --bg2:#0b0a14; --panel:#101220; --panel2:#0e1019;
+    --ink:#f2f0ea; --muted:#8b90a6; --faint:#5a5f74;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.05);
+    --tang:#ff6a3d; --amber:#ffb057; --teal:#2ee6c6; --mint:#5ff0d0;
+    --grad:linear-gradient(105deg,var(--tang),var(--amber) 42%,var(--teal));
+    --grad-soft:linear-gradient(105deg,rgba(255,106,61,.16),rgba(46,230,198,.14));
+    --disp:-apple-system,"SF Pro Display",system-ui,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+    font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+  @media(max-width:640px){.wrap{padding:0 22px}}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:600}
+  h1,h2,h3{font-family:var(--disp);font-weight:800;letter-spacing:-.03em;line-height:1.02;text-wrap:balance;margin:0}
+  h2{font-size:clamp(30px,4.6vw,50px);letter-spacing:-.035em}
+  h3{font-size:22px;letter-spacing:-.02em}
+  p{margin:0 0 14px;color:#d7d9e3}
+  .lead{color:var(--muted);font-size:19px;max-width:64ch}
+  a{color:var(--teal);text-decoration:none}
+  .grad-txt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ---------- hero ---------- */
+  header.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+    padding:80px 0 60px;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;z-index:0;
+    background:radial-gradient(120% 90% at 78% 8%,rgba(255,106,61,.14),transparent 46%),
+               radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.13),transparent 44%),var(--bg)}
+  .route-svg{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.6}
+  .route-svg path{fill:none;stroke:url(#rg);stroke-width:2.4;stroke-linecap:round;
+    stroke-dasharray:2600;stroke-dashoffset:2600;animation:draw 4.5s cubic-bezier(.6,.05,.2,1) .3s forwards}
+  .route-svg .node{fill:var(--teal);opacity:0;animation:pop .5s ease forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes pop{to{opacity:1}}
+  .hero-inner{position:relative;z-index:2}
+  .logo{display:flex;align-items:center;gap:12px;margin-bottom:44px}
+  .logo .mk{width:34px;height:34px;filter:drop-shadow(0 0 14px rgba(46,230,198,.4))}
+  .logo b{font-family:var(--disp);font-weight:800;letter-spacing:-.02em;font-size:20px}
+  .logo span{color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+  h1.big{font-size:clamp(44px,8.5vw,104px);letter-spacing:-.045em;margin:0 0 22px}
+  .hero .sub{font-size:clamp(19px,2.4vw,24px);color:var(--muted);max-width:44ch;margin-bottom:30px}
+  .hero .sub b{color:var(--ink);font-weight:600}
+  .chiprow{display:flex;flex-wrap:wrap;gap:9px;margin-top:8px}
+  .chip{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding:8px 13px;border:1px solid var(--line);
+    border-radius:999px;color:var(--muted);background:rgba(255,255,255,.02)}
+  .scrollcue{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:2;color:var(--faint);
+    font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+  .cta-launch{display:inline-block;background:var(--grad);color:#08070e;font-weight:800;font-size:17px;
+    padding:15px 30px;border-radius:14px;text-decoration:none;box-shadow:0 10px 34px rgba(255,106,61,.32);
+    transition:transform .15s ease,box-shadow .15s ease}
+  .cta-launch:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(255,106,61,.42)}
+  .cta-secondary{color:var(--muted);text-decoration:none;font-size:15px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:2px}
+  .cta-secondary:hover{color:var(--ink)}
+  .launch-fixed{position:fixed;top:18px;right:18px;z-index:50;background:rgba(16,18,32,.72);backdrop-filter:blur(10px);
+    border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:14px;padding:9px 16px;border-radius:11px;
+    text-decoration:none;transition:border-color .15s ease}
+  .launch-fixed:hover{border-color:var(--teal)}
+  @media(max-width:640px){.launch-fixed{top:12px;right:12px;padding:8px 13px;font-size:13px}}
+
+  /* ---------- sections ---------- */
+  section{padding:76px 0;position:relative;border-top:1px solid var(--line2)}
+  .num{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.2em}
+  .sec-head{max-width:70ch;margin-bottom:38px}
+  .sec-head h2{margin:12px 0 16px}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:var(--r);padding:22px}
+  .card h3{margin-bottom:8px}
+  .card p{font-size:15px;color:var(--muted);margin:0}
+  .card .k{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+  .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:20px;
+    background:var(--grad-soft);border:1px solid var(--line);margin-bottom:14px}
+
+  .pillar{position:relative;overflow:hidden}
+  .pillar .no{position:absolute;top:16px;right:18px;font-family:var(--disp);font-weight:800;font-size:34px;
+    letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.1)}
+  .pillar .quote{margin-top:12px;font-style:italic;color:#c9cde0;font-size:14px;border-left:2px solid;
+    border-image:var(--grad) 1;padding-left:12px}
+
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding:9px 0;border-top:1px solid var(--line2);color:#cfd2df;font-size:15px;display:flex;gap:11px}
+  ul.clean li:first-child{border-top:0}
+  ul.clean li .b{color:var(--teal);font-weight:700}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:rgba(255,255,255,.02)}
+  td{color:#cfd2df}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:3px 9px;border-radius:999px;font-weight:600}
+  .p-now{background:rgba(46,230,198,.14);color:var(--mint)}
+  .p-next{background:rgba(255,176,87,.14);color:var(--amber)}
+  .p-later{background:rgba(138,144,166,.14);color:var(--muted)}
+
+  .flow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .flow .node{padding:9px 13px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink)}
+  .flow .ar{color:var(--teal)}
+
+  .persona{display:flex;gap:16px;align-items:flex-start}
+  .persona .av{width:54px;height:54px;border-radius:14px;flex:0 0 auto;display:grid;place-items:center;font-size:26px;background:var(--grad-soft);border:1px solid var(--line)}
+
+  .journey{counter-reset:step;display:grid;gap:0}
+  .journey .st{display:flex;gap:16px;padding:16px 0;border-top:1px solid var(--line2)}
+  .journey .st:before{counter-increment:step;content:counter(step);flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+    background:var(--grad);color:#06121a;font-weight:800;display:grid;place-items:center;font-size:14px;font-family:var(--disp)}
+  .journey .st div b{color:var(--ink)}
+  .journey .st div{color:var(--muted);font-size:15px}
+
+  .big-stat{font-family:var(--disp);font-weight:800;font-size:clamp(34px,5vw,52px);letter-spacing:-.04em;line-height:1}
+  .big-stat.grad-txt+ p{margin-top:6px}
+
+  .quotebox{border:1px solid var(--line);border-radius:var(--r);padding:30px 28px;background:var(--grad-soft);position:relative}
+  .quotebox p{font-family:var(--disp);font-weight:700;font-size:clamp(22px,3.2vw,32px);letter-spacing:-.02em;color:var(--ink);line-height:1.18;margin:0}
+
+  code.k{font-family:var(--mono);font-size:13px;background:rgba(255,255,255,.05);border:1px solid var(--line2);padding:2px 7px;border-radius:6px;color:var(--mint)}
+  .callout{border-left:2px solid;border-image:var(--grad) 1;padding:4px 0 4px 16px;color:var(--muted);font-size:15px;margin:14px 0}
+  .callout b{color:var(--ink)}
+
+  footer{padding:60px 0 90px;border-top:1px solid var(--line2);color:var(--faint);font-size:14px}
+  .honest{background:repeating-linear-gradient(135deg,rgba(255,176,87,.05),rgba(255,176,87,.05) 12px,transparent 12px,transparent 24px);
+    border:1px solid rgba(255,176,87,.25);border-radius:14px;padding:18px 20px;margin-top:18px}
+  .honest .k{color:var(--amber)}
+
+  @media (prefers-reduced-motion:reduce){
+    .route-svg path{animation:none;stroke-dashoffset:0}.route-svg .node{animation:none;opacity:1}
+    .reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}
+  }
+
+  .topnav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:18px;padding:13px 40px;
+    background:rgba(8,7,14,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .nav-brand{display:flex;align-items:center;gap:9px;color:var(--ink);text-decoration:none;font-family:var(--disp);font-weight:800;font-size:17px;letter-spacing:-.02em}
+  .nav-brand .nav-mk{width:24px;height:24px;flex:0 0 auto}
+  .nav-brand b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .nav-links{display:flex;gap:4px;margin-left:auto}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;padding:8px 14px;border-radius:9px;transition:.15s;white-space:nowrap}
+  .nav-links a:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+  .nav-links a.active{color:var(--ink);background:rgba(255,255,255,.08)}
+  .nav-launch{background:var(--grad);color:#08070e;font-weight:800;font-size:14px;padding:9px 16px;border-radius:10px;text-decoration:none;white-space:nowrap}
+  .page-hero{padding:66px 0 26px;border-bottom:1px solid var(--line2);background:radial-gradient(100% 130% at 82% 0%,rgba(255,106,61,.09),transparent 52%)}
+  .page-h1{font-size:clamp(36px,6vw,62px);letter-spacing:-.04em;margin:12px 0 16px}
+  .pager{display:flex;justify-content:space-between;gap:16px;padding:44px 40px 0;max-width:1320px;margin:0 auto;flex-wrap:wrap}
+  .pager a{color:var(--ink);text-decoration:none;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:-.02em;
+    border:1px solid var(--line);border-radius:14px;padding:16px 22px;transition:.15s;background:var(--panel)}
+  .pager a:hover{border-color:var(--teal)}
+  .pg-next{margin-left:auto;text-align:right}
+  @media(max-width:820px){.topnav{padding:11px 20px;gap:10px;flex-wrap:wrap}
+    .nav-links{order:3;width:100%;margin-left:0;overflow-x:auto;padding-bottom:2px}.nav-launch{margin-left:auto}
+    .pager{padding:32px 22px 0}.pager a{font-size:15px;padding:13px 16px}}
+</style>
+<nav class="topnav"><a class="nav-brand" href="./index.html"><svg class="nav-mk" viewBox="0 0 100 100"><defs><linearGradient id="nvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs><g fill="none" stroke="url(#nvg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/><path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#nvg)" stroke="none"/></g></svg><span>Strivon <b>Atlas</b></span></a><div class="nav-links"><a href="./index.html">Vision</a><a href="./experience.html">Experience</a><a href="./technology.html" class="active">Technology</a><a href="./business.html">Business</a></div><a class="nav-launch" href="./app.html">Open app&nbsp;→</a></nav>
+<header class="page-hero"><div class="wrap"><div class="eyebrow">How it's built</div><h1 class="page-h1">The Technology</h1><p class="lead">The map-first architecture, the nine-agent AI swarm, the data model, and the Python brain beside the realtime spine.</p></div></header>
+<main>
+<section id="arch"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">06 — CORE APP ARCHITECTURE</div><h2>Map-first, offline-first, private by design</h2>
+    <p class="lead">Built on what Strivon already runs today (PWA + Supabase + on-device intelligence + Claude edge functions) and extended with a Python ML brain.</p></div>
+  <div class="flow reveal" style="margin-bottom:22px">
+    <span class="node">📱 Client (PWA / Capacitor native)</span><span class="ar">→</span>
+    <span class="node">Supabase — Auth · Postgres+PostGIS · Realtime · Storage</span><span class="ar">→</span>
+    <span class="node">Edge Functions (Deno) — coach · missions</span><span class="ar">→</span>
+    <span class="node">🧠 Flask ML service — twin · embeddings · agents</span>
+  </div>
+  <div class="grid g3">
+    <div class="card reveal"><div class="k">Client</div><p style="color:#cfd2df;font-size:15px">Vanilla-JS PWA today → Capacitor for native GPS/Health/notifications. Map-centric UI, offline journey capture, on-device GPS smoothing & sports-science math.</p></div>
+    <div class="card reveal"><div class="k">Data & realtime</div><p style="color:#cfd2df;font-size:15px">Supabase Postgres + <b style="color:#fff">PostGIS</b> for geospatial, Storage for media, RLS for privacy, Realtime for the anonymous network.</p></div>
+    <div class="card reveal"><div class="k">Intelligence</div><p style="color:#cfd2df;font-size:15px">Deno edge functions for low-latency LLM calls; a <b style="color:#fff">Python/Flask</b> service for the digital twin, vector memory (pgvector), and the agent swarm.</p></div>
+  </div>
+</div></section>
+<section id="ai"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">07 — AI ARCHITECTURE · THE AGENT SWARM</div><h2>Nine agents, one companion</h2></div>
+  <div class="tblwrap reveal"><table>
+    <tr><th>Agent</th><th>Job</th><th>Inputs</th><th>Engine</th></tr>
+    <tr><td><b>Coach</b></td><td>Empathetic daily guidance & check-ins</td><td>Plan, runs, mood, calendar, weather</td><td>LLM (Claude) + RAG</td></tr>
+    <tr><td><b>Memory / RAG</b></td><td>Retrieve your past — “what was I doing last spring?”</td><td>Journeys, notes, media captions</td><td>pgvector embeddings</td></tr>
+    <tr><td><b>Mission Generator</b></td><td>Daily adventures tuned to context</td><td>Location, weather, time, fitness, history</td><td>LLM + rules + POI data</td></tr>
+    <tr><td><b>Route Generator</b></td><td>Loops by distance, mood, scenery, elevation</td><td>PostGIS, OSM, elevation, preferences</td><td>Graph routing + LLM</td></tr>
+    <tr><td><b>Behavioural Analyst</b></td><td>Detect habit cycles, break points, personality</td><td>Time-series of activity & mood</td><td>Classical ML (sklearn)</td></tr>
+    <tr><td><b>Wellbeing Insights</b></td><td>“Which places lift you” correlations</td><td>Mood deltas × place × route</td><td>Stats / causal-lite</td></tr>
+    <tr><td><b>Digital Twin</b></td><td>Predict future fitness, mood, burnout; simulate scenarios</td><td>Full history + goals</td><td>Time-series forecasting</td></tr>
+    <tr><td><b>Story Generator</b></td><td>Narrate your year / journey as a film</td><td>Journeys, memories, milestones</td><td>LLM + media pipeline</td></tr>
+    <tr><td><b>Serendipity</b></td><td>Anonymous crossings & kindred spirits</td><td>Hashed geohash grid, k-anonymity</td><td>Privacy-preserving match</td></tr>
+  </table></div>
+  <div class="callout reveal"><b>The learning loop:</b> every agent writes back to a per-user profile of motivations, triggers and preferred adventures. The companion gets more “you” every week — the compounding data moat.</div>
+</div></section>
+<section id="db"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">12 — DATABASE DESIGN</div><h2>Postgres + PostGIS + pgvector</h2></div>
+  <div class="tblwrap reveal"><table>
+    <tr><th>Table</th><th>Key columns</th><th>Purpose</th></tr>
+    <tr><td><code class="k">users</code></td><td>id, personality_type, motivations jsonb, twin_state jsonb</td><td>Identity + learned model</td></tr>
+    <tr><td><code class="k">journeys</code></td><td>id, user_id, path <i>geography(LineString)</i>, started_at, mode, stats</td><td>Every walk/run/ride</td></tr>
+    <tr><td><code class="k">memories</code></td><td>id, journey_id, point <i>geography</i>, media_url, transcript, embedding <i>vector</i>, life_event</td><td>Pinned moments (RAG source)</td></tr>
+    <tr><td><code class="k">capsules</code></td><td>id, user_id, point, media_url, unlock_rule, revealed_at</td><td>Future-self messages</td></tr>
+    <tr><td><code class="k">moods</code></td><td>id, user_id, journey_id, before, after, dims jsonb</td><td>Emotional Fitness Engine</td></tr>
+    <tr><td><code class="k">missions</code></td><td>id, user_id, spec jsonb, status, xp, completed_at</td><td>AI adventures</td></tr>
+    <tr><td><code class="k">places</code></td><td>id, point, type, note, dropped_by, votes</td><td>Living treasure map</td></tr>
+    <tr><td><code class="k">legacy_routes</code></td><td>id, owner_id, path, stories jsonb, heirs[]</td><td>Cross-generation preservation</td></tr>
+    <tr><td><code class="k">progression</code></td><td>user_id, xp, level, class, titles[], skills jsonb</td><td>City RPG</td></tr>
+    <tr><td><code class="k">crossings</code></td><td>geohash, day, hashed_user, count</td><td>Anonymous network (k-anonymous)</td></tr>
+    <tr><td><code class="k">twin_snapshots</code></td><td>user_id, at, projections jsonb</td><td>Digital-twin history</td></tr>
+  </table></div>
+  <p style="margin-top:14px;color:var(--muted);font-size:14px">Row-Level Security on every table; media in object storage; the <code class="k">crossings</code> grid never stores exact coordinates — only coarse, hashed, k-anonymised cells.</p>
+</div></section>
+<section id="backend"><div class="wrap">
+  <div class="sec-head reveal"><div class="num">13 — BACKEND · FLASK ML SERVICE</div><h2>A Python brain beside the realtime spine</h2>
+    <p class="lead">You asked for Flask — and it's exactly right for the ML/agent layer. The honest architecture is <b style="color:#fff">hybrid</b>: keep Supabase for auth, data, realtime and low-latency LLM edge calls; add a Flask service where Python earns its keep — forecasting, embeddings, agents.</p></div>
+  <div class="tblwrap reveal"><table>
+    <tr><th>Layer</th><th>Tech</th><th>Responsibility</th></tr>
+    <tr><td>API</td><td>Flask + Gunicorn</td><td>/coach /mission /route /twin /story /insights endpoints</td></tr>
+    <tr><td>Async jobs</td><td>Celery + Redis</td><td>Story films, twin recompute, weekly behavioural analysis</td></tr>
+    <tr><td>Data</td><td>Postgres (Supabase) + PostGIS + pgvector</td><td>Shared source of truth; geospatial + embeddings</td></tr>
+    <tr><td>ML</td><td>scikit-learn · Prophet/torch · sentence-transformers</td><td>Behaviour models, forecasting twin, memory embeddings</td></tr>
+    <tr><td>LLM</td><td>Claude via Anthropic API</td><td>Coach, missions, story narration, RAG answers</td></tr>
+    <tr><td>Deploy</td><td>Docker → Fly.io / Render / Cloud Run</td><td>Autoscale the ML service independently of the app</td></tr>
+  </table></div>
+  <div class="callout reveal"><b>Migration path:</b> Strivon's live Deno edge functions (coach, strava, stripe) stay. The Flask service is added only when the twin/embeddings need Python — no rewrite, incremental.</div>
+</div></section>
+</main>
+<div class="pager"><a class="pg-prev" href="./experience.html">← Experience</a><a class="pg-next" href="./business.html">Business →</a></div>
+<footer><div class="wrap">
+  <div class="logo" style="margin-bottom:16px"><b style="font-family:var(--disp);font-weight:800">Strivon</b><span style="color:var(--faint);font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase">· Atlas</span></div>
+  <p style="color:var(--faint);max-width:60ch">Product vision & strategy — a geographical autobiography, an emotional-wellbeing OS, a real-world RPG, and a legacy that outlives its user. Built to layer onto Strivon's live PWA + Supabase + on-device intelligence + Claude edge functions. Designed as a category, not a feature.</p>
+</div></footer>
+<script>
+  (function(){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  })();
+</script>
