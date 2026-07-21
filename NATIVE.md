@@ -7,6 +7,16 @@ Strivon is wrapped with [Capacitor](https://capacitorjs.com) so the **same `app/
 - **Web source:** `app/` (Capacitor `webDir`)
 - Native projects: `ios/` (Xcode, uses Swift Package Manager — no CocoaPods needed) and `android/` (Gradle).
 
+## Background GPS (the whole reason to go native)
+A browser/PWA **cannot** track with the screen locked — iOS suspends JavaScript. The native shell fixes this via **`@capacitor-community/background-geolocation`**, which runs a real `CLLocationManager` (iOS) / foreground service (Android) that keeps streaming fixes while the phone is in your pocket, screen off.
+
+- Wired in `app/native-bridge.js` → `startGeo()` prefers `BackgroundGeolocation.addWatcher`, normalises its location shape to the web `pos.coords` shape the app already consumes, and **falls back** to `@capacitor/geolocation` then web GPS — so nothing breaks if the plugin isn't synced.
+- iOS: `Info.plist` has `UIBackgroundModes → location` + an always-on usage string (App Store review reads these).
+- Android: manifest has `ACCESS_BACKGROUND_LOCATION` + `FOREGROUND_SERVICE_LOCATION`.
+- **Verify on a real device:** start a run, lock the phone, walk ~200 m, unlock → the route/distance must have kept accruing. (Simulators don't reproduce background suspension — must be a physical phone.)
+
+> ⚠️ `@perfood/capacitor-healthkit@1.3.2` is a Capacitor-4-era plugin in a Capacitor-8 project — installs need `--legacy-peer-deps` and it may not compile under Xcode 15+. Being replaced with a Cap-8 health plugin (roadmap item #5).
+
 ## After you change the web app
 Copy the latest `app/` into the native projects:
 ```bash

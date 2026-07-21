@@ -7,6 +7,8 @@
   var P = (CAP && CAP.Plugins) || {};
   var platform = (CAP && CAP.getPlatform && CAP.getPlatform()) || 'web';
   var geoWatchId = null;
+  var bgWatchId = null;      // @capacitor-community/background-geolocation watcher id
+  var usingBg = false;
 
   function b64ToBytes(b64) {
     var bin = atob(b64), arr = new Uint8Array(bin.length);
@@ -18,22 +20,76 @@
     available: isNative,
     platform: platform,
 
-    // ---- GPS (native, high-accuracy, works with screen off if bg mode enabled) ----
+    // ---- GPS ----------------------------------------------------------------
+    // Prefer @capacitor-community/background-geolocation: it registers a real
+    // CLLocationManager (iOS) / foreground-service (Android) that keeps streaming
+    // fixes with the screen LOCKED and the app backgrounded — the thing plain
+    // @capacitor/geolocation.watchPosition can't do. Falls back to watchPosition
+    // if the bg plugin isn't installed/synced yet, so nothing breaks either way.
     startGeo: function (onPos) {
-      if (!isNative || !P.Geolocation) return false;
-      var start = function () {
-        P.Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 8000 }, function (pos) {
-          if (pos && pos.coords) onPos(pos); // Capacitor position shape == web position shape
-        }).then(function (id) { geoWatchId = id; }).catch(function () {});
-      };
-      P.Geolocation.checkPermissions()
-        .then(function (s) { return (s.location === 'granted') ? null : P.Geolocation.requestPermissions(); })
-        .catch(function () {})
-        .then(start, start);
-      return true; // native path taken
+      if (!isNative) return false;
+      var BG = P.BackgroundGeolocation;
+
+      // Normalise the bg-geo location shape -> the web Geolocation `pos` shape the
+      // app already consumes, so app.html needs zero changes.
+      function toWebPos(loc) {
+        return {
+          timestamp: loc.time || Date.now(),
+          coords: {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+            accuracy: loc.accuracy,
+            altitude: (loc.altitude != null ? loc.altitude : null),
+            altitudeAccuracy: (loc.altitudeAccuracy != null ? loc.altitudeAccuracy : null),
+            heading: (loc.bearing != null ? loc.bearing : null),
+            speed: (loc.speed != null ? loc.speed : null)
+          }
+        };
+      }
+
+      if (BG && BG.addWatcher) {
+        BG.addWatcher({
+          backgroundMessage: 'Recording your route — tap to return to Strivon.',
+          backgroundTitle: 'Strivon is tracking',
+          requestPermissions: true,
+          stale: false,       // don't deliver a cached stale fix on start
+          distanceFilter: 4    // metres between fixes — smooths GPS jitter
+        }, function (location, error) {
+          if (error) {
+            // NOT_AUTHORIZED etc. — let the app fall back to web GPS.
+            if (error.code === 'NOT_AUTHORIZED') { usingBg = false; }
+            return;
+          }
+          if (location) onPos(toWebPos(location));
+        }).then(function (id) { bgWatchId = id; usingBg = true; })
+          .catch(function () { usingBg = false; startWatchFallback(); });
+        return true;
+      }
+      return startWatchFallback();
+
+      function startWatchFallback() {
+        if (!P.Geolocation) return false;
+        var start = function () {
+          P.Geolocation.watchPosition({ enableHighAccuracy: true, timeout: 8000 }, function (pos) {
+            if (pos && pos.coords) onPos(pos);
+          }).then(function (id) { geoWatchId = id; }).catch(function () {});
+        };
+        P.Geolocation.checkPermissions()
+          .then(function (s) { return (s.location === 'granted') ? null : P.Geolocation.requestPermissions(); })
+          .catch(function () {})
+          .then(start, start);
+        return true;
+      }
     },
     stopGeo: function () {
-      try { if (geoWatchId && P.Geolocation) { P.Geolocation.clearWatch({ id: geoWatchId }); geoWatchId = null; } } catch (e) {}
+      try {
+        if (bgWatchId != null && P.BackgroundGeolocation) {
+          P.BackgroundGeolocation.removeWatcher({ id: bgWatchId }); bgWatchId = null; usingBg = false;
+        }
+      } catch (e) {}
+      try {
+        if (geoWatchId && P.Geolocation) { P.Geolocation.clearWatch({ id: geoWatchId }); geoWatchId = null; }
+      } catch (e) {}
     },
 
     // ---- Bluetooth heart-rate strap (native BLE — works on iOS, unlike Web Bluetooth) ----

@@ -18,6 +18,16 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 - [x] P4 — Build the app in `app/index.html` — MVP built + browser-verified (onboarding, SafeRamp plan w/ proven ≤10% cap, readiness, run tracker + auto-pause, adaptive RPE recalibration, persistence)
 - [x] P5 — Updated root TRACKER.md, app #1 = DONE (MVP)
 
+## 🎯 GAP-TO-10/10 ROADMAP (2026-07-21) — fixing one after the other
+Tier 1 = blockers (no product without them). Working top-down.
+- [x] **#1 Reliable background GPS** — added `@capacitor-community/background-geolocation` (real CLLocationManager / Android foreground service), wired into `native-bridge.js` startGeo/stopGeo with normalised position shape + graceful fallback; iOS Info.plist rebranded + bg usage string; Android FOREGROUND_SERVICE_LOCATION; `cap sync` done (iOS 5 plugins, Android 4). **Code-complete — needs Soumya to build in Xcode on a physical iPhone to verify screen-off tracking.**
+- [ ] #2 Apple Watch / Garmin-Coros support
+- [ ] #3 App Store / Play Store submission (needs Apple Dev acct + review)
+- [ ] #4 100 real users + retention (D1/D7/D30)
+- [ ] #5 Health import (Apple Health / Health Connect) — also replaces the broken Cap-4 `@perfood/capacitor-healthkit`
+- [ ] #6 AI coach turnkey server-side · #7 self-hosted routing · #8 social layer · #9 build ONE Atlas feature fully · #10 modularise
+See full 21-point table in chat 2026-07-21.
+
 ## ✅ APP #1 COMPLETE (MVP) — 2026-07-20 BST
 Verified working in browser (playwright): plan cap holds ≤9.8% max jump, 0 violations; RPE "hard" → next week 16.8→15.6km; persistence OK.
 
