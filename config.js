@@ -7,5 +7,9 @@ window.STRIDE_CONFIG = {
 
   // Pro subscription (Stripe). Web only — the App Store requires Apple IAP instead. See PRO.md.
   // Create a recurring Payment Link in the Stripe dashboard (£6.99/mo) and paste its URL here.
-  STRIPE_PAYMENT_LINK: 'https://buy.stripe.com/6oUfZigar2healY2sT6g800'  // Stride Pro £6.99/mo
+  STRIPE_PAYMENT_LINK: 'https://buy.stripe.com/6oUfZigar2healY2sT6g800',  // Stride Pro £6.99/mo
+
+  // Strava auto-import (Pro). Public Client ID from your Strava API app. See STRAVA.md.
+  // Leave blank to hide the Strava feature. The Client SECRET goes in Supabase secrets, never here.
+  STRAVA_CLIENT_ID: ''
 };
