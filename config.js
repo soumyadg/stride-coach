@@ -7,5 +7,5 @@ window.STRIDE_CONFIG = {
 
   // Pro subscription (Stripe). Web only — the App Store requires Apple IAP instead. See PRO.md.
   // Create a recurring Payment Link in the Stripe dashboard (£6.99/mo) and paste its URL here.
-  STRIPE_PAYMENT_LINK: ''  // e.g. https://buy.stripe.com/xxxxxxxx
+  STRIPE_PAYMENT_LINK: 'https://buy.stripe.com/6oUfZigar2healY2sT6g800'  // Stride Pro £6.99/mo
 };
