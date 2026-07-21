@@ -15,7 +15,7 @@ window.StrideSync = (function () {
 
   const N = {
     enabled: false,
-    state: () => ({ enabled: N.enabled, configured: configured(), signedIn: !!user, email: user ? user.email : null, lastSync: localStorage.getItem(LAST) }),
+    state: () => ({ enabled: N.enabled, configured: configured(), signedIn: !!user, userId: user ? user.id : null, email: user ? user.email : null, lastSync: localStorage.getItem(LAST) }),
 
     async init(cb) {
       onState = cb;
@@ -73,10 +73,11 @@ window.StrideSync = (function () {
   }
   async function pull() {
     if (!user) return; const s = getS();
-    const [{ data: prof }, { data: plan }, { data: acts }] = await Promise.all([
+    const [{ data: prof }, { data: plan }, { data: acts }, { data: sub }] = await Promise.all([
       sb.from('profiles').select('*').eq('id', user.id).maybeSingle(),
       sb.from('plans').select('*').eq('user_id', user.id).eq('is_active', true).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
-      sb.from('activities').select('*').eq('user_id', user.id)
+      sb.from('activities').select('*').eq('user_id', user.id),
+      sb.from('subscriptions').select('*').eq('user_id', user.id).maybeSingle()
     ]);
     if (!s && (plan || prof)) { saveS(rebuildLocal(prof, plan, acts)); }       // fresh device → restore
     else if (s) {
@@ -84,6 +85,8 @@ window.StrideSync = (function () {
       if (acts && acts.length) { const have = new Set((s.activities || []).map(a => a.id)); const add = acts.filter(a => !have.has(a.id)).map(fromActRow); if (add.length) s.activities = (s.activities || []).concat(add).sort((a, b) => b.at - a.at); } // union runs
       saveS(s);
     }
+    // subscription status (server truth) → drives Pro gating
+    const s3 = getS(); if (s3) { s3.subscription = sub ? { tier: sub.tier, status: sub.status, period_end: sub.current_period_end } : (s3.subscription || { tier: 'free' }); if (s3.subscription.tier === 'pro') s3.pro = true; saveS(s3); }
     stamp();
   }
   async function firstSync() { try { await pull(); if (localStorage.getItem(OUTBOX)) await push(); } catch (e) { console.warn('[StrideSync]', e && e.message); } finally { emit(); } }

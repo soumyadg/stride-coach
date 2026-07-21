@@ -528,9 +528,9 @@
           <li class="lock">Race-specific &amp; multiple plans</li>
           <li class="lock">Advanced training-load analytics</li>
         </ul>
-        <button class="btn p" style="margin-top:14px" onclick="document.getElementById('trial-note').classList.remove('hide')">Start 7-day free trial</button>
-        <div class="sub center" style="margin-top:7px">£59.99/yr (save 29%) · cancel anytime, in-app</div>
-        <div id="trial-note" class="banner a hide" style="margin-top:10px">Prototype — billing isn't wired yet. In production this starts a 7-day free trial (Stripe / App Store).</div>
+        <button class="btn p" id="pro-btn" style="margin-top:14px" onclick="goPro()">Go Pro — £6.99/mo</button>
+        <div class="sub center" style="margin-top:7px">Secure checkout via Stripe · cancel anytime</div>
+        <div id="trial-note" class="banner a hide" style="margin-top:10px">Checkout isn't configured yet — add your Stripe payment link in <b>config.js</b> (see PRO.md).</div>
       </div>
 
       <div class="banner g" style="margin-top:14px"><span class="tick">✓</span> The safety promise is <b>always free</b> — Pro never paywalls what keeps you injury-free.</div>
@@ -692,7 +692,7 @@ function makeSessions(vol,days,goal,w,total,mode){
 }
 
 // ---- render ----
-function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();}
+function enterApp(){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');renderAll();go('today');loadWeather();if(typeof maybeShowInstall==='function')maybeShowInstall();if(typeof proInit==='function')proInit();}
 function renderAll(){if(!S)return;renderCurve();renderCalendar();renderToday();}
 function renderCurve(){
   const max=Math.max(...S.plan.map(x=>x.vol));
@@ -1302,7 +1302,7 @@ function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classL
   $$('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
-  if(v==='why'&&window.StrideSync)renderAccount(StrideSync.state());
+  if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();}
   s.scrollTop=0;}
 
 // ---- account + cloud sync UI ----
@@ -1334,6 +1334,27 @@ async function acctAuth(mode){
 }
 async function acctSync(){const m=$('#acct-msg');m.innerHTML='<div class="sub" style="margin-top:10px">Syncing…</div>';try{await StrideSync.syncNow();m.innerHTML='<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Synced.</div>';}catch(e){m.innerHTML='<div class="banner r" style="margin-top:10px">Sync failed — check connection.</div>';}}
 async function acctSignOut(){await StrideSync.signOut();}
+
+// ---- Pro subscription (Stripe) ----
+function isPro(){return !!(S&&(S.pro||(S.subscription&&S.subscription.tier==='pro')));}
+function goPro(){
+  if(isPro())return;
+  const cfg=window.STRIDE_CONFIG||{},link=cfg.STRIPE_PAYMENT_LINK;
+  if(!link){const n=$('#trial-note');if(n)n.classList.remove('hide');return;}
+  const uid=(window.StrideSync&&StrideSync.state().userId)||'';           // so the webhook can unlock the right account
+  const ret=location.origin+location.pathname+'?pro=success';
+  const q=[];if(uid)q.push('client_reference_id='+encodeURIComponent(uid));q.push('success_url='+encodeURIComponent(ret));
+  location.href=link+(link.includes('?')?'&':'?')+q.join('&');
+}
+function reflectPro(){const b=$('#pro-btn');if(!b)return;if(isPro()){b.textContent='✓ Pro active';b.disabled=true;b.style.opacity='.7';}else{b.textContent='Go Pro — £6.99/mo';b.disabled=false;b.style.opacity='';}}
+function proInit(){
+  try{const p=new URLSearchParams(location.search);if(p.get('pro')==='success'){
+    if(S){S.pro=true;store.set(S);}                                     // optimistic unlock; webhook confirms server-side
+    history.replaceState(null,'',location.pathname);
+    if(window.StrideSync&&StrideSync.state().signedIn)StrideSync.syncNow();
+    go('why');coach&&0;
+  }}catch(e){}
+}
 document.addEventListener('stride-synced',()=>{
   const fresh=store.get();
   if(fresh){S=fresh;

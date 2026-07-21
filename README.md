@@ -74,26 +74,30 @@ mindmap
   root((Stride Coach))
     Plan
       SafeRamp generator
-      Deload every 4th week
-      Taper
+      Deload + taper
       Editable calendar
+      Running or Walking mode
     Safety
       ACWR injury-risk radar
       Daily readiness check
-      Overtraining guardrail
+      Wet-bulb heat safety
+      BMI-based pace for beginners
     Run
       Lap-based intervals
       Live audio coaching TTS
+      In-run learning lessons
       Smart auto-pause
-      GPS route trace
+      Real map + Bluetooth HR
+      Treadmill mode
     Progress
-      Weekly stats
-      Personal records
-      Activity history
-    Workouts
-      Easy / Tempo / Intervals
-      Hill / Long / Time trial
-      Parkrun / Race
+      Stats + personal records
+      BMI + pace suggestion
+      GPX export
+    Platform
+      Installable PWA offline
+      Native iOS + Android Capacitor
+      Cloud accounts + sync Supabase
+      Weather-tinted splash
 ```
 
 ## App navigation
@@ -156,32 +160,60 @@ python3 -m http.server 8791
 ```
 Or open `app/index.html` directly (GPS tracking needs http/https + location permission; falls back to demo mode otherwise).
 
+## What's built (all free & working)
+
+| Area | Capabilities |
+|---|---|
+| **Plan** | SafeRamp generator (≤10%/wk, deloads, taper), editable calendar, **Running or Walking** mode |
+| **Safety** | ACWR injury-risk radar, daily readiness, **wet-bulb heat** (5-bucket app theme + warnings), **BMI-based pace** for beginners |
+| **Run** | Lap-based intervals, live voice coaching, **in-run learning lessons**, smart auto-pause, real dark map, **Bluetooth HR** zones, **treadmill** mode |
+| **Progress** | Stats, personal records, **BMI**, one-tap **GPX export** |
+| **Platform** | Installable **PWA** (offline), native **iOS + Android** (Capacitor), cloud **accounts + sync** (Supabase), weather-tinted splash |
+
+> Everything above works today, for free. **Pro** (Stripe) and store distribution are set up but not switched on — see the docs below.
+
+## Docs
+
+- **[NATIVE.md](NATIVE.md)** — build the native iOS/Android app (Capacitor)
+- **[BACKEND.md](BACKEND.md)** — Supabase schema + offline-first sync design
+- **[PRO.md](PRO.md)** — Stripe subscriptions + Pro gating (web only; App Store needs IAP)
+- **[tests/](tests/)** — unit + stress + smoke battery (`await runStrideTests()`)
+- **[research/](research/)** — market research, competitor analysis, blueprint
+
+## Run it
+
+```bash
+cd app && python3 -m http.server 8791
+# open http://localhost:8791/index.html  (mobile viewport)
+```
+Live: **[soumyadg.github.io/stride-coach](https://soumyadg.github.io/stride-coach/)** · Landing: **[/landing.html](https://soumyadg.github.io/stride-coach/landing.html)**
+
 ## Tech
 
-- **Single-file** `app/index.html` — vanilla HTML/CSS/JS, `localStorage` persistence, zero dependencies.
-- Web APIs: **Geolocation** (run tracking), **SpeechSynthesis** (live audio coaching), **SVG** (route trace).
-- Theme: **"Neon Aurora"** — deep indigo canvas, electric-tangerine brand, mint green reserved for safety semantics only.
-- Portable to Capacitor / React Native for a native app + real watch sync (phase 2).
-
-## Roadmap
-
-```mermaid
-flowchart LR
-    MVP[✅ MVP<br/>plan · safety · run · stats] --> P2[Phase 2<br/>native + Apple Watch/Garmin sync]
-    P2 --> P3[Phase 3<br/>HR zones · nutrition · community · human coach]
-```
+- **Single-file** `app/index.html` — vanilla HTML/CSS/JS, `localStorage`, plus optional Supabase sync.
+- Web APIs: Geolocation, SpeechSynthesis, Web Bluetooth, SVG map tiles, Notifications.
+- Theme **"Neon Aurora"**; brand mark + logo set in `app/brand/`.
+- Native shell via **Capacitor** (`ios/`, `android/`).
 
 ## Repo layout
 
 ```
 stride-coach/
 ├── app/
-│   ├── index.html      # the whole app
-│   ├── README.md       # app-level notes
-│   └── screenshots/    # UI captures
-├── research/           # market research, competitor analysis, blueprint
-├── STATE.md            # autonomous-build resume log
-└── README.md           # this file
+│   ├── index.html          # the whole app
+│   ├── config.js           # Supabase + Stripe keys (blank = fully offline)
+│   ├── sync.js             # offline-first cloud sync
+│   ├── native-bridge.js    # native GPS / BLE / Health / notifications
+│   ├── landing.html        # marketing landing page
+│   ├── brand/              # runner logo set (mark, app-icon, wordmarks)
+│   └── screenshots/
+├── ios/  · android/         # Capacitor native projects
+├── supabase/migrations/     # accounts + sync schema (SQL)
+├── supabase/functions/      # Stripe checkout + webhook (edge functions)
+├── tests/                   # unit + stress + smoke battery
+├── research/                # market research + blueprint
+├── NATIVE.md · BACKEND.md · PRO.md · STATE.md
+└── README.md
 ```
 
 ---
