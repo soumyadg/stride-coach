@@ -180,3 +180,7 @@
   .footbar{display:flex;justify-content:space-between;gap:16px;margin-top:34px;padding-top:20px;border-top:1px solid var(--line2);color:var(--faint);font-size:13px;flex-wrap:wrap}
   .footbar a{color:var(--teal);text-decoration:none}
   @media(max-width:720px){.footgrid{grid-template-columns:1fr 1fr}.foot-tag{grid-column:1/-1}.footbar{flex-direction:column;gap:6px}}
+  .hero-inner{text-align:center}
+  .hero-inner .chiprow{justify-content:center}
+  .hero-inner .sub{margin-left:auto;margin-right:auto}
+  .hero-inner .eyebrow{display:block}
