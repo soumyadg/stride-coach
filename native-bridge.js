@@ -1,4 +1,4 @@
-/* Stride Coach — native bridge.
+/* Strivon — native bridge.
    When running inside the Capacitor native shell, use native GPS / Bluetooth / Health.
    In a normal browser this whole module no-ops, so the web app is unaffected. */
 (function () {

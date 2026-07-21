@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Stride Coach — the running coach that won't get you injured</title>
+<title>Strivon — the running coach that won't get you injured</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0a0912">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Stride">
+<meta name="apple-mobile-web-app-title" content="Strivon">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -310,12 +310,12 @@
         <circle class="lead" r="5.5"/>
       </svg>
     </div>
-    <div class="splash-word">Stride<span class="d">.</span>Coach</div>
-    <div class="splash-tag">The running coach that won't get you injured.</div>
+    <div class="splash-word">Strivon</div>
+    <div class="splash-tag">Train smarter. Stay injury-free.</div>
   </div>
   <div class="statusbar"><span>9:41</span><span class="ic">● ●●● ▮</span></div>
   <div id="install-banner" class="hide">
-    <span id="install-text">📲 Install Stride for the full experience</span>
+    <span id="install-text">📲 Install Strivon for the full experience</span>
     <span style="display:flex;gap:8px;flex:none">
       <button id="install-btn" onclick="doInstall()">Install</button>
       <button id="install-x" onclick="dismissInstall()" aria-label="Dismiss">✕</button>
@@ -328,7 +328,7 @@
 
     <!-- step 1: goal -->
     <div id="ob1">
-      <div class="brand">Stride<span class="g">.</span>Coach</div>
+      <div class="brand">Strivon</div>
       <h2 style="margin-top:22px">What's your goal?</h2>
       <div class="sub">Pick the one that fits you best.</div>
       <div class="rows" id="goal-rows">
@@ -484,15 +484,15 @@
 
   <!-- ================= WHY ================= -->
   <div id="s-why" class="screen hide">
-    <h1 style="padding-top:6px">Why Stride</h1>
+    <h1 style="padding-top:6px">Why Strivon</h1>
     <div class="card" id="account-card"></div>
     <div class="card" id="strava-card" style="display:none"></div>
     <div class="card" id="import-card" style="display:none"></div>
     <div class="card" id="plans-card"></div>
     <div class="card">
-      <div class="kicker">What makes Stride different</div>
+      <div class="kicker">What makes Strivon different</div>
       <table>
-        <tr><th>What most running apps miss</th><th>Stride</th></tr>
+        <tr><th>What most running apps miss</th><th>Strivon</th></tr>
         <tr><td>Ramps too fast → injuries (PTs report weekly cases)</td><td class="tick">SafeRamp ≤10%/wk + deloads</td></tr>
         <tr><td>“Takes you at your word”, no feedback loop</td><td class="tick">Daily readiness + post-run RPE</td></tr>
         <tr><td>GPS undercounts 100–200m</td><td class="tick">Smoothed, no undercount</td></tr>
@@ -946,7 +946,7 @@ const LESSONS=[
   ['Foot strike','Land with your foot under your hips, not reaching out in front. Overstriding acts like a brake and spikes impact — a common injury cause.'],
   ['Easy pace','On easy runs you should be able to hold a conversation. If you can\'t speak in full sentences, you\'re going too hard. Ease off.'],
   ['Breathing','Breathe from your belly, not your chest. Try a rhythm: in for three steps, out for two, to stay relaxed.'],
-  ['The 10% rule','Never raise your weekly distance by more than about ten percent. That\'s exactly what Stride\'s SafeRamp does for you automatically.'],
+  ['The 10% rule','Never raise your weekly distance by more than about ten percent. That\'s exactly what Strivon\'s SafeRamp does for you automatically.'],
   ['Recovery','Rest days aren\'t lazy — they\'re when your body actually gets stronger. Adaptation happens during recovery, not the run.'],
   ['Fuelling','For runs over ninety minutes, take thirty to sixty grams of carbs an hour. Practise it in training — never try something new on race day.'],
   ['Hydration','Drink to thirst on the run and rehydrate afterward. A simple check: your urine should be pale straw, not clear and not dark.'],
@@ -1188,7 +1188,7 @@ function buildGPX(act){
   const trk=pts.map((p,i)=>{const t=new Date(start+(n>1?i/(n-1):0)*dur).toISOString();
     return `  <trkpt lat="${(+p[0]).toFixed(6)}" lon="${(+p[1]).toFixed(6)}"><time>${t}</time></trkpt>`;}).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Stride Coach" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Strivon" xmlns="http://www.topografix.com/GPX/1/1">
  <metadata><name>${xesc(act.name)}</name><time>${new Date(start).toISOString()}</time></metadata>
  <trk><name>${xesc(act.name)}</name><type>running</type><trkseg>
 ${trk}
@@ -1220,7 +1220,7 @@ function dismissInstall(){try{localStorage.setItem('stride_install_dismissed','1
 function maybeShowInstall(){
   var b=document.getElementById('install-banner');if(!b)return;
   if(isStandalone()||localStorage.getItem('stride_install_dismissed'))return;
-  if(deferredPrompt){document.getElementById('install-btn').style.display='';document.getElementById('install-text').textContent='📲 Install Stride for the full experience';b.classList.remove('hide');}
+  if(deferredPrompt){document.getElementById('install-btn').style.display='';document.getElementById('install-text').textContent='📲 Install Strivon for the full experience';b.classList.remove('hide');}
   else if(isIOS()){document.getElementById('install-btn').style.display='none';document.getElementById('install-text').textContent='📲 Add to Home Screen — tap Share, then “Add to Home Screen”';b.classList.remove('hide');}
 }
 async function doInstall(){if(!deferredPrompt)return;deferredPrompt.prompt();try{await deferredPrompt.userChoice;}catch(e){}deferredPrompt=null;hideInstall();}
@@ -1413,12 +1413,12 @@ async function renderStrava(){
   el.style.display='';
   if(!isPro()){
     el.innerHTML=`<div class="kicker">🔗 Strava auto-import <span class="pill">PRO</span></div>
-      <div class="sub" style="margin-top:4px">Pull your Strava runs &amp; history straight into Stride — no manual logging. Included with Pro.</div>
+      <div class="sub" style="margin-top:4px">Pull your Strava runs &amp; history straight into Strivon — no manual logging. Included with Pro.</div>
       <button class="btn ghost" style="margin-top:12px" onclick="go('why');document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">See Pro</button>`;
     return;
   }
   if(!st.signedIn){
-    el.innerHTML=`<div class="kicker">🔗 Strava auto-import</div><div class="sub" style="margin-top:4px">Sign in to your Stride account above to connect Strava.</div>`;
+    el.innerHTML=`<div class="kicker">🔗 Strava auto-import</div><div class="sub" style="margin-top:4px">Sign in to your Strivon account above to connect Strava.</div>`;
     return;
   }
   let status={connected:false};try{status=await StrideSync.stravaStatus();}catch(e){}
@@ -1429,7 +1429,7 @@ async function renderStrava(){
       <div id="strava-msg"></div>`;
   }else{
     el.innerHTML=`<div class="kicker">🔗 Strava auto-import <span class="pill g">PRO</span></div>
-      <div class="sub" style="margin-top:4px">Connect once — Stride pulls in your Strava runs and keeps your stats &amp; PRs complete.</div>
+      <div class="sub" style="margin-top:4px">Connect once — Strivon pulls in your Strava runs and keeps your stats &amp; PRs complete.</div>
       <button class="btn p" style="margin-top:12px;background:#fc4c02" onclick="connectStrava()">Connect Strava</button>
       <div id="strava-msg"></div>`;
   }

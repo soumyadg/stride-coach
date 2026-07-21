@@ -1,4 +1,4 @@
-# Stride Coach — MVP prototype
+# Strivon — MVP prototype
 
 **The running coach that won't get you injured.** An adaptive, injury-safe running-plan app (design notes in `../research/`).
 
