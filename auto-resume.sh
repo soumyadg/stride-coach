@@ -19,6 +19,12 @@ ts() { date "+%Y-%m-%d %H:%M:%S %Z"; }
 # 1) Honour the manual stop flag.
 [ -f "$STOP" ] && { echo "$(ts) stop-flag present, exiting" >> "$LOG"; exit 0; }
 
+# 1b) Only work when the laptop LID IS UP. If the clamshell is closed, stand down
+#     (desktops / no-lid Macs have no AppleClamshellState key → treated as "up").
+if ioreg -r -k AppleClamshellState -d 4 2>/dev/null | grep -q '"AppleClamshellState" = Yes'; then
+  echo "$(ts) lid closed — standing down" >> "$LOG"; exit 0
+fi
+
 # 2) Never run two at once (stale lock >3h is cleared).
 if [ -d "$LOCK" ]; then
   if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +180 2>/dev/null)" ]; then
@@ -28,17 +34,34 @@ if [ -d "$LOCK" ]; then
   fi
 fi
 
-# 3) CRITICAL: if any Claude session is already alive (interactive or a prior
-#    headless run), do nothing — we only step in once a limit has ended it.
-if pgrep -f "[c]laude" >/dev/null 2>&1; then
-  echo "$(ts) a claude session is live, standing down" >> "$LOG"; exit 0
+# 3) CRITICAL: if a real Claude Code session is already alive (interactive or a
+#    prior headless run), do nothing — we only step in once a limit has ended it.
+#    Match only processes whose command STARTS with `claude` (the CLI); this
+#    deliberately ignores the always-on `claude-flow` daemon and statusline
+#    helpers, which run under node/npm and would otherwise pin us down forever.
+if ps ax -o command= | awk '{print $1}' | grep -qE '^(.*/)?claude$'; then
+  echo "$(ts) a Claude Code session is live, standing down" >> "$LOG"; exit 0
 fi
 
 mkdir "$LOCK" 2>/dev/null || { echo "$(ts) could not lock" >> "$LOG"; exit 0; }
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 cd "$APP" || exit 0
-echo "$(ts) ===== resuming Strivon build (no live session detected) =====" >> "$LOG"
+
+# 4) PROBE — is the usage limit reset? Send one tiny message. If it answers,
+#    the limit is available and we do the real work. If it hits the limit,
+#    stand down quietly and let the next 30-min tick try again.
+PROBE="$(claude -p "Reply with exactly: READY" --dangerously-skip-permissions 2>&1)"
+if ! print -r -- "$PROBE" | grep -qi "READY"; then
+  if print -r -- "$PROBE" | grep -qiE "usage limit|rate limit|limit reached|resets? (in|at)"; then
+    echo "$(ts) limit still active — standing down, retry next tick" >> "$LOG"
+  else
+    echo "$(ts) probe inconclusive ($(print -r -- "$PROBE" | head -c 120))" >> "$LOG"
+  fi
+  exit 0
+fi
+
+echo "$(ts) ===== limit is reset — resuming Strivon build =====" >> "$LOG"
 
 read -r -d '' PROMPT <<'EOP'
 You are resuming the autonomous Strivon build after a usage-limit reset.
