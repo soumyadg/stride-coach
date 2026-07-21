@@ -93,3 +93,13 @@ Soumya connected his real Stripe + Supabase accounts; full stack now live + veri
 Strava auto-import: fully BUILT (edge fn strava-sync + OAuth + token refresh + import, migration 0002, config STRAVA_CLIENT_ID, app UI) but Strava now gates ALL API access behind a PAID Strava subscription ("API available to subscribers") — free accounts can't even create an API app. Per spend-discipline: NOT paying Strava for a 0-user feature. Strava code stays dormant (UI hidden until STRAVA_CLIENT_ID set) — lights up instantly if he ever gets API access.
 PIVOT (no-paywall, serves the same "import my runs" intent): **GPX/TCX file import** — Pro card in Why → "Import a run". Client-side DOMParser: GPX (haversine distance) + TCX (cumulative DistanceMeters + HR avg), computes km/secs/pace/hr/route, adds to activities (source:'file'), syncs up if signed in. Browser-verified: GPX 1.001km@4:59, TCX 2km@5:00 HR135, 5K end-to-end add, Pro-gated, friendly errors. Offline, zero external cost. SW v19.
 Users export GPX/TCX free from Strava/Garmin/Apple Health. STRAVA.md documents the dormant Strava path.
+
+## 🏷️🧠 REBRAND → STRIVON + ML/AI FEATURES (2026-07-21)
+**Rebrand:** Stride Coach → **Strivon** ("Train smarter."). All user-facing text/titles/wordmark/manifest/landing/docs renamed; internal ids preserved (localStorage 'stride' key, StrideSync, STRIDE_CONFIG, cache prefix, repo/URL/appId all unchanged → no data loss, live URL stays soumyadg.github.io/stride-coach). New logo (S-runner, orange→teal) — asset in ~/Downloads, NOT yet wired as icon/splash (pending).
+**ML/AI (user: "do all"):**
+- Tier A on-device (LIVE, no cost): Smart Insights on Stats — Riegel race predictions (5K/10K/half/marathon) from best effort, Daniels VO2max, CTL/ATL/TSB fitness-fatigue-form + sparkline. Verified: 6km@5:00→5K 24:44/Mara 3:57, VO2 38.7.
+- Air quality (LIVE): Open-Meteo Air Quality API (no key) → AQI line + poor-air warning in weather card. Verified live London AQI 30.
+- Tier C AI Coach (BUILT, needs setup): supabase/functions/ai-coach → Claude (Haiku default) with athlete context; server-side Pro gate + JWT verify; Pro chat card in Why. Needs user to deploy fn + add ANTHROPIC_API_KEY (AICOACH.md). Not live until then.
+- Tier B (on-device NN training via TF.js) DEFERRED — honest: needs more labeled data; formulas deliver the value now.
+- public-apis scrape verdict: its Sports category = team sports (useless); real free gems = Open-Meteo Air Quality/weather (wired), Open-Elevation (not yet).
+SWs up to v23. All committed + deployed except AI-coach-live (user setup).
