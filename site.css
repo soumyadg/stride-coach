@@ -27,7 +27,7 @@
   .grad-txt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
   /* ---------- hero ---------- */
-  header.hero{position:relative;min-height:auto;display:flex;flex-direction:column;justify-content:flex-start;padding:50px 0 60px;overflow:hidden}
+  header.hero{position:relative;min-height:calc(100svh - 64px);display:flex;flex-direction:column;justify-content:center;padding:24px 0 40px;overflow:hidden}
   .hero-bg{position:absolute;inset:0;z-index:0;
     background:radial-gradient(120% 90% at 78% 8%,rgba(255,106,61,.14),transparent 46%),
                radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.13),transparent 44%),var(--bg)}
