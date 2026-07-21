@@ -554,6 +554,7 @@
         <div class="stat"><div class="v" id="st-runs">0</div><div class="k">Runs</div></div>
       </div>
     </div>
+    <div class="card" id="insights-card"></div>
     <div class="card" id="bmi-card"></div>
     <div class="card">
       <div class="kicker">Weekly volume</div>
@@ -868,9 +869,10 @@ async function loadWeather(){
   try{
     const loc=await getLoc();
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code&timezone=auto&forecast_days=1`;
-    const j=await (await fetch(url)).json();
+    const aqUrl=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.lat}&longitude=${loc.lon}&current=european_aqi,us_aqi,pm2_5&timezone=auto`;
+    const [j,aq]=await Promise.all([fetch(url).then(r=>r.json()),fetch(aqUrl).then(r=>r.json()).catch(()=>null)]);
     if(!j.current||!j.hourly)throw 0;
-    renderWeather(j,loc);
+    renderWeather(j,loc,aq);
   }catch(e){$('#weather-card').innerHTML=`<div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Couldn’t load weather right now.</div>`;}
 }
 function bestWindow(h){
@@ -886,8 +888,17 @@ function bestWindow(h){
   }
   return best;
 }
-function renderWeather(j,loc){
+function aqiInfo(aq){
+  if(!aq||!aq.current)return null;
+  const e=aq.current.european_aqi,u=aq.current.us_aqi,val=(e!=null?e:u);if(val==null)return null;
+  const eu=e!=null;let label,cls,warn=false;
+  if(eu){if(val<=20){label='Good';cls='g';}else if(val<=40){label='Fair';cls='g';}else if(val<=60){label='Moderate';cls='a';}else if(val<=80){label='Poor';cls='a';warn=true;}else{label='Very poor';cls='r';warn=true;}}
+  else{if(val<=50){label='Good';cls='g';}else if(val<=100){label='Moderate';cls='a';}else if(val<=150){label='Unhealthy (sensitive)';cls='a';warn=true;}else{label='Unhealthy';cls='r';warn=true;}}
+  return {val:Math.round(val),label,cls,warn,pm25:aq.current.pm2_5};
+}
+function renderWeather(j,loc,aq){
   const c=j.current,[cd,ce]=wmo(c.weather_code),cwb=wetBulb(c.temperature_2m,c.relative_humidity_2m),[crisk,crc]=heatRisk(cwb);
+  const air=aqiInfo(aq);window._airNow=air;
   window._weatherNow={T:c.temperature_2m,RH:c.relative_humidity_2m,wb:cwb,risk:crisk,cls:crc};
   applySafetyTheme();
   try{localStorage.setItem('stride_wx',JSON.stringify({bucket:safetyBucket(cwb),at:Date.now()}));}catch(e){}
@@ -903,9 +914,10 @@ function renderWeather(j,loc){
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div><div class="kicker">Weather · when to run${loc.ok?'':' · London'}</div>
         <div style="font-weight:800;font-size:17px;margin-top:5px">${ce} ${Math.round(c.temperature_2m)}°C · ${cd}</div>
-        <div class="sub">${c.relative_humidity_2m}% humidity · wet-bulb ${cwb.toFixed(1)}°C</div></div>
+        <div class="sub">${c.relative_humidity_2m}% humidity · wet-bulb ${cwb.toFixed(1)}°C</div>
+        ${air?`<div class="sub" style="margin-top:2px">Air quality: <b class="${air.cls==='r'?'':''}">${air.label}</b> · AQI ${air.val}</div>`:''}</div>
       <span class="pill ${crc}">${crisk}</span>
-    </div>${bestHtml}
+    </div>${air&&air.warn?`<div class="banner ${air.cls}" style="margin-top:10px">😷 <b>${air.label} air quality (AQI ${air.val})</b> — consider an easier effort, indoors, or waiting for cleaner air.</div>`:''}${bestHtml}
     <div id="weather-note"></div>`;
 }
 async function notifyBestRun(){
@@ -1309,6 +1321,7 @@ function editBMI(){$('#bmi-card').innerHTML=`<div class="kicker">Body · BMI</di
   <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;}
 function renderStats(){
   renderBMI();
+  if(typeof renderInsights==='function')renderInsights();
   const acts=S.activities||[],now=Date.now(),wkms=7*86400000;
   const tw=acts.filter(a=>now-a.at<wkms);
   $('#st-km').textContent=tw.reduce((s,a)=>s+a.km,0).toFixed(1);
@@ -1338,6 +1351,64 @@ function resetWeek(wi){S.plan[wi].days=assignDays(S.plan[wi].sessions);store.set
 function haversine(la1,lo1,la2,lo2){const R=6371000,r=x=>x*Math.PI/180,dla=r(la2-la1),dlo=r(lo2-lo1);
   const a=Math.sin(dla/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(dlo/2)**2;return 2*R*Math.asin(Math.sqrt(a));}
 function fmt(s){const m=Math.floor(s/60);return `${m}:${String(s%60).padStart(2,'0')}`;}
+function fmtHMS(s){s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${m}:${String(ss).padStart(2,'0')}`;}
+// ---- on-device intelligence (no server, uses your own runs) ----
+function eligibleRuns(){return (S.activities||[]).filter(a=>a.km>=1.5&&a.secs>90&&a.pace>=2.6&&a.pace<=12);}
+function predictRaces(){                                          // Riegel: T2 = T1·(D2/D1)^1.06, anchored on your best effort
+  const acts=eligibleRuns();if(acts.length<1)return null;
+  let best=null,bestEq=Infinity;acts.forEach(a=>{const eq=a.secs*Math.pow(5/a.km,1.06);if(eq<bestEq){bestEq=eq;best=a;}});
+  const D={'5K':5,'10K':10,'Half':21.0975,'Marathon':42.195};const out={};
+  for(const k in D)out[k]={secs:best.secs*Math.pow(D[k]/best.km,1.06),km:D[k]};
+  return {out,ref:best,n:acts.length};
+}
+function vdotEstimate(){                                          // Daniels VDOT from best effort
+  const p=predictRaces();if(!p)return null;const b=p.ref;
+  const t=b.secs/60, v=(b.km*1000)/t;                            // minutes, m/min
+  const pct=0.8+0.1894393*Math.exp(-0.012778*t)+0.2989558*Math.exp(-0.1932605*t);
+  const vo2=-4.60+0.182258*v+0.000104*v*v;
+  return Math.round((vo2/pct)*10)/10;
+}
+function trainingForm(){                                          // CTL(42d)/ATL(7d)/TSB — fitness/fatigue/form
+  const acts=(S.activities||[]).filter(a=>a.secs>60&&a.pace>=2.6).slice().sort((a,b)=>a.at-b.at);
+  if(acts.length<3)return null;
+  const thr=(typeof PACES!=='undefined'?PACES.tempo:5.0),day={};
+  acts.forEach(a=>{const d=new Date(a.at);d.setHours(0,0,0,0);const IF=Math.min(1.5,thr/(a.pace||thr));day[+d]=(day[+d]||0)+(a.secs/60)*IF*IF;});
+  const keys=Object.keys(day).map(Number),start=Math.min(...keys);
+  const today=new Date();today.setHours(0,0,0,0);
+  let ctl=0,atl=0;const series=[];
+  for(let t=start;t<=+today;t+=86400000){const L=day[t]||0;ctl+=(L-ctl)/42;atl+=(L-atl)/7;series.push(ctl-atl);}
+  return {ctl:Math.round(ctl),atl:Math.round(atl),tsb:Math.round(ctl-atl),series};
+}
+function formVerdict(tsb){
+  if(tsb>=10)return['Fresh / tapered','g'];
+  if(tsb>=-10)return['Balanced — good to train','g'];
+  if(tsb>=-25)return['Building fatigue — watch recovery','a'];
+  return['Overreaching — ease off','r'];
+}
+function renderInsights(){
+  const el=$('#insights-card');if(!el)return;
+  const p=predictRaces();
+  if(!p){el.innerHTML=`<div class="kicker">🧠 Smart insights</div><div class="sub" style="margin-top:4px">Log a couple of runs (1.5km+) and Strivon will predict your race times, VO₂max and training form — all computed on your device.</div>`;return;}
+  const vo2=vdotEstimate(),form=trainingForm();
+  const rt=Object.keys(p.out).map(k=>`<div class="stat"><div class="v tick" style="font-size:18px">${fmtHMS(p.out[k].secs)}</div><div class="k">${k}</div></div>`).join('');
+  let formHtml='';
+  if(form){const[txt,cls]=formVerdict(form.tsb);
+    const mn=Math.min(...form.series),mx=Math.max(...form.series),rng=(mx-mn)||1;
+    const spark=form.series.slice(-42).map(v=>`<div style="flex:1;min-width:1px;height:${Math.round((v-mn)/rng*100)}%;background:${v>=0?'var(--brand,#4be3c3)':'#ff6a3d'};border-radius:1px"></div>`).join('');
+    formHtml=`<div style="margin-top:14px"><div class="kicker" style="display:flex;justify-content:space-between">Training form <span class="pill ${cls}">${txt}</span></div>
+      <div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:8px">
+        <div class="stat"><div class="v" style="font-size:18px">${form.ctl}</div><div class="k">Fitness</div></div>
+        <div class="stat"><div class="v" style="font-size:18px">${form.atl}</div><div class="k">Fatigue</div></div>
+        <div class="stat"><div class="v" style="font-size:18px">${form.tsb>0?'+':''}${form.tsb}</div><div class="k">Form</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:1px;height:34px;margin-top:8px">${spark}</div></div>`;
+  }
+  el.innerHTML=`<div class="kicker" style="display:flex;justify-content:space-between;align-items:center">🧠 Race predictions ${vo2?`<span class="pill">VO₂max ~${vo2}</span>`:''}</div>
+    <div class="sub" style="margin-top:4px">From your best recent effort (${p.ref.km.toFixed(1)}km @ ${paceStr(p.ref.pace)}/km) · Riegel model.</div>
+    <div class="stats" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:10px">${rt}</div>
+    ${formHtml}
+    <div class="sub" style="margin-top:10px;opacity:.7">Estimates from your own runs — not medical advice. More runs = sharper predictions.</div>`;
+}
 function go(v){['today','plan','run','stats','why'].forEach(x=>$('#s-'+x).classList.add('hide'));
   const s=$('#s-'+v);s.classList.remove('hide');
   s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
