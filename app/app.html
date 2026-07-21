@@ -649,7 +649,7 @@
   <nav id="nav" class="hide">
     <button data-v="today" class="on" onclick="go('today')"><span class="ni">☀️</span>Today</button>
     <button data-v="plan" onclick="go('plan')"><span class="ni">🗓️</span>Plan</button>
-    <button data-v="run" onclick="go('run')"><span class="ni">🏃</span>Run</button>
+    <button data-v="run" onclick="go('run')"><span class="ni" id="nav-run-i">🏃</span><span id="nav-run-t">Run</span></button>
     <button data-v="stats" onclick="go('stats')"><span class="ni">📊</span>Stats</button>
     <button data-v="atlas" onclick="go('atlas')"><span class="ni">🗺️</span>Atlas</button>
     <button data-v="why" onclick="go('why')"><span class="ni">✨</span>Why</button>
@@ -1058,6 +1058,7 @@ function renderToday(){
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
   if(typeof renderRouteFinder==='function')renderRouteFinder();
+  if(typeof reflectMode==='function')reflectMode();
 }
 
 // ---- readiness ----
@@ -1253,8 +1254,9 @@ function checkHeat(speakIt){
 let run=null,watchId=null,tick=null,muted=false;
 const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,race:4.4,cool:6.3,walk:11.0,wwarm:12.5,brisk:9.0};
 function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=0;}return `${m}:${String(s).padStart(2,'0')}`;}
-function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy run',km:5,kind:'easy',note:''};}
+function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy '+(S&&S.mode==='walk'?'walk':'run'),km:5,kind:'easy',note:''};}
 function actWord(){return S&&S.mode==='walk'?'walk':'run';}
+function reflectMode(){var w=S&&S.mode==='walk';var i=document.getElementById('nav-run-i'),t=document.getElementById('nav-run-t');if(i)i.textContent=w?'🚶':'🏃';if(t)t.textContent=w?'Walk':'Run';var rs=document.getElementById('r-start');if(rs&&(typeof run==='undefined'||!run||!run.active))rs.textContent='Start '+(w?'walk':'run');}
 function buildLaps(se){
   const t=se.t||'',km=se.km||5,kind=se.kind;
   if(/walk/i.test(t)){
