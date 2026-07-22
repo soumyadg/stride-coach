@@ -19,7 +19,8 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 - [x] P5 — Updated root TRACKER.md, app #1 = DONE (MVP)
 
 ## ✅ PROGRESS LOG (2026-07-22, live build)
-Done: #1 bg GPS · #5 bulk import · #6 coach turnkey (local fallback) · #7 route finder robustness · #8 shareable canvas card (Web Share) · #11 copy honest · #14 data export/delete · #16 error telemetry · #18 weather fallback (MET Norway) · #21 privacy policy · Batch B website text cut (css v12). SW v36. REMAINING code-buildable: #12 60-sec onboarding, #15 accessibility (WCAG AA), #19 tests, #17 audio cues, #9 one Atlas feature deep. #2/#3/#4 = BLOCKED-on-Soumya (Xcode/Apple Dev acct/GTM).
+✅ ALL CODE-BUILDABLE ITEMS DONE (2026-07-22). Done: #1 bg GPS · #5 bulk import · #6 coach turnkey · #7 route finder robustness · #8 shareable card · #9 Atlas journey replay · #11 copy honest · #12 60s onboarding value · #14 data export/delete · #15 accessibility (WCAG AA focus/aria/live) · #16 error telemetry · #17 spoken km splits · #18 weather fallback · #19 test battery (science) · #21 privacy policy · Batch B website text cut. SW v38.
+ONLY REMAINING = BLOCKED-on-Soumya (not code): #2 Apple Watch (needs Mac/Xcode + watch), #3 App Store submit (Apple Dev acct), #4 real users (GTM). #10 modularise = deferred (risky big refactor, low user value on a working single-file app).
 
 ## ⚡ USER DIRECTIVE (2026-07-21) — DO ALL OF THIS VIA AUTO-RESUME AFTER LIMIT RESET
 Soumya is conserving credits. He wants the auto-resume cron to complete the WHOLE
