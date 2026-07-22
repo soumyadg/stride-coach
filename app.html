@@ -804,44 +804,74 @@ function buildCoachContext(){
   if(S.heightCm&&S.weightKg)L.push(`Height ${S.heightCm}cm, weight ${S.weightKg}kg.`);
   return L.join('\n');
 }
+// On-device coach — always available, grounded in the athlete's real numbers.
+// Pro + signed-in upgrades to the full conversational AI (edge fn); this is the
+// graceful fallback when offline, signed-out, free-tier, or the AI errors.
+function localCoachReply(q){
+  q=(q||'').toLowerCase();
+  const w=S&&S.mode==='walk',act=w?'walk':'run';
+  let f=null;try{f=trainingForm();}catch(e){}
+  const tsb=f?f.tsb:null,rd=S.readiness;
+  let cs=null;try{cs=curSession();}catch(e){}
+  if(/should i|today|ready|go out|run today|walk today|train now/.test(q)){
+    if(rd&&rd.score<=2)return `Your readiness is low (${rd.level}). Keep it very easy or take a recovery day — sleep and stress drive injury risk more than any single ${act}.`;
+    if(tsb!=null&&tsb<-15)return `Form is ${tsb} — that's real fatigue. A gentle ${act} or rest beats pushing today; you'll absorb the work better.`;
+    if(cs)return `Yes — today's plan is ${cs.t}${cs.km?' ('+cs.km+'km)':''}. ${rd?'Readiness '+rd.level+' — ':''}warm up easy and keep the effort honest.`;
+    return `You're clear to ${act} today. Keep easy days genuinely easy — that's where most fitness is built.`;
+  }
+  if(/overtrain|too much|burn|overreach|injur|niggle/.test(q)){
+    if(tsb!=null)return tsb<-20?`Signs of overreaching — form is ${tsb} (fatigue well over fitness). Take 2–3 easy/rest days and reassess.`:`Not overtrained — form is ${tsb>0?'+':''}${tsb}, a normal range. Keep weekly load rises ≤10% and you'll stay in the safe zone.`;
+    return `Keep weekly load jumps ≤10% and don't stack hard days. Persistent fatigue, bad sleep or niggles = back off. Real pain → see a physio.`;
+  }
+  if(/next|explain|workout|session|what.*(do|run)/.test(q)&&cs)
+    return `Today: ${cs.t}${cs.km?' — '+cs.km+'km':''}. ${w?'Keep a comfortable, conversational pace.':'Run at an effort where you could still talk in short sentences, unless it says otherwise.'}`;
+  if(/pace|how fast|how slow|speed|target time/.test(q)){
+    let p=null;try{p=predictRaces();}catch(e){}
+    if(p&&p.out)return `From your recent ${act}s: `+Object.keys(p.out).slice(0,3).map(k=>`${k} ${fmtHMS(p.out[k].secs)}`).join(', ')+`. Easy days should feel 60–90s/km slower than that.`;
+    return `Easy = conversational; hard = controlled but strong. Log a few ${act}s and I'll predict your paces.`;
+  }
+  if(/rest|recover|day off|sore|sleep/.test(q))
+    return `Recovery is where you get faster. Prioritise sleep, easy movement and food. If you're flat${tsb!=null?` (form ${tsb})`:''}, an extra rest day rarely hurts a plan — chronic fatigue does.`;
+  const bits=[];
+  if(S.goalName)bits.push(`Week ${S.curWeek}/${S.weeks} toward ${S.goalName}.`);
+  if(f)bits.push(`Fitness ${f.ctl}, fatigue ${f.atl}, form ${tsb>0?'+':''}${tsb} (${formVerdict(tsb)[0]}).`);
+  if(cs)bits.push(`Today: ${cs.t}${cs.km?' '+cs.km+'km':''}.`);
+  bits.push(`Ask me "should I ${act} today?", "am I overtraining?" or "what's my pace?"`);
+  return bits.join(' ');
+}
+function scrollCoach(){const t=$('#coach-thread');if(t)t.scrollTop=t.scrollHeight;}
+function coachAiLive(){const st=(window.StrideSync&&StrideSync.state())||{};return !!(isPro()&&st.signedIn&&coachConfigured());}
 function renderCoach(){
   const el=$('#coach-card');if(!el||!S)return;
-  if(!coachConfigured()){el.style.display='none';return;}
   el.style.display='';
-  const st=StrideSync.state();
-  if(!isPro()){
-    el.innerHTML=`<div class="kicker">🧠 AI running coach <span class="pill">PRO</span></div>
-      <div class="sub" style="margin-top:4px">Ask anything — "should I run today?", "how do I pace my long run?" — and get answers grounded in your plan, runs, readiness and the weather.</div>
-      <button class="btn p" style="margin-top:12px" onclick="document.querySelector('#pro-btn').scrollIntoView({behavior:'smooth'})">Unlock the AI coach — Pro</button>`;
-    return;
-  }
-  if(!st.signedIn){el.innerHTML=`<div class="kicker">🧠 AI running coach</div><div class="sub" style="margin-top:4px">Sign in to your Strivon account above to chat with your coach.</div>`;return;}
+  const w=S.mode==='walk',aiLive=coachAiLive();
+  const badge=aiLive?'<span class="pill g">PRO · AI</span>':'<span class="pill">SMART</span>';
+  const note=aiLive?'':'<div class="sub" style="margin-top:2px;font-size:12px;opacity:.72">On-device coach, grounded in your data. <b>Pro</b> adds the full conversational AI.</div>';
   const thread=coachMsgs.map(m=>`<div style="margin:8px 0;${m.role==='user'?'text-align:right':''}"><span style="display:inline-block;max-width:85%;text-align:left;padding:9px 12px;border-radius:13px;font-size:14px;line-height:1.4;background:${m.role==='user'?'var(--brand,#4be3c3);color:#04121f':'rgba(255,255,255,.06)'}">${m.content.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</span></div>`).join('');
-  el.innerHTML=`<div class="kicker">🧠 AI running coach <span class="pill g">PRO</span></div>
-    <div id="coach-thread" style="margin-top:8px;max-height:320px;overflow-y:auto">${thread||'<div class="sub">Ask your coach anything about your training. It knows your plan, runs, readiness &amp; the weather.</div>'}</div>
+  const chips=w?['Should I walk today?','Explain my next session','Am I doing too much?']:['Should I run today?','Explain my next workout','Am I overtraining?'];
+  el.innerHTML=`<div class="kicker">🧠 ${w?'Walking':'Running'} coach ${badge}</div>${note}
+    <div id="coach-thread" style="margin-top:8px;max-height:320px;overflow-y:auto">${thread||`<div class="sub">Ask anything about your training — it knows your plan, ${w?'walks':'runs'}, readiness &amp; the weather.</div>`}</div>
     <div class="row" style="margin-top:10px;gap:8px">
-      <input id="coach-q" placeholder="Should I run today?" style="flex:1" onkeydown="if(event.key==='Enter')askCoach()">
+      <input id="coach-q" placeholder="Should I ${w?'walk':'run'} today?" style="flex:1" onkeydown="if(event.key==='Enter')askCoach()">
       ${speechSupported()?'<button class="btn ghost mic-btn" id="coach-mic" style="flex:0 0 auto;width:auto;padding:12px 14px;font-size:17px" title="Speak your question" onclick="coachVoice()">🎤</button>':''}
       <button class="btn p" style="flex:0 0 auto;width:auto;padding:12px 16px" id="coach-send" onclick="askCoach()">Ask</button></div>
-    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">${['Should I run today?','Explain my next workout','Am I overtraining?'].map(q=>`<button class="btn ghost" style="flex:0 0 auto;width:auto;padding:7px 11px;font-size:12px" onclick="askCoach('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>`;
+    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">${chips.map(q=>`<button class="btn ghost" style="flex:0 0 auto;width:auto;padding:7px 11px;font-size:12px" onclick="askCoach('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>`;
 }
 async function askCoach(preset){
-  const inp=$('#coach-q'),send=$('#coach-send');const q=(preset||(inp&&inp.value)||'').trim();if(!q)return;
-  const jwt=(window.StrideSync&&StrideSync.token())||'';
-  if(!jwt){coachMsgs.push({role:'assistant',content:'Please sign in first.'});renderCoach();return;}
+  const inp=$('#coach-q');const q=(preset||(inp&&inp.value)||'').trim();if(!q)return;
   coachMsgs.push({role:'user',content:q});if(inp)inp.value='';
-  coachMsgs.push({role:'assistant',content:'…thinking'});renderCoach();
-  const th=$('#coach-thread');if(th)th.scrollTop=th.scrollHeight;
+  if(!coachAiLive()){coachMsgs.push({role:'assistant',content:localCoachReply(q)});renderCoach();scrollCoach();return;}
+  coachMsgs.push({role:'assistant',content:'…thinking'});renderCoach();scrollCoach();
   try{
+    const jwt=(window.StrideSync&&StrideSync.token())||'';
     const history=coachMsgs.slice(0,-2).filter(m=>m.content!=='…thinking');
     const r=await fetch(StrideSync.fnBase()+'/ai-coach',{method:'POST',headers:{'Authorization':'Bearer '+jwt,'Content-Type':'application/json'},
       body:JSON.stringify({question:q,context:buildCoachContext(),history})});
-    const d=await r.json();
-    coachMsgs.pop();
-    if(!r.ok||d.error){const msg=d.error==='pro_required'?'The AI coach is a Pro feature.':d.error==='not_configured'?'Coach isn’t set up yet (add the Anthropic key — see AICOACH.md).':(d.detail||d.error||'Coach unavailable right now.');coachMsgs.push({role:'assistant',content:msg});}
-    else coachMsgs.push({role:'assistant',content:d.reply||'…'});
-  }catch(e){coachMsgs.pop();coachMsgs.push({role:'assistant',content:'Network error — try again.'});}
-  renderCoach();const t2=$('#coach-thread');if(t2)t2.scrollTop=t2.scrollHeight;
+    const d=await r.json();coachMsgs.pop();
+    // graceful fallback to the on-device coach on any AI error, so a reply always lands
+    coachMsgs.push({role:'assistant',content:(!r.ok||d.error||!d.reply)?localCoachReply(q):d.reply});
+  }catch(e){coachMsgs.pop();coachMsgs.push({role:'assistant',content:localCoachReply(q)});}
+  renderCoach();scrollCoach();
 }
 // ---- ATLAS: life story map (memories + time capsules) ----
 const ATLAS_Z=14;
@@ -1364,18 +1394,28 @@ function project(lat,lon,z){const s=256*Math.pow(2,z),x=(lon+180)/360*s,sl=Math.
 function destPoint(lat,lon,brng,dKm){const R=6371,d=dKm/R,b=brng*Math.PI/180,la1=lat*Math.PI/180,lo1=lon*Math.PI/180;const la2=Math.asin(Math.sin(la1)*Math.cos(d)+Math.cos(la1)*Math.sin(d)*Math.cos(b));const lo2=lo1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la1),Math.cos(d)-Math.sin(la1)*Math.sin(la2));return [la2*180/Math.PI,((lo2*180/Math.PI+540)%360)-180];}
 function lastAct(){return (S.activities||[]).filter(a=>a.km>0)[0]||null;}
 function routeStart(){const a=lastAct();if(a&&a.pts&&a.pts.length)return[a.pts[0][0],a.pts[0][1]];return null;}
+function fetchT(url,ms){return new Promise((res,rej)=>{const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||4500);fetch(url,{signal:c.signal}).then(r=>{clearTimeout(t);res(r);},e=>{clearTimeout(t);rej(e);});});}
 async function osrmLoop(start,targetKm,seed){
   const base=(seed*47)%360;let r=targetKm/6.2,last=null;
   for(let i=0;i<3;i++){
     const wps=[start,destPoint(start[0],start[1],base,r),destPoint(start[0],start[1],base+125,r),destPoint(start[0],start[1],base+245,r*0.92),start];
     const coords=wps.map(p=>p[1].toFixed(5)+','+p[0].toFixed(5)).join(';');
-    try{const j=await(await fetch(`https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`)).json();
+    try{const resp=await fetchT(`https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`,4500);
+      if(!resp.ok)break;const j=await resp.json();
       if(j.routes&&j.routes[0]){const rt=j.routes[0],dist=rt.distance/1000;last={km:dist,geo:rt.geometry.coordinates.map(c=>[c[1],c[0]])};
         if(Math.abs(dist-targetKm)/targetKm<0.14)return last; r*=Math.max(.5,Math.min(1.6,targetKm/dist));}
       else break;
     }catch(e){break;}
   }
   return last;
+}
+// Keyless fallback when the routing service is unreachable: a distance-accurate
+// circular loop through the start point. Doesn't snap to roads, but always works.
+function syntheticLoop(start,targetKm,seed){
+  const base=(seed*61)%360,r=targetKm/(2*Math.PI),ctr=destPoint(start[0],start[1],base,r),startBrng=(base+180)%360,N=48,geo=[];
+  for(let i=0;i<=N;i++)geo.push(destPoint(ctr[0],ctr[1],startBrng+360*i/N,r));
+  geo[0]=start.slice();geo[N]=start.slice();
+  return {km:2*Math.PI*r,geo,approx:true};
 }
 function drawRouteMini(geo){
   const wrap=$('#rf-map'),tiles=$('#rf-tiles'),svg=$('#rf-svg');if(!wrap||!geo||!geo.length)return;
@@ -1401,13 +1441,14 @@ async function findRoute(){
   let start=routeStart();
   if(!start){try{const l=await getLoc();start=[l.lat,l.lon];}catch(e){start=[51.5074,-0.1278];}}
   const seed=Math.floor((Date.now()/1000)%997);
-  const loop=await osrmLoop(start,target,seed);
+  let loop=await osrmLoop(start,target,seed);
+  const approx=!loop;
+  if(!loop)loop=syntheticLoop(start,target,seed);   // never leave the user empty-handed
   _rfBusy=false;
-  if(!loop){el.innerHTML=`<div class="kicker">🧭 Route finder</div><div class="sub" style="margin-top:6px">Couldn’t reach the route service just now — try again in a moment.</div><button class="btn ghost" style="margin-top:10px" onclick="findRoute()">Retry</button>`;return;}
   const walk=S&&S.mode==='walk';const pace=walk?PACES.walk:PACES.easy;const mins=Math.round(loop.km*pace);
   el.innerHTML=`<div class="kicker">🧭 Route finder <span class="pill g">${loop.km.toFixed(1)} km</span></div>
-    <div class="sub" style="margin-top:4px">A fresh loop from your area${a?`, like your last ${actWord()} (${a.km.toFixed(1)}km)`:''}.</div>
-    <div id="rf-map" style="position:relative;height:200px;border-radius:12px;overflow:hidden;margin-top:10px;background:#0c0e16"><div id="rf-tiles" style="position:absolute;inset:0"></div><svg id="rf-svg" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"></svg><div style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · OSRM · CARTO</div></div>
+    <div class="sub" style="margin-top:4px">A fresh loop from your area${a?`, like your last ${actWord()} (${a.km.toFixed(1)}km)`:''}.${approx?' <span style="color:var(--amber,#f5b23d)">Approx loop — routing service was busy, so it may cross non-paths.</span>':''}</div>
+    <div id="rf-map" style="position:relative;height:200px;border-radius:12px;overflow:hidden;margin-top:10px;background:#0c0e16"><div id="rf-tiles" style="position:absolute;inset:0"></div><svg id="rf-svg" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"></svg><div style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM${approx?'':' · OSRM'} · CARTO</div></div>
     <div class="stats" style="grid-template-columns:1fr 1fr;margin-top:10px"><div class="stat"><div class="v tick" style="font-size:18px">${loop.km.toFixed(1)}km</div><div class="k">Distance</div></div><div class="stat"><div class="v" style="font-size:18px">~${mins}min</div><div class="k">Est. ${walk?'walk':'run'}</div></div></div>
     <button class="btn p" style="margin-top:12px" onclick="findRoute()">🔀 Find another</button>`;
   setTimeout(()=>drawRouteMini(loop.geo),50);
