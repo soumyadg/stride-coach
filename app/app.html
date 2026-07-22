@@ -627,6 +627,7 @@
     </div>
     <div class="card"><div class="kicker">🧵 Your story</div><div id="atlas-memories" style="margin-top:6px"></div></div>
     <div class="card" id="atlas-caps-card"><div class="kicker">⏳ Time capsules</div><div id="atlas-capsules" style="margin-top:6px"></div></div>
+    <div class="card" id="community-card"><div class="kicker">🌍 Community</div><div id="community-body" style="margin-top:8px"></div></div>
   </div>
 
   <!-- Atlas modal (add moment / seal capsule / view memory) -->
@@ -956,6 +957,89 @@ async function replayStory(){
   _replaying=false;drawAtlasMap();
 }
 function checkCapsules(){ensureAtlas();const now=Date.now();let any=false;(S.capsules||[]).forEach(c=>{if(!c.revealed&&(!c.unlockAt||c.unlockAt<=now)){c.revealed=true;c.seenReveal=false;any=true;}});if(any)store.set(S);}
+
+/* ===================== COMMUNITY (anonymous & public) =====================
+   Shared feed (shares · birthdays · anniversaries) + "X people took this route".
+   Privacy: no names ever; location stored only as a COARSE geohash (~40km) so
+   we can say "near you" without exposing where anyone lives; route popularity is
+   a COUNT only. Needs the 0003_community.sql migration + a signed-in account. */
+function _cfg(){return window.STRIDE_CONFIG||{};}
+function communityOn(){const c=_cfg();return !!(c.SUPABASE_URL&&c.SUPABASE_ANON_KEY);}
+function geohash(lat,lon,prec){const b='0123456789bcdefghjkmnpqrstuvwxyz';let idx=0,bit=0,even=true,h='';let la=[-90,90],lo=[-180,180];
+  while(h.length<prec){if(even){const m=(lo[0]+lo[1])/2;if(lon>=m){idx=idx*2+1;lo[0]=m;}else{idx*=2;lo[1]=m;}}else{const m=(la[0]+la[1])/2;if(lat>=m){idx=idx*2+1;la[0]=m;}else{idx*=2;la[1]=m;}}even=!even;if(++bit===5){h+=b[idx];bit=0;idx=0;}}return h;}
+async function sbFetch(path,opts){const c=_cfg();const jwt=(window.StrideSync&&StrideSync.token())||c.SUPABASE_ANON_KEY;
+  const h=Object.assign({apikey:c.SUPABASE_ANON_KEY,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},(opts&&opts.headers)||{});
+  const r=await fetch(c.SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/'+path,Object.assign({},opts,{headers:h}));
+  if(!r.ok)throw new Error('sb '+r.status);const t=await r.text();return t?JSON.parse(t):null;}
+async function sbRpc(fn,args){const c=_cfg();const jwt=(window.StrideSync&&StrideSync.token())||c.SUPABASE_ANON_KEY;
+  const r=await fetch(c.SUPABASE_URL.replace(/\/$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:c.SUPABASE_ANON_KEY,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},body:JSON.stringify(args||{})});
+  if(!r.ok)throw new Error('rpc '+r.status);return r.json();}
+const _bad=/\b(fuck|shit|cunt|bitch|nigger|faggot|rape|kill yourself|kys)\b/i;
+function cleanText(t){return (t||'').replace(/\s+/g,' ').trim().slice(0,280);}
+let _myRegion=null;
+async function myRegion(){if(_myRegion)return _myRegion;try{const l=await getLoc();_myRegion=geohash(l.lat,l.lon,4);}catch(e){_myRegion='';}return _myRegion;}
+// coarse route signature: ~5km start cell + rounded-km bucket → hides home, still "similar route"
+function routeKey(lat,lon,km){return geohash(lat,lon,5)+'|'+Math.max(1,Math.round(km));}
+async function routePopularity(key){try{const n=await sbRpc('route_popularity',{key});return typeof n==='number'?n:0;}catch(e){return 0;}}
+async function registerRoutePrint(lat,lon,km){
+  if(!communityOn())return;const st=StrideSync&&StrideSync.state();if(!st||!st.signedIn)return;
+  try{await sbFetch('route_prints?on_conflict=user_id,route_key',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates'},body:JSON.stringify({user_id:st.userId,route_key:routeKey(lat,lon,km)})});}catch(e){}
+}
+let _feed=[];
+function renderCommunity(){
+  const el=$('#community-body');if(!el)return;
+  if(!communityOn()){el.innerHTML='<div class="sub">Community is available once cloud sync is set up.</div>';return;}
+  const st=StrideSync&&StrideSync.state();
+  if(!st||!st.signedIn){el.innerHTML='<div class="sub">Sign in on the <b>Why</b> tab to join the community — share milestones and see who else is moving near you. Anonymous by design.</div>';return;}
+  const kinds=[['share','💬 Share'],['birthday','🎂 Birthday'],['anniversary','💍 Anniversary'],['route','📍 Route love']];
+  const chips=kinds.map((k,i)=>`<button class="btn ghost cm-kind${i===0?' on':''}" data-k="${k[0]}" style="flex:0 0 auto;width:auto;padding:7px 11px;font-size:12px" onclick="pickKind('${k[0]}')">${k[1]}</button>`).join('');
+  const feed=_feed.length?_feed.map(p=>communityRow(p)).join(''):'<div class="sub">No posts near you yet — be the first to share a moment. 🌱</div>';
+  el.innerHTML=`<div class="sub" style="margin-bottom:8px">Anonymous &amp; kind. No names — just people moving near you.</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${chips}</div>
+    <textarea id="cm-text" maxlength="280" placeholder="Share something — a milestone, a birthday run, a route you loved…" style="width:100%;min-height:56px;resize:vertical"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn p" onclick="submitPost()">Share to community</button></div>
+    <div id="cm-msg"></div>
+    <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">${feed}</div>`;
+}
+let _kind='share';
+function pickKind(k){_kind=k;$$('.cm-kind').forEach(b=>b.classList.toggle('on',b.dataset.k===k));}
+function communityRow(p){
+  const ic={share:'💬',birthday:'🎂',anniversary:'💍',route:'📍'}[p.kind]||'💬';
+  const who=p._near?'Someone near you':'A Strivon '+(/walk/i.test(p.body||'')?'walker':'mover');
+  return `<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+    <div style="font-size:20px">${ic}</div>
+    <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">${who} <span class="sub" style="font-weight:400">· ${timeAgo(new Date(p.created_at).getTime())}</span></div>
+    <div style="font-size:14px;margin-top:2px;line-height:1.4">${(p.body||'').replace(/</g,'&lt;')}${p.km?` <span class="sub">· ${(+p.km).toFixed(1)}km</span>`:''}</div></div>
+    <button class="gpxbtn" title="Report" aria-label="Report post" onclick="reportPost('${p.id}')" style="width:26px;height:26px;font-size:12px">⚑</button></div>`;
+}
+async function loadCommunity(){
+  if(!communityOn())return;const st=StrideSync&&StrideSync.state();if(!st||!st.signedIn)return;
+  try{
+    const reg=await myRegion();
+    const rows=await sbFetch('community_posts?select=id,kind,body,region,km,created_at&order=created_at.desc&limit=40')||[];
+    rows.forEach(r=>{r._near=reg&&r.region&&r.region.slice(0,3)===reg.slice(0,3);});
+    // near-you first, then recent
+    _feed=rows.sort((a,b)=>(b._near?1:0)-(a._near?1:0)||new Date(b.created_at)-new Date(a.created_at)).slice(0,30);
+    renderCommunity();
+  }catch(e){logErr('community-load',e);}
+}
+async function submitPost(){
+  const m=$('#cm-msg'),ta=$('#cm-text');const body=cleanText(ta&&ta.value);
+  if(!body){if(m)m.innerHTML='<div class="banner a" style="margin-top:8px">Write something first.</div>';return;}
+  if(_bad.test(body)){if(m)m.innerHTML='<div class="banner r" style="margin-top:8px">Let’s keep it kind — please reword that.</div>';return;}
+  const st=StrideSync&&StrideSync.state();if(!st||!st.signedIn)return;
+  if(m)m.innerHTML='<div class="sub" style="margin-top:8px">Sharing…</div>';
+  try{
+    const reg=await myRegion();const la=lastAct();
+    await sbFetch('community_posts',{method:'POST',body:JSON.stringify({user_id:st.userId,kind:_kind,body,region:reg||null,km:(_kind==='route'&&la)?la.km:null})});
+    if(ta)ta.value='';if(m)m.innerHTML='<div class="banner g" style="margin-top:8px"><span class="tick">✓</span> Shared. Thanks for adding to the map.</div>';
+    loadCommunity();
+  }catch(e){if(m)m.innerHTML='<div class="banner r" style="margin-top:8px">Couldn’t share right now.</div>';}
+}
+async function reportPost(id){
+  if(!confirm('Report this post for review?'))return;const st=StrideSync&&StrideSync.state();if(!st||!st.signedIn)return;
+  try{await sbFetch('post_reports',{method:'POST',body:JSON.stringify({post_id:id,reporter:st.userId})});alert('Thanks — reported for review.');}catch(e){}
+}
 function renderAtlas(){
   ensureAtlas();
   checkCapsules();
@@ -1546,8 +1630,13 @@ async function findRoute(){
     <div class="sub" style="margin-top:4px">A fresh loop from your area${a?`, like your last ${actWord()} (${a.km.toFixed(1)}km)`:''}.${approx?' <span style="color:var(--amber,#f5b23d)">Approx loop — routing service was busy, so it may cross non-paths.</span>':''}</div>
     <div id="rf-map" style="position:relative;height:200px;border-radius:12px;overflow:hidden;margin-top:10px;background:#0c0e16"><div id="rf-tiles" style="position:absolute;inset:0"></div><svg id="rf-svg" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"></svg><div style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM${approx?'':' · OSRM'} · CARTO</div></div>
     <div class="stats" style="grid-template-columns:1fr 1fr;margin-top:10px"><div class="stat"><div class="v tick" style="font-size:18px">${loop.km.toFixed(1)}km</div><div class="k">Distance</div></div><div class="stat"><div class="v" style="font-size:18px">~${mins}min</div><div class="k">Est. ${walk?'walk':'run'}</div></div></div>
+    <div id="rf-popular" class="sub" style="margin-top:8px"></div>
     <button class="btn p" style="margin-top:12px" onclick="findRoute()">🔀 Find another</button>`;
   setTimeout(()=>drawRouteMini(loop.geo),50);
+  // community: how many people took a similar route (anonymous count only)
+  if(typeof routePopularity==='function'&&start&&communityOn()){
+    routePopularity(routeKey(start[0],start[1],loop.km)).then(n=>{const pe=$('#rf-popular');if(pe&&n>0)pe.innerHTML=`🧑‍🤝‍🧑 <b>${n}</b> ${n===1?'person has':'people have'} taken a similar route.`;});
+  }
 }
 function renderRouteFinder(){
   const el=$('#route-card');if(!el||!S)return;
@@ -1591,6 +1680,8 @@ function saveRPE(){
   const km=+(run.dist/1000).toFixed(2),secs=run.moving||run.elapsed,pace=km>0.02?Math.max(2.8,secs/60/km):6;
   S.history=S.history||[];S.history.push({km,rpe,at:Date.now()});
   S.activities=S.activities||[];S.activities.unshift({id:uuid(),km,secs,pace,name:run.name||'Run',at:Date.now(),rpe,hr:run.hr||null,startAt:run.startedAt||Date.now()-secs*1000,pts:(run.pts||[]).slice()});
+  // register an anonymous, coarse route print for community popularity (fuzzed ~5km, opt-in via account)
+  try{const p0=(run.pts||[])[0];if(p0&&typeof registerRoutePrint==='function')registerRoutePrint(p0[0],p0[1],km);}catch(e){}
   const factor=rpe==='painful'?0.82:rpe==='hard'?0.93:rpe==='easy'?1.05:1.0;
   const ni=S.curWeek%S.plan.length,nw=S.plan[ni];
   if(nw&&!nw.isDeload&&!nw.isTaper){const cap=S.plan[ni-1]?S.plan[ni-1].vol*1.10:nw.vol;
@@ -1900,7 +1991,7 @@ function go(v){['today','plan','run','stats','atlas','why'].forEach(x=>$('#s-'+x
   if(v==='stats')renderStats();
   if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
   if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();if(typeof renderPlans==='function')renderPlans();if(typeof renderCoach==='function')renderCoach();}
-  if(v==='atlas'&&typeof renderAtlas==='function')renderAtlas();
+  if(v==='atlas'&&typeof renderAtlas==='function'){renderAtlas();if(typeof renderCommunity==='function'){renderCommunity();loadCommunity();}}
   s.scrollTop=0;}
 
 // ---- account + cloud sync UI ----
