@@ -20,7 +20,8 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 
 ## ✅ PROGRESS LOG (2026-07-22, live build)
 ✅ ALL CODE-BUILDABLE ITEMS DONE (2026-07-22). Done: #1 bg GPS · #5 bulk import · #6 coach turnkey · #7 route finder robustness · #8 shareable card · #9 Atlas journey replay · #11 copy honest · #12 60s onboarding value · #14 data export/delete · #15 accessibility (WCAG AA focus/aria/live) · #16 error telemetry · #17 spoken km splits · #18 weather fallback · #19 test battery (science) · #21 privacy policy · Batch B website text cut. SW v38.
-ONLY REMAINING = BLOCKED-on-Soumya (not code): #2 Apple Watch (needs Mac/Xcode + watch), #3 App Store submit (Apple Dev acct), #4 real users (GTM). #10 modularise = deferred (risky big refactor, low user value on a working single-file app).
+#2 Apple Watch — CODE WRITTEN (Soumya has a watch now): standalone watchOS app in ios/StrivonWatch/ (HealthKit workout + GPS + HR, saves to Apple Health). WATCH.md = Xcode build steps. Soumya builds/tests on his own watch. v2 = live WatchConnectivity sync.
+REMAINING = BLOCKED-on-Soumya (not code): #3 App Store submit (Apple Dev acct), #4 real users (GTM). #10 modularise = deferred (risky refactor, low user value).
 
 ## ⚡ USER DIRECTIVE (2026-07-21) — DO ALL OF THIS VIA AUTO-RESUME AFTER LIMIT RESET
 Soumya is conserving credits. He wants the auto-resume cron to complete the WHOLE
