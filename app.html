@@ -163,6 +163,16 @@
   .cta{position:sticky;bottom:0;padding:14px 0;background:linear-gradient(transparent,var(--bg) 30%)}
   /* cards */
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin:14px 0}
+  /* collapsible card — tucks secondary content behind a tap so Today stays one-glance */
+  details.card{padding:0;margin:12px 0}
+  details.card>summary{list-style:none;cursor:pointer;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;font-size:14px;color:var(--ink)}
+  details.card>summary::-webkit-details-marker{display:none}
+  details.card>summary .cx-sum{font-weight:500;color:var(--muted);font-size:12.5px;margin-left:auto;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52%}
+  details.card>summary .cx-chev{flex:none;color:var(--muted);transition:transform .2s;font-size:13px}
+  details.card[open]>summary .cx-chev{transform:rotate(180deg)}
+  details.card[open]>summary{padding-bottom:4px}
+  details.card .cx-body{padding:0 18px 18px}
+  details.card .cx-body>.card{margin:0;padding:0;background:none;border:none}
   .card.glow{border-color:var(--safe-dim);box-shadow:0 0 0 1px rgba(47,227,160,.18)}
   .kicker{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
   .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.3px}
@@ -427,26 +437,35 @@
     </div>
     <div id="today-plan"></div>
     <div id="today-welcome"></div>
-    <div class="card" id="risk-card"></div>
-    <div class="card glow">
-      <div class="kicker">Daily readiness check</div>
-      <div class="sub" style="margin:4px 0 4px">20 seconds — adapts today's run to how you feel.</div>
-      <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="2" class="on">Good</button><button data-v="1">OK</button><button data-v="0">Poor</button></div>
-      <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="2" class="on">None</button><button data-v="1">Some</button><button data-v="0">High</button></div>
-      <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="2" class="on">High</button><button data-v="1">Meh</button><button data-v="0">Low</button></div>
-      <button class="btn p" style="margin-top:16px" onclick="computeReadiness()">Check readiness</button>
-      <div id="readiness-out"></div>
-    </div>
+    <!-- HERO: today's workout — the one thing you came for, first -->
     <div class="card" id="today-sesh"></div>
-    <div class="card" id="weather-card"><div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Checking conditions…</div></div>
-    <div class="card" id="route-card"></div>
-    <div class="card" id="reminder-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <div><div class="kicker">🔔 Training reminders</div><div class="sub" style="margin-top:2px">A nudge on your run days at 7:30am.</div></div>
-        <button class="btn ghost" id="rem-btn" style="width:auto;padding:11px 16px;flex:none" onclick="toggleReminders()">Turn on</button>
+    <div class="card" id="risk-card"></div>
+    <!-- secondary: tucked into taps so Today stays one-glance -->
+    <details class="card"><summary>🩺 Daily readiness check <span class="cx-sum">tune today to how you feel</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body">
+        <div class="sub" style="margin:0 0 6px">20 seconds — adapts today's run to how you feel.</div>
+        <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="2" class="on">Good</button><button data-v="1">OK</button><button data-v="0">Poor</button></div>
+        <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="2" class="on">None</button><button data-v="1">Some</button><button data-v="0">High</button></div>
+        <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="2" class="on">High</button><button data-v="1">Meh</button><button data-v="0">Low</button></div>
+        <button class="btn p" style="margin-top:16px" onclick="computeReadiness()">Check readiness</button>
+        <div id="readiness-out"></div>
       </div>
-      <div id="rem-out"></div>
-    </div>
+    </details>
+    <details class="card"><summary>🌤️ Weather · when to move <span class="cx-sum" id="weather-sum"></span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body"><div id="weather-card"><div class="sub">Checking conditions…</div></div></div>
+    </details>
+    <details class="card"><summary>🧭 Route finder <span class="cx-sum">a fresh loop near you</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body"><div id="route-card"></div></div>
+    </details>
+    <details class="card"><summary>🔔 Training reminders <span class="cx-sum" id="rem-sum">a nudge on run days</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body">
+        <div id="reminder-card">
+          <div class="sub" style="margin-bottom:8px">A nudge on your run days at 7:30am.</div>
+          <button class="btn ghost" id="rem-btn" style="width:auto;padding:11px 16px" onclick="toggleReminders()">Turn on</button>
+          <div id="rem-out"></div>
+        </div>
+      </div>
+    </details>
   </div>
 
   <!-- ================= PLAN / CALENDAR ================= -->
@@ -1289,7 +1308,7 @@ async function toggleReminders(){
     $('#rem-out').innerHTML=`<div class="banner a" style="margin-top:10px">🔔 Reminders run in the installed app — <b>${list.length}</b> would be scheduled for your run days.</div>`;
   }
 }
-function reflectReminders(){const on=S&&S.reminders&&S.reminders.on,b=$('#rem-btn');if(b){b.textContent=on?'On ✓':'Turn on';b.classList.toggle('p',!!on);}}
+function reflectReminders(){const on=S&&S.reminders&&S.reminders.on,b=$('#rem-btn');if(b){b.textContent=on?'On ✓':'Turn on';b.classList.toggle('p',!!on);}const rs=$('#rem-sum');if(rs)rs.textContent=on?'on · run days 7:30am':'a nudge on run days';}
 
 // ---- local weather + best time to run (wet-bulb heat-stress) ----
 function wmo(code){const m={0:['Clear','☀️'],1:['Mainly clear','🌤️'],2:['Partly cloudy','⛅'],3:['Overcast','☁️'],45:['Fog','🌫️'],48:['Fog','🌫️'],51:['Light drizzle','🌦️'],53:['Drizzle','🌦️'],55:['Drizzle','🌦️'],61:['Light rain','🌧️'],63:['Rain','🌧️'],65:['Heavy rain','🌧️'],71:['Light snow','🌨️'],73:['Snow','🌨️'],75:['Heavy snow','❄️'],80:['Showers','🌦️'],81:['Showers','🌧️'],82:['Heavy showers','⛈️'],95:['Thunderstorm','⛈️'],96:['Thunderstorm','⛈️'],99:['Thunderstorm','⛈️']};return m[code]||['—','🌡️'];}
@@ -1365,6 +1384,7 @@ function renderWeather(j,loc,aq){
       <span class="pill ${crc}">${crisk}</span>
     </div>${air&&air.warn?`<div class="banner ${air.cls}" style="margin-top:10px">😷 <b>${air.label} air quality (AQI ${air.val})</b> — consider an easier effort, indoors, or waiting for cleaner air.</div>`:''}${bestHtml}
     <div id="weather-note"></div>`;
+  const ws=$('#weather-sum');if(ws)ws.textContent=b?`${Math.round(c.temperature_2m)}°C · best ${b.t.getHours()}:00`:`${Math.round(c.temperature_2m)}°C now`;
 }
 async function notifyBestRun(){
   const b=window._weatherBest;if(!b)return;
