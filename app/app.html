@@ -1146,15 +1146,29 @@ function wmo(code){const m={0:['Clear','☀️'],1:['Mainly clear','🌤️'],2:
 function wetBulb(T,RH){return T*Math.atan(0.151977*Math.sqrt(RH+8.313659))+Math.atan(T+RH)-Math.atan(RH-1.676331)+0.00391838*Math.pow(RH,1.5)*Math.atan(0.023101*RH)-4.686035;}
 function heatRisk(wb){if(wb<10)return['Ideal','g'];if(wb<18)return['Comfortable','g'];if(wb<23)return['Caution','a'];if(wb<27)return['High heat risk','r'];return['Dangerous','r'];}
 function getLoc(){return new Promise(res=>{if(navigator.geolocation)navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude,ok:true}),()=>res({lat:51.5074,lon:-0.1278,ok:false}),{timeout:6000,maximumAge:600000});else res({lat:51.5074,lon:-0.1278,ok:false});});}
+// #18 secondary weather source (MET Norway — free, keyless) reshaped to the Open-Meteo shape
+async function metNoWeather(loc){
+  const r=await fetchT(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${loc.lat.toFixed(3)}&lon=${loc.lon.toFixed(3)}`,5000);
+  if(!r.ok)throw 0;const d=await r.json();const ts=d&&d.properties&&d.properties.timeseries;if(!ts||!ts.length)throw 0;
+  const cur=ts[0].data.instant.details;
+  const H={time:[],temperature_2m:[],relative_humidity_2m:[],precipitation_probability:[],weather_code:[]};
+  ts.slice(0,24).forEach(t=>{const de=t.data.instant.details;const nx=t.data.next_1_hours;
+    H.time.push(t.time);H.temperature_2m.push(de.air_temperature);H.relative_humidity_2m.push(de.relative_humidity);
+    H.precipitation_probability.push(nx&&nx.details&&nx.details.probability_of_precipitation!=null?nx.details.probability_of_precipitation:0);
+    H.weather_code.push(nx&&nx.summary&&/rain|sleet|snow/i.test(nx.summary.symbol_code||'')?61:1);});
+  return {current:{temperature_2m:cur.air_temperature,relative_humidity_2m:cur.relative_humidity,precipitation:0,weather_code:1},hourly:H};
+}
 async function loadWeather(){
   try{
     const loc=await getLoc();
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code&timezone=auto&forecast_days=1`;
     const aqUrl=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${loc.lat}&longitude=${loc.lon}&current=european_aqi,us_aqi,pm2_5&timezone=auto`;
-    const [j,aq]=await Promise.all([fetch(url).then(r=>r.json()),fetch(aqUrl).then(r=>r.json()).catch(()=>null)]);
-    if(!j.current||!j.hourly)throw 0;
+    let j=null;
+    try{const r=await fetchT(url,5000);if(r.ok)j=await r.json();}catch(e){}
+    if(!j||!j.current||!j.hourly){j=await metNoWeather(loc);}   // fall back to MET Norway
+    const aq=await fetchT(aqUrl,5000).then(r=>r.ok?r.json():null).catch(()=>null);  // AQI best-effort
     renderWeather(j,loc,aq);
-  }catch(e){$('#weather-card').innerHTML=`<div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Couldn’t load weather right now.</div>`;}
+  }catch(e){logErr('weather',e);$('#weather-card').innerHTML=`<div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Couldn’t load weather right now.</div>`;}
 }
 function bestWindow(h){
   const now=Date.now();let best=null;
@@ -1688,7 +1702,48 @@ function renderStats(){
     return `<div class="act"><span class="dot ${kindOf(a.name)}" style="width:11px;height:11px"></span>
       <div><div style="font-weight:700;font-size:14px">${a.name}</div><div class="sub">${DOW[dd.getDay()]} ${dd.getDate()} ${MON[dd.getMonth()]}</div></div>
       <div class="ad"><div style="font-weight:800" class="tick">${a.km.toFixed(1)}km</div><div class="sub">${paceStr(a.pace)}/km</div></div>
-      ${(a.pts&&a.pts.length>1)?`<button class="gpxbtn" onclick="exportActivity(${i})" title="Export GPX">⬇</button>`:''}</div>`;}).join('')||'<div class="sub">No runs yet — complete a run to see it here.</div>';
+      <button class="gpxbtn" onclick="shareActivity(${i})" title="Share">↗</button>${(a.pts&&a.pts.length>1)?`<button class="gpxbtn" onclick="exportActivity(${i})" title="Export GPX">⬇</button>`:''}</div>`;}).join('')||'<div class="sub">No runs yet — complete a run to see it here.</div>';
+}
+// ---- #8 shareable branded card (canvas → Web Share API, falls back to download) ----
+function activityCardCanvas(a){
+  const W=1080,H=1080,cv=document.createElement('canvas');cv.width=W;cv.height=H;const g=cv.getContext('2d');
+  // background gradient (brand)
+  const bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0b0a12');bg.addColorStop(1,'#141024');g.fillStyle=bg;g.fillRect(0,0,W,H);
+  // route polyline centred
+  const pts=(a.pts||[]).filter(p=>isFinite(p[0])&&isFinite(p[1]));
+  if(pts.length>1){
+    let laMin=90,laMax=-90,loMin=180,loMax=-180;pts.forEach(p=>{laMin=Math.min(laMin,p[0]);laMax=Math.max(laMax,p[0]);loMin=Math.min(loMin,p[1]);loMax=Math.max(loMax,p[1]);});
+    const pad=140,bw=W-pad*2,bh=440,by=250,mlat=(laMin+laMax)/2,coslat=Math.cos(mlat*Math.PI/180);
+    const spanX=Math.max(1e-6,(loMax-loMin)*coslat),spanY=Math.max(1e-6,laMax-laMin),sc=Math.min(bw/spanX,bh/spanY);
+    const offX=pad+(bw-spanX*sc)/2,offY=by+(bh-spanY*sc)/2;
+    g.strokeStyle='#2ee6c6';g.lineWidth=10;g.lineJoin='round';g.lineCap='round';g.shadowColor='rgba(46,230,198,.55)';g.shadowBlur=24;g.beginPath();
+    pts.forEach((p,i)=>{const x=offX+(p[1]-loMin)*coslat*sc,y=offY+(laMax-p[0])*sc;i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();g.shadowBlur=0;
+    g.fillStyle='#ff6a3d';const s=pts[0],x0=offX+(s[1]-loMin)*coslat*sc,y0=offY+(laMax-s[0])*sc;g.beginPath();g.arc(x0,y0,16,0,7);g.fill();
+  }
+  const walk=/walk/i.test(a.name||'')|| (S&&S.mode==='walk');
+  // brand
+  g.fillStyle='#fff';g.font='800 60px -apple-system,system-ui,sans-serif';g.fillText('Strivon',140,150);
+  g.fillStyle='#8b8fa3';g.font='500 34px -apple-system,system-ui,sans-serif';g.fillText((walk?'Walk':'Run')+' · '+(a.name||''),140,200);
+  // stat row
+  const stats=[[a.km.toFixed(2),'km'],[fmt(a.secs),'time'],[paceStr(a.pace)+'','/km']];
+  const sy=820;stats.forEach((st,i)=>{const cx=180+i*380;g.fillStyle='#fff';g.font='800 96px -apple-system,system-ui,sans-serif';g.textAlign='left';g.fillText(st[0],cx-40,sy);g.fillStyle='#8b8fa3';g.font='500 36px -apple-system,system-ui,sans-serif';g.fillText(st[1],cx-40,sy+56);});
+  g.textAlign='left';g.fillStyle='#5a5f73';g.font='500 30px -apple-system,system-ui,sans-serif';g.fillText('strivon.run · injury-safe coaching for runners & walkers',140,1000);
+  return cv;
+}
+async function shareActivity(i){
+  const a=(S.activities||[])[i];if(!a)return;
+  const cv=activityCardCanvas(a);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+  const txt=`My ${/walk/i.test(a.name||'')?'walk':'run'}: ${a.km.toFixed(2)}km in ${fmt(a.secs)} (${paceStr(a.pace)}/km) — tracked with Strivon`;
+  try{
+    const file=new File([blob],'strivon-'+a.km.toFixed(1)+'km.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],text:txt,title:'Strivon'});return;
+    }
+    if(navigator.share){await navigator.share({text:txt+' — strivon.run',title:'Strivon'});return;}
+  }catch(e){if(e&&e.name==='AbortError')return;logErr('share',e);}
+  // fallback: download the card image
+  const url=URL.createObjectURL(blob),el=document.createElement('a');el.href=url;el.download='strivon-'+a.km.toFixed(1)+'km.png';document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 // ---- calendar editing ----
