@@ -666,6 +666,10 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 // installed-app detection (iOS navigator.standalone + display-mode) → drives safe-area CSS
 if(window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode:standalone)').matches)){document.documentElement.classList.add('standalone');}
 const store={get:()=>JSON.parse(localStorage.getItem('stride')||'null'),set:d=>{try{d._mut=Date.now();}catch(e){}localStorage.setItem('stride',JSON.stringify(d));if(window.StrideSync)StrideSync.markDirty();}};
+// ---- lightweight private error log (on-device ring buffer, never auto-sent) ----
+function logErr(where,e){try{const log=JSON.parse(localStorage.getItem('stride_errlog')||'[]');log.push({t:Date.now(),where:where,msg:(e&&(e.message||e.reason&&e.reason.message))||String(e).slice(0,200)});while(log.length>40)log.shift();localStorage.setItem('stride_errlog',JSON.stringify(log));}catch(_){}}
+window.addEventListener('error',ev=>logErr('window',ev.error||ev.message));
+window.addEventListener('unhandledrejection',ev=>logErr('promise',ev.reason));
 let S=store.get();
 const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function uuid(){return crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.random().toString(16).slice(2);}
@@ -1768,22 +1772,41 @@ function go(v){['today','plan','run','stats','atlas','why'].forEach(x=>$('#s-'+x
 
 // ---- account + cloud sync UI ----
 function timeAgo(iso){const s=(Date.now()-new Date(iso))/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+// Your data, yours to take or wipe — GDPR-friendly, no account needed.
+const dataTools=`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+    <div class="kicker" style="font-size:12px">Your data</div>
+    <div class="row" style="margin-top:8px;gap:6px"><button class="btn ghost" style="padding:9px 12px" onclick="exportAllData()">⬇ Export all</button><button class="btn ghost" style="padding:9px 12px;flex:.7;color:var(--bad,#f5665f)" onclick="wipeAllData()">Delete everything</button></div>
+    <div class="sub" style="margin-top:6px;font-size:11px;opacity:.6">Export a full JSON backup, or erase all local data. Private policy: strivon.run/privacy.</div></div>`;
 function renderAccount(st){
   const el=$('#account-card');if(!el)return;
-  if(!st||!st.configured){el.innerHTML=`<div class="kicker">☁️ Cloud sync</div><div class="sub" style="margin-top:4px">Runs fully offline. To back up &amp; sync across devices, add your Supabase keys in <b>config.js</b> (see BACKEND.md).</div>`;return;}
+  if(!st||!st.configured){el.innerHTML=`<div class="kicker">☁️ Cloud sync</div><div class="sub" style="margin-top:4px">Runs fully offline. To back up &amp; sync across devices, add your Supabase keys in <b>config.js</b> (see BACKEND.md).</div>`+dataTools;return;}
   if(st.signedIn){
     el.innerHTML=`<div class="kicker">☁️ Account</div>
       <div style="margin-top:8px"><div style="font-weight:800">${st.email}</div><div class="sub">${st.lastSync?'Synced '+timeAgo(st.lastSync):'Not synced yet'}</div></div>
       <div class="row" style="margin-top:12px"><button class="btn p" onclick="acctSync()">Sync now</button><button class="btn ghost" style="flex:.6" onclick="acctSignOut()">Sign out</button></div>
-      <div id="acct-msg"></div>`;
+      <div id="acct-msg"></div>`+dataTools;
   }else{
     el.innerHTML=`<div class="kicker">☁️ Back up &amp; sync</div>
       <div class="sub" style="margin-top:4px">Sign in to save your plan &amp; runs to the cloud and sync across devices.</div>
       <label>Email</label><input id="acct-email" type="email" autocomplete="email" placeholder="you@email.com">
       <label>Password</label><input id="acct-pw" type="password" autocomplete="current-password" placeholder="at least 6 characters">
       <div class="row" style="margin-top:12px"><button class="btn p" onclick="acctAuth('in')">Sign in</button><button class="btn ghost" onclick="acctAuth('up')">Create account</button></div>
-      <div id="acct-msg"></div>`;
+      <div id="acct-msg"></div>`+dataTools;
   }
+}
+function exportAllData(){
+  try{
+    const dump={app:'Strivon',exportedAt:new Date().toISOString(),version:1,data:store.get()};
+    const blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='strivon-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(e){logErr('export',e);alert('Export failed — try again.');}
+}
+async function wipeAllData(){
+  if(!confirm('Delete ALL your Strivon data on this device? Export first if you want a backup. This cannot be undone.'))return;
+  try{if(window.StrideSync&&StrideSync.state().signedIn)await StrideSync.signOut();}catch(e){}
+  try{localStorage.removeItem('stride');localStorage.removeItem('stride_wx');localStorage.removeItem('stride_install_dismissed');localStorage.removeItem('stride_errlog');}catch(e){}
+  location.reload();
 }
 async function acctAuth(mode){
   const email=($('#acct-email').value||'').trim(),pw=$('#acct-pw').value||'',m=$('#acct-msg');
