@@ -102,6 +102,36 @@ window.runStrideTests = async function () {
     sections.push(s);
   }
 
+  // ---------------- UNIT · sports-science + new features ----------------
+  {
+    const s = mk('UNIT · science & features'); const ok = s.ok;
+    // seed a clean athlete with a few realistic runs so predictors have data
+    const now = Date.now(), day = 86400000;
+    S.activities = [
+      { id: 't1', name: 'Easy run', km: 5.0, secs: 1500, pace: 5.0, hr: 150, rpe: 4, startAt: now - 2 * day, at: now - 2 * day, pts: [[51.5, -0.12], [51.51, -0.12]] },
+      { id: 't2', name: 'Tempo', km: 8.0, secs: 2304, pace: 4.8, hr: 165, rpe: 6, startAt: now - 4 * day, at: now - 4 * day, pts: [] },
+      { id: 't3', name: 'Long run', km: 12.0, secs: 3960, pace: 5.5, hr: 158, rpe: 5, startAt: now - 6 * day, at: now - 6 * day, pts: [] },
+    ];
+    // race prediction (Riegel): longer distance => slower per-km pace than the 5k
+    if (typeof predictRaces === 'function') {
+      const pr = predictRaces();
+      ok('predictRaces returns times', !!(pr && pr.out && Object.keys(pr.out).length));
+      if (pr && pr.out && pr.out['10k'] && pr.out['5k']) ok('Riegel: 10k slower pace than 5k', (pr.out['10k'].secs / 10) > (pr.out['5k'].secs / 5) - 1);
+      let mono = true, keys = Object.keys(pr.out); for (let i = 1; i < keys.length; i++) if (pr.out[keys[i]].secs < pr.out[keys[i - 1]].secs) mono = false;
+      ok('race times increase with distance', mono);
+    }
+    if (typeof vdotEstimate === 'function') { const v = vdotEstimate(); ok('VDOT/VO2max in human range 20-85', v == null || (v >= 20 && v <= 85)); }
+    if (typeof trainingForm === 'function') { const f = trainingForm(); ok('trainingForm CTL/ATL/TSB finite', !f || (isFinite(f.ctl) && isFinite(f.atl) && isFinite(f.tsb))); if (f) ok('TSB == CTL - ATL', Math.abs(f.tsb - (f.ctl - f.atl)) < 1.5); }
+    // synthetic route loop must be distance-accurate (#7)
+    if (typeof syntheticLoop === 'function') { let worst = 0; for (const km of [2, 5, 10, 21]) { const lp = syntheticLoop([51.5, -0.12], km, 42); const e = Math.abs(lp.km - km) / km; if (e > worst) worst = e; } ok('syntheticLoop within 1% of target (max ' + (worst * 100).toFixed(2) + '%)', worst < 0.01); }
+    // dedupe guard (#5)
+    if (typeof activityExists === 'function') { ok('dedupe: same run detected', activityExists({ startAt: now - 2 * day, km: 5.0 }) === true); ok('dedupe: different run not flagged', activityExists({ startAt: now - 99 * day, km: 3.3 }) === false); }
+    // on-device coach always replies (#6)
+    if (typeof localCoachReply === 'function') { ['should i run today?', 'am i overtraining?', 'what pace?', 'random gibberish'].forEach(q => ok('coach replies to "' + q + '"', typeof localCoachReply(q) === 'string' && localCoachReply(q).length > 5)); }
+    S.activities = []; store.set(S);
+    sections.push(s);
+  }
+
   // ---------------- SMOKE · navigation ----------------
   {
     const s = mk('SMOKE · screens'); const ok = s.ok;
