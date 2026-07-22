@@ -3,41 +3,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="./site.css?v=13">
 <nav class="topnav"><a class="nav-brand" href="./index.html"><svg class="nav-mk" viewBox="0 0 100 100"><defs><linearGradient id="nvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs><g fill="none" stroke="url(#nvg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/><path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#nvg)" stroke="none"/></g></svg><span>Strivon</span></a><button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button><div class="nav-links"><a href="./index.html">Vision</a><a href="./compare.html">Compare</a><a href="./experience.html">Experience</a><a href="./technology.html" class="active">Technology</a><a href="./business.html">Business</a></div><a class="nav-launch" href="./app.html">Open app&nbsp;→</a></nav>
-<header class="page-hero"><div class="wrap"><div class="eyebrow">How it's built</div><h1 class="page-h1">The Technology</h1><p class="lead">Map-first architecture, a nine-agent AI swarm, and a Python brain beside the realtime spine.</p></div></header>
+<header class="page-hero"><div class="wrap"><div class="eyebrow">How it's built</div><h1 class="page-h1">The Technology</h1><p class="lead">Private by design, intelligent on your device, and built to feel effortless. Here’s the thinking — not the plumbing.</p></div></header>
 <main>
-<section id="arch"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">06 — CORE APP ARCHITECTURE</div><h2>Map-first, offline-first, private by design</h2>
-    <p class="lead">Built on what Strivon runs today — PWA, Supabase, on-device intelligence, Claude — plus a Python ML brain.</p></div>
-  <div class="flow reveal" style="margin-bottom:22px">
-    <span class="node">📱 Client (PWA / Capacitor native)</span><span class="ar">→</span>
-    <span class="node">Supabase — Auth · Postgres+PostGIS · Realtime · Storage</span><span class="ar">→</span>
-    <span class="node">Edge Functions (Deno) — coach · missions</span><span class="ar">→</span>
-    <span class="node">🧠 Flask ML service — twin · embeddings · agents</span>
-  </div>
-  <div class="grid g3">
-    <div class="card reveal"><div class="k">Client</div><p style="color:#cfd2df;font-size:15px">Vanilla-JS PWA today → Capacitor for native GPS/Health/notifications. Map-centric UI, offline journey capture, on-device GPS smoothing & sports-science math.</p></div>
-    <div class="card reveal"><div class="k">Data & realtime</div><p style="color:#cfd2df;font-size:15px">Supabase Postgres + <b style="color:#fff">PostGIS</b> for geospatial, Storage for media, RLS for privacy, Realtime for the anonymous network.</p></div>
-    <div class="card reveal"><div class="k">Intelligence</div><p style="color:#cfd2df;font-size:15px">Deno edge functions for low-latency LLM calls; a <b style="color:#fff">Python/Flask</b> service for the digital twin, vector memory (pgvector), and the agent swarm.</p></div>
+<section><div class="wrap">
+  <div class="eyebrow">Principles</div>
+  <h2>Built on four convictions</h2>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card reveal"><h3>Private by design</h3><p>Your journeys, memories and health data live on your device by default. Nothing is sold, and the social layer is anonymous by construction — you’re never the product.</p></div>
+    <div class="card reveal"><h3>Works offline</h3><p>Capture a moment or track a route with no signal. Everything syncs quietly when you’re back online — the map is always there when you need it.</p></div>
+    <div class="card reveal"><h3>Intelligence on your device</h3><p>The sports-science that keeps you injury-safe — pacing, load, readiness — runs on your phone in real time. Fast, and yours.</p></div>
+    <div class="card reveal"><h3>Effortless &amp; cross-device</h3><p>Start on your phone, glance at your watch, pick up on the web. Import from any wearable. It all stays in sync without you thinking about it.</p></div>
   </div>
 </div></section>
-<section id="ai"><div class="wrap">
-  <div class="sec-head reveal"><div class="num">07 — AI ARCHITECTURE · THE AGENT SWARM</div><h2>Nine agents, one companion</h2></div>
-  <div class="tblwrap reveal"><table>
-    <tr><th>Agent</th><th>Job</th><th>Inputs</th><th>Engine</th></tr>
-    <tr><td><b>Coach</b></td><td>Empathetic daily guidance & check-ins</td><td>Plan, runs, mood, calendar, weather</td><td>LLM (Claude) + RAG</td></tr>
-    <tr><td><b>Memory / RAG</b></td><td>Retrieve your past — “what was I doing last spring?”</td><td>Journeys, notes, media captions</td><td>pgvector embeddings</td></tr>
-    <tr><td><b>Mission Generator</b></td><td>Daily adventures tuned to context</td><td>Location, weather, time, fitness, history</td><td>LLM + rules + POI data</td></tr>
-    <tr><td><b>Route Generator</b></td><td>Loops by distance, mood, scenery, elevation</td><td>PostGIS, OSM, elevation, preferences</td><td>Graph routing + LLM</td></tr>
-    <tr><td><b>Behavioural Analyst</b></td><td>Detect habit cycles, break points, personality</td><td>Time-series of activity & mood</td><td>Classical ML (sklearn)</td></tr>
-    <tr><td><b>Wellbeing Insights</b></td><td>“Which places lift you” correlations</td><td>Mood deltas × place × route</td><td>Stats / causal-lite</td></tr>
-    <tr><td><b>Digital Twin</b></td><td>Predict future fitness, mood, burnout; simulate scenarios</td><td>Full history + goals</td><td>Time-series forecasting</td></tr>
-    <tr><td><b>Story Generator</b></td><td>Narrate your year / journey as a film</td><td>Journeys, memories, milestones</td><td>LLM + media pipeline</td></tr>
-    <tr><td><b>Serendipity</b></td><td>Anonymous crossings & kindred spirits</td><td>Hashed geohash grid, k-anonymity</td><td>Privacy-preserving match</td></tr>
-  </table></div>
-  <div class="callout reveal"><b>The learning loop:</b> every agent writes back to a per-user profile of motivations, triggers and preferred adventures. The companion gets more “you” every week — the compounding data moat.</div>
+
+<section><div class="wrap">
+  <div class="eyebrow">The intelligence</div>
+  <h2>A coach that actually knows you</h2>
+  <p class="lead" style="margin-top:8px">Strivon’s intelligence isn’t one chatbot bolted on — it’s a set of specialists that quietly work together, and get more “you” every week.</p>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card reveal"><h3>🧠 Your coach</h3><p>Warm, specific daily guidance grounded in your plan, runs, mood and the weather — never generic.</p></div>
+    <div class="card reveal"><h3>🧵 Your memory</h3><p>Ask “what was I doing last spring?” and your own history answers.</p></div>
+    <div class="card reveal"><h3>🧭 Missions &amp; routes</h3><p>Fresh adventures and loops tuned to your distance, mood, scenery and the day.</p></div>
+    <div class="card reveal"><h3>📈 Patterns &amp; wellbeing</h3><p>It learns which places and rhythms lift you — and gently steers you toward them.</p></div>
+    <div class="card reveal"><h3>🔮 Your future self</h3><p>See where your fitness and habits are heading, and test “what if?” before you commit.</p></div>
+    <div class="card reveal"><h3>🎬 Your story</h3><p>Your year, narrated back to you as a film built from where you moved and how it felt.</p></div>
+  </div>
+  <div class="callout reveal" style="margin-top:24px"><b>The compounding advantage:</b> everything you do teaches Strivon what moves <i>you</i>. The longer you’re here, the more it becomes irreplaceable — not because of lock-in, but because it holds your story.</div>
 </div></section>
-
-
 </main>
 <div class="pager"><a class="pg-prev" href="./experience.html">← Experience</a><a class="pg-next" href="./business.html">Business →</a></div>
 <footer><div class="wrap footgrid"><div><div class="foot-logo"><svg class="foot-mk" viewBox="0 0 100 100"><defs><linearGradient id="fvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs><g fill="none" stroke="url(#fvg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/><path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#fvg)" stroke="none"/></g></svg><span>Strivon</span></div><p class="foot-tag">A geographical autobiography, an emotional-wellbeing OS, a real-world RPG, and a legacy that outlives its user. Designed as a category, not a feature.</p></div><div class="footcol"><h4>Explore</h4><a href="./index.html">Vision</a><a href="./compare.html">Compare</a><a href="./experience.html">Experience</a><a href="./technology.html">Technology</a><a href="./business.html">Business</a></div><div class="footcol"><h4>Product</h4><a href="./app.html">Open the app</a><a href="https://www.axiomarcapital.com" target="_blank" rel="noopener">Axiomar Capital &#8599;</a></div></div><div class="wrap footbar"><span>&copy; Strivon &mdash; a product of <a href="https://www.axiomarcapital.com" target="_blank" rel="noopener">Axiomar Capital</a>.</span><span>Building the fund that trades every market, and the tools that get there.</span></div><a href="./privacy.html" style="position:fixed"></a></footer>
