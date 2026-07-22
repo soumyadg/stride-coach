@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Strivon</string>
+	<key>CFBundleDisplayName</key>
+	<string>Strivon</string>
+	<key>WKApplication</key>
+	<true/>
+	<key>WKRunsIndependentlyOfCompanionApp</key>
+	<true/>
+	<key>WKBackgroundModes</key>
+	<array>
+		<string>workout-processing</string>
+	</array>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Strivon reads your heart rate, distance and energy to show live run and walk metrics.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Strivon saves your completed runs and walks to Apple Health so they sync to your Strivon app.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Strivon uses your location to record your route, distance and pace while you run or walk.</string>
+</dict>
+</plist>
