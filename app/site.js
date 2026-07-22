@@ -1,7 +1,15 @@
 (function(){
-  // reveal-on-scroll
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12,rootMargin:'0px 0px -8% 0px'});
-  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  // reveal-on-scroll — pre-reveals BEFORE content enters view (no scrolling into a void),
+  // with a hard failsafe so nothing is ever left invisible.
+  var reveals=document.querySelectorAll('.reveal');
+  function showAll(){reveals.forEach(function(el){el.classList.add('in');});}
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},
+      {threshold:0,rootMargin:'0px 0px 240px 0px'});   // reveal ~240px before it reaches the viewport
+    reveals.forEach(function(el){io.observe(el);});
+    // failsafe: reveal anything still hidden shortly after load (covers fast scroll / observer misses)
+    setTimeout(showAll,2200);
+  } else { showAll(); }
 
   // scroll-progress "tape" — eased with requestAnimationFrame so it glides smoothly
   var t=document.createElement('div');t.className='scrolltape';t.setAttribute('aria-hidden','true');
