@@ -617,10 +617,12 @@
         <div id="atlas-pins" style="position:absolute;inset:0"></div>
         <div class="attrib" style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · CARTO</div>
         <div id="atlas-empty" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);font-size:14px">Your map is empty.<br>Add your first moment below — every memory pins to where it happened.</div>
+        <div id="atlas-replay-cap" style="position:absolute;left:0;right:0;bottom:0;padding:10px 14px;background:linear-gradient(0deg,rgba(6,5,12,.92),transparent);display:none;pointer-events:none"><div id="atlas-replay-label" style="color:#fff;font-weight:700;font-size:13px"></div></div>
       </div>
       <div class="row" style="gap:8px;padding:12px">
         <button class="btn p" onclick="addMoment()">＋ Add a moment</button>
         <button class="btn ghost" style="flex:0 0 auto;width:auto;padding:12px 14px" onclick="sealCapsule()">⏳ Capsule</button>
+        <button class="btn ghost" id="atlas-replay-btn" style="flex:0 0 auto;width:auto;padding:12px 14px" onclick="replayStory()" title="Replay your journey">▶ Replay</button>
       </div>
     </div>
     <div class="card"><div class="kicker">🧵 Your story</div><div id="atlas-memories" style="margin-top:6px"></div></div>
@@ -907,6 +909,51 @@ async function drawAtlasMap(){
   S.memories.forEach(m=>{if(!isFinite(m.lat))return;const w=project(m.lat,m.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-20||x>W+20||y<-20||y>H+20)return;pHtml+=`<button class="atlas-pin" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px" onclick="viewMemory('${m.id}')">${m.feeling||'📍'}</button>`;});
   S.capsules.forEach(c2=>{if(!isFinite(c2.lat))return;const w=project(c2.lat,c2.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-20||x>W+20||y<-20||y>H+20)return;pHtml+=`<button class="atlas-pin cap" style="left:${x.toFixed(0)}px;top:${y.toFixed(0)}px" onclick="viewCapsule('${c2.id}')">⏳</button>`;});
   pinsEl.innerHTML=pHtml;
+}
+// #9 "a documentary you can replay" — animate the whole journey in time order.
+let _replaying=false;
+async function replayStory(){
+  if(_replaying)return;
+  ensureAtlas();
+  const wrap=$('#atlas-map'),svg=$('#atlas-routes'),pinsEl=$('#atlas-pins'),cap=$('#atlas-replay-cap'),lab=$('#atlas-replay-label'),btn=$('#atlas-replay-btn');
+  if(!wrap)return;
+  // gather every dated element: runs (with routes), moments, capsules — sorted by time
+  const items=[];
+  (S.activities||[]).forEach(a=>{if(a.pts&&a.pts.length>1)items.push({t:a.startAt||a.at,type:'route',a,label:(a.name||'Run')+' · '+(a.km||0).toFixed(1)+'km'});});
+  (S.memories||[]).forEach(m=>{if(isFinite(m.lat))items.push({t:m.at,type:'mem',m,label:(m.note||'A moment')});});
+  (S.capsules||[]).forEach(c=>{if(isFinite(c.lat))items.push({t:c.unlockAt||c.t||0,type:'cap',c,label:'A capsule'});});
+  if(items.length<1){coach&&coach('Add a few moments or runs first — then replay your story.');return;}
+  items.sort((x,y)=>(x.t||0)-(y.t||0));
+  _replaying=true;if(btn){btn.disabled=true;btn.textContent='● Playing';}
+  await drawAtlasMap();                                  // fit the map first
+  const Z=ATLAS_Z,W=wrap.clientWidth||360,H=wrap.clientHeight||280;
+  let ctr=atlasCenter()||[51.5074,-0.1278];const c=project(ctr[0],ctr[1],Z),ox=c.x-W/2,oy=c.y-H/2;
+  svg.innerHTML='';pinsEl.innerHTML='';if(cap)cap.style.display='block';
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const wait=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+  for(const it of items){
+    const d=new Date(it.t||Date.now());
+    if(lab)lab.textContent=`${it.label}  ·  ${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`;
+    if(it.type==='route'){
+      const pts=it.a.pts,poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');
+      const pp=pts.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' ');
+      poly.setAttribute('points',pp);poly.setAttribute('fill','none');poly.setAttribute('stroke','#ff6a3d');poly.setAttribute('stroke-width','4');poly.setAttribute('stroke-linecap','round');poly.setAttribute('stroke-linejoin','round');
+      const len=pts.length*10;poly.style.strokeDasharray=len;poly.style.strokeDashoffset=reduce?0:len;poly.style.transition=reduce?'':'stroke-dashoffset 1.1s ease-out';
+      svg.appendChild(poly);requestAnimationFrame(()=>{poly.style.strokeDashoffset=0;});
+      await wait(1150);
+    }else{
+      const o=it.type==='mem'?it.m:it.c,w=project(o.lat,o.lon,Z),x=w.x-ox,y=w.y-oy;
+      const b=document.createElement('button');b.className='atlas-pin'+(it.type==='cap'?' cap':'');
+      b.style.left=x.toFixed(0)+'px';b.style.top=y.toFixed(0)+'px';b.textContent=it.type==='cap'?'⏳':(o.feeling||'📍');
+      if(!reduce){b.style.transform='scale(0)';b.style.transition='transform .45s cubic-bezier(.34,1.56,.64,1)';}
+      pinsEl.appendChild(b);requestAnimationFrame(()=>{b.style.transform='scale(1)';});
+      await wait(560);
+    }
+  }
+  if(lab)lab.textContent=`Your story so far — ${items.length} moment${items.length>1?'s':''} on the map ✨`;
+  await wait(1600);
+  if(cap)cap.style.display='none';if(btn){btn.disabled=false;btn.textContent='▶ Replay';}
+  _replaying=false;drawAtlasMap();
 }
 function checkCapsules(){ensureAtlas();const now=Date.now();let any=false;(S.capsules||[]).forEach(c=>{if(!c.revealed&&(!c.unlockAt||c.unlockAt<=now)){c.revealed=true;c.seenReveal=false;any=true;}});if(any)store.set(S);}
 function renderAtlas(){
