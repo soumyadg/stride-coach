@@ -18,6 +18,9 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 - [x] P4 — Build the app in `app/index.html` — MVP built + browser-verified (onboarding, SafeRamp plan w/ proven ≤10% cap, readiness, run tracker + auto-pause, adaptive RPE recalibration, persistence)
 - [x] P5 — Updated root TRACKER.md, app #1 = DONE (MVP)
 
+## ✅ PROGRESS LOG (2026-07-22, live build)
+Done: #1 bg GPS · #5 bulk import · #6 coach turnkey (local fallback) · #7 route finder robustness (timeout+synthetic loop) · #11 copy already honest · #14 data export/delete · #16 error telemetry · #21 privacy policy. Next: website 50% text cut (Batch B), then #8/#12/#15/#18/#19 as time allows. #2/#3/#4 = BLOCKED-on-Soumya (Xcode/Apple acct/GTM).
+
 ## ⚡ USER DIRECTIVE (2026-07-21) — DO ALL OF THIS VIA AUTO-RESUME AFTER LIMIT RESET
 Soumya is conserving credits. He wants the auto-resume cron to complete the WHOLE
 list below once the usage limit resets. Work through them one per run, commit +
