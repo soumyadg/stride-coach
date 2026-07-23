@@ -950,7 +950,7 @@ function localCoachReply(q){
   let f=null;try{f=trainingForm();}catch(e){}
   const tsb=f?f.tsb:null,rd=S.readiness;
   let cs=null;try{cs=curSession();}catch(e){}
-  if(/should i|today|ready|go out|run today|walk today|train now/.test(q)){
+  if(/should i (run|walk|go|train|head|move|do)|(run|walk) today|train (now|today)|ready to (run|walk|train|go|move)|good to (go|run|train)|go out for/.test(q)){
     if(rd&&rd.score<=2)return `Your readiness is low (${rd.level}). Keep it very easy or take a recovery day — sleep and stress drive injury risk more than any single ${act}.`;
     if(tsb!=null&&tsb<-15)return `Form is ${tsb} — that's real fatigue. A gentle ${act} or rest beats pushing today; you'll absorb the work better.`;
     if(cs)return `Yes — today's plan is ${cs.t}${cs.km?' ('+cs.km+'km)':''}. ${rd?'Readiness '+rd.level+' — ':''}warm up easy and keep the effort honest.`;
