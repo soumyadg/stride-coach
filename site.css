@@ -257,3 +257,6 @@
   .legal a{color:var(--teal);text-decoration:underline;text-underline-offset:2px}
   .legal b{color:var(--ink);font-weight:650}
   .legal .sub{margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
+  .legal-list{margin:10px 0 6px;padding-left:22px}
+  .legal-list li{color:var(--muted);line-height:1.7;margin:8px 0;font-size:16px}
+  .legal-list li::marker{color:var(--teal)}
