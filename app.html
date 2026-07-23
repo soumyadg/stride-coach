@@ -385,7 +385,8 @@
       <h2 style="margin-top:22px">How do you like to move?</h2>
       <div class="sub">Strivon adapts to you — walking or running.</div>
       <div class="rows">
-        <div class="opt modeopt" onclick="setMode('walk')"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Explore, wander &amp; de-stress. For casual walkers, dog walkers, hikers, families &amp; explorers.</div></div><div class="chev">›</div></div>
+        <div class="opt modeopt" onclick="setMode('walk')"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Explore, wander &amp; de-stress. For casual walkers, hikers, families &amp; explorers.</div></div><div class="chev">›</div></div>
+        <div class="opt modeopt" onclick="setMode('dog')"><div class="tile">🐕</div><div><div class="t">Dog walking</div><div class="d">Walks built around your dog — mark poop &amp; bin spots so anyone can take them out.</div></div><div class="chev">›</div></div>
         <div class="opt modeopt" onclick="setMode('run')"><div class="tile">🏃</div><div><div class="t">Running</div><div class="d">Train, race and get faster — safely, without injury.</div></div><div class="chev">›</div></div>
       </div>
     </div>
@@ -499,6 +500,9 @@
     <!-- run-only: injury history → injury-aware plan -->
     <details class="card" id="injury-details" style="display:none"><summary>🩹 Injury history <span class="cx-sum" id="inj-sum">tune the plan</span> <span class="cx-chev">⌄</span></summary>
       <div class="cx-body"><div id="injury-card"></div></div>
+    </details>
+    <details class="card" id="projection-details" style="display:none"><summary>📈 Your projected progress <span class="cx-sum" id="proj-sum">where this takes you</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body"><div id="projection-card"></div></div>
     </details>
   </div>
 
@@ -805,6 +809,7 @@ var WALK_GOALS='<div class="opt on" data-v="wgeneral"><div class="tile">🌿</di
 '<div class="opt" data-v="dog"><div class="tile">🐕</div><div><div class="t">Walk the dog</div><div class="d">Routes &amp; habits built around your dog walks.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="hike"><div class="tile">⛰️</div><div><div class="t">Hiking &amp; long walks</div><div class="d">Build up to longer walks &amp; weekend hikes.</div></div><div class="chev">›</div></div>';
 function setMode(m){
+  window._wantDog=(m==='dog'); if(m==='dog')m='walk';   // dog walking = walk profile + dog features on
   window._mode=m;
   var gr=$('#goal-rows');if(gr){gr.innerHTML=(m==='walk'?WALK_GOALS:RUN_GOALS);wireSelect('#goal-rows');}
   var set=function(id,t){var e=$('#'+id);if(e)e.textContent=t;};
@@ -862,7 +867,7 @@ function buildPlan(){
   }
   store.useMode(mode);   // build into this mode's profile slot
   S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[],justOnboarded:true,
-     injuries:(mode==='run'&&window._obInjuries)?window._obInjuries.slice():[],injuryTag:_ia.tag||null};
+     injuries:(mode==='run'&&window._obInjuries)?window._obInjuries.slice():[],injuryTag:_ia.tag||null,dogWalk:!!window._wantDog};
   S.plans=[planSnapshot()];
   store.set(S); runBuildLoader();
 }
@@ -1368,6 +1373,7 @@ function renderToday(){
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
   if(typeof renderMission==='function')renderMission();
+  if(typeof renderProjection==='function')renderProjection();
   if(typeof renderRouteFinder==='function')renderRouteFinder();
   if(typeof renderDogWalk==='function')renderDogWalk();
   if(typeof renderInjuries==='function')renderInjuries();
@@ -1383,9 +1389,43 @@ function renderWelcome(){
   el.innerHTML=`<div class="card" style="border:1px solid var(--accent,#2ee6c6);background:linear-gradient(180deg,rgba(46,230,198,.08),rgba(46,230,198,.02))">
     <div class="kicker">✨ Your plan is ready</div>
     <div style="margin-top:8px;font-size:15px;line-height:1.5">Here's the difference: your load rises <b>≤${cap}% a week</b> — the injury-safe ramp most apps ignore. You build from <b>${wk1.vol}${w?' walks':'km'}/wk</b> to a peak of <b>${peakWk.vol}${w?'':'km'}</b>, arriving at <b>${S.goalName||distLabel(S.goal)}</b> around <b>${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}</b>.</div>
+    ${(function(){var p=computeProjection();if(!p)return '';var e=p.points[Math.min(1,p.points.length-1)];var bits=[];if(e.weight&&p.canLose)bits.push('about <b>'+e.weight+'kg</b>');bits.push('resting HR down');bits.push('noticeably fitter');return '<div style="margin-top:10px;font-size:14px;line-height:1.5;color:var(--muted)">📈 By <b>week '+e.week+'</b> ('+e.date.getDate()+' '+MON[e.date.getMonth()]+'): '+bits.join(', ')+'. See the full trajectory below.</div>';})()}
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn p" onclick="go('run')">Start your first ${actWord()} →</button><button class="btn ghost" style="flex:.5" onclick="dismissWelcome()">Got it</button></div></div>`;
 }
 function dismissWelcome(){if(S){delete S.justOnboarded;store.set(S);}const el=$('#today-welcome');if(el)el.innerHTML='';}
+// ---- tangible projected progress (weight, resting HR, fitness) over the plan ----
+function computeProjection(){
+  if(!S||!S.plan||!S.plan.length)return null;
+  const start=new Date(S.created), w=S.mode==='walk', weeks=S.weeks||S.plan.length;
+  const wt=S.weightKg||null, ht=S.heightCm||null;
+  const avgKm=S.plan.reduce((a,x)=>a+(x.vol||0),0)/S.plan.length;
+  const bmi=(wt&&ht)?wt/Math.pow(ht/100,2):null;
+  const canLose=bmi?bmi>22.5:false;                       // only project loss if not already lean
+  const wkLoss=canLose?(w?0.28:0.38):0;                   // kg/week with training + a modest calorie balance
+  const pick=[0,4,Math.min(8,weeks),weeks].filter((v,i,a)=>a.indexOf(v)===i&&v<=weeks);
+  const points=pick.map(wk=>{const d=new Date(start);d.setDate(start.getDate()+wk*7);
+    return {week:wk,date:d,
+      weight:wt?Math.max(+(wt*0.90).toFixed(1),+(wt-wkLoss*wk).toFixed(1)):null,
+      hrDrop:Math.min(7,Math.round(wk/2)), fitPct:Math.min(14,Math.round(wk*1.1))};});
+  return {start,weeks,weight:wt,canLose,kcalWeek:Math.round(avgKm*(w?52:62)),points,walk:w};
+}
+function renderProjection(){
+  const det=$('#projection-details');if(!det)return;
+  if(!S||!S.plan){det.style.display='none';return;}
+  det.style.display='';
+  const p=computeProjection(),el=$('#projection-card');if(!p||!el)return;
+  const ps=$('#proj-sum');if(ps)ps.textContent=p.canLose&&p.weight?('to ~'+p.points[p.points.length-1].weight+'kg'):'where this takes you';
+  const fmtD=d=>`${d.getDate()} ${MON[d.getMonth()]}`;
+  const rows=p.points.map(pt=>{
+    let right;
+    if(pt.week===0){right=p.weight?`baseline ${p.weight}kg`:'your baseline today';}
+    else{const b=[];if(pt.weight&&p.canLose)b.push(`~${pt.weight}kg`);b.push(`resting HR −${pt.hrDrop}`);b.push(`${pt.fitPct}% fitter`);right=b.join(' · ');}
+    return `<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)"><div style="font-weight:700;font-size:13px;flex:none">${pt.week===0?'Today':'Week '+pt.week}<div class="sub" style="font-weight:400;font-size:11px">${fmtD(pt.date)}</div></div><div class="sub" style="text-align:right;font-size:12.5px;align-self:center">${right}</div></div>`;
+  }).join('');
+  el.innerHTML=`<div class="sub" style="margin-bottom:4px">Where consistent ${p.walk?'walking':'training'} takes you${p.canLose&&p.weight?' — with a modest calorie balance':''}. You'll burn about <b>${p.kcalWeek} kcal/week</b> from ${p.walk?'walking':'running'} alone.</div>
+    ${rows}
+    <div class="sub" style="margin-top:10px;font-size:11px;opacity:.6">Realistic estimates, not promises — sleep, food and consistency drive the real result. Not medical advice.</div>`;
+}
 
 // ---- readiness ----
 function computeReadiness(){
