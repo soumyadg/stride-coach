@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #08070e; }
+      body { font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+      #root { position: relative; width: 1080px; height: 1920px; }
+
+      .bg { position: absolute; inset: 0; background:
+        radial-gradient(120% 90% at 80% 0%, rgba(255,106,61,.18), transparent 55%),
+        radial-gradient(120% 90% at 10% 100%, rgba(46,230,198,.16), transparent 55%),
+        linear-gradient(160deg, #0a0912, #141024); }
+      .orb { position:absolute; border-radius:50%; filter: blur(80px); opacity:.55; }
+      .orb.a { width:620px; height:620px; background: radial-gradient(circle,#ff6a3d,transparent 68%); top:-140px; right:-120px; }
+      .orb.b { width:680px; height:680px; background: radial-gradient(circle,#2ee6c6,transparent 68%); bottom:-180px; left:-160px; }
+
+      .center { position:absolute; left:0; right:0; text-align:center; padding:0 90px; }
+      .eyebrow { font-family:"JetBrains Mono", monospace; letter-spacing:.28em; text-transform:uppercase;
+        font-size:30px; color:#8b8fa3; font-weight:600; }
+      .h1 { font-size:104px; line-height:1.02; font-weight:800; letter-spacing:-.03em; color:#fff; }
+      .grad { background:linear-gradient(90deg,#ff6a3d,#2ee6c6); -webkit-background-clip:text;
+        background-clip:text; color:transparent; }
+      .sub { font-size:40px; color:#c9ccd8; font-weight:500; line-height:1.35; }
+
+      .mark { width:150px; height:150px; margin:0 auto; display:block; }
+
+      .phone { position:absolute; left:50%; top:250px; transform:translateX(-50%);
+        width:512px; height:1108px; border-radius:56px; background:#0c0e16;
+        border:10px solid #1c1f2b; box-shadow:0 40px 120px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+        overflow:hidden; }
+      .phone img { width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+
+      .chips { position:absolute; left:0; right:0; bottom:150px; padding:0 70px;
+        display:flex; flex-direction:column; gap:22px; }
+      .chip { display:flex; align-items:center; gap:22px; padding:26px 34px; border-radius:24px;
+        background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.1);
+        backdrop-filter:blur(12px); font-size:38px; color:#fff; font-weight:700; }
+      .chip .ic { font-size:46px; flex:none; }
+      .chip .tk { color:#2ee6c6; }
+
+      .wordmark { font-size:120px; font-weight:800; letter-spacing:-.03em; }
+      .url { font-family:"JetBrains Mono", monospace; font-size:38px; color:#8b8fa3; letter-spacing:.06em; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="17" data-width="1080" data-height="1920">
+
+      <div class="bg clip" id="bg" data-start="0" data-duration="17" data-track-index="0"></div>
+      <div class="orb a clip" id="orbA" data-start="0" data-duration="17" data-track-index="1"></div>
+      <div class="orb b clip" id="orbB" data-start="0" data-duration="17" data-track-index="2"></div>
+
+      <audio class="clip" id="music" data-start="0" data-duration="17" data-track-index="3" data-volume="0.55" src="assets/music.mp3"></audio>
+
+      <!-- SCENE 1 — hook (0-3.2) -->
+      <svg class="mark clip" id="s1mark" data-start="0" data-duration="3.2" data-track-index="4" viewBox="0 0 100 100" style="position:absolute; left:50%; top:760px; transform:translateX(-50%)">
+        <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#2ee6c6"/></linearGradient></defs>
+        <g fill="none" stroke="url(#mg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/>
+          <path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#mg)" stroke="none"/></g>
+      </svg>
+      <div class="center clip" id="s1txt" data-start="0.3" data-duration="2.9" data-track-index="5" style="top:960px">
+        <div class="sub">Every app records your run.</div>
+      </div>
+
+      <!-- SCENE 2 — reveal (3.2-6.6) -->
+      <div class="center clip" id="s2" data-start="3.2" data-duration="3.4" data-track-index="4" style="top:720px">
+        <div class="eyebrow" style="margin-bottom:34px">A new category</div>
+        <div class="h1">Strivon <span class="grad">remembers<br/>your life.</span></div>
+      </div>
+
+      <!-- SCENE 3 — the product (6.6-12.8) -->
+      <div class="phone clip" id="phone" data-start="6.6" data-duration="6.2" data-track-index="4">
+        <img src="assets/today.png" alt="Strivon Today" />
+      </div>
+      <div class="chip clip" id="c1" data-start="7.4" data-duration="5.4" data-track-index="5" style="position:absolute;left:70px;right:70px;bottom:352px"><span class="ic">🩹</span><span>Injury-safe plans <span class="tk">· ramp &le;10%/wk</span></span></div>
+      <div class="chip clip" id="c2" data-start="8.2" data-duration="4.6" data-track-index="6" style="position:absolute;left:70px;right:70px;bottom:262px"><span class="ic">🚶🏃</span><span>Walk or run <span class="tk">· any watch</span></span></div>
+      <div class="chip clip" id="c3" data-start="9.0" data-duration="3.8" data-track-index="7" style="position:absolute;left:70px;right:70px;bottom:172px"><span class="ic">🧠</span><span>An AI coach that <span class="tk">knows you</span></span></div>
+
+      <!-- SCENE 4 — outro (12.8-17) -->
+      <div class="center clip" id="s4" data-start="12.8" data-duration="4.2" data-track-index="4" style="top:770px">
+        <svg class="mark" viewBox="0 0 100 100" style="margin-bottom:30px">
+          <g fill="none" stroke="url(#mg)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M58 33 L45 55"/><path d="M57 35 L70 39 L73 30"/><path d="M57 35 L45 44 L36 39"/>
+            <path d="M45 55 L61 57 L57 74"/><path d="M45 55 L33 66 L20 79"/><circle cx="63" cy="24" r="8" fill="url(#mg)" stroke="none"/></g>
+        </svg>
+        <div class="wordmark grad">Strivon</div>
+        <div class="sub" style="margin-top:18px">Walk or run, your way.</div>
+        <div class="url" style="margin-top:40px">strivon.run</div>
+      </div>
+
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.to("#orbA", { x: 60, y: 40, duration: 17, ease: "sine.inOut" }, 0)
+        .to("#orbB", { x: -50, y: -30, duration: 17, ease: "sine.inOut" }, 0);
+
+      // Scene 1
+      tl.from("#s1mark", { scale: 0.4, opacity: 0, transformOrigin: "50% 50%", duration: 0.9, ease: "back.out(1.7)" }, 0.1)
+        .from("#s1txt", { opacity: 0, y: 30, duration: 0.7 }, 0.6)
+        .to("#s1mark", { opacity: 0, duration: 0.4 }, 2.9)
+        .to("#s1txt", { opacity: 0, duration: 0.4 }, 2.9);
+
+      // Scene 2
+      tl.from("#s2 .eyebrow", { opacity: 0, y: 20, duration: 0.5 }, 3.3)
+        .from("#s2 .h1", { opacity: 0, y: 40, duration: 0.8, ease: "power3.out" }, 3.5)
+        .to("#s2", { opacity: 0, duration: 0.4 }, 6.3);
+
+      // Scene 3
+      tl.from("#phone", { opacity: 0, y: 120, duration: 0.9, ease: "power3.out" }, 6.7)
+        .from("#c1", { opacity: 0, x: 60, duration: 0.55, ease: "power2.out" }, 7.5)
+        .from("#c2", { opacity: 0, x: 60, duration: 0.55, ease: "power2.out" }, 8.3)
+        .from("#c3", { opacity: 0, x: 60, duration: 0.55, ease: "power2.out" }, 9.1)
+        .to("#phone", { opacity: 0, duration: 0.4 }, 12.5)
+        .to("#c1", { opacity: 0, duration: 0.4 }, 12.5)
+        .to("#c2", { opacity: 0, duration: 0.4 }, 12.5)
+        .to("#c3", { opacity: 0, duration: 0.4 }, 12.5);
+
+      // Scene 4
+      tl.from("#s4 .mark", { opacity: 0, scale: 0.5, transformOrigin: "50% 50%", duration: 0.7, ease: "back.out(1.6)" }, 13.0)
+        .from("#s4 .wordmark", { opacity: 0, y: 30, duration: 0.6 }, 13.3)
+        .from("#s4 .sub", { opacity: 0, y: 20, duration: 0.6 }, 13.6)
+        .from("#s4 .url", { opacity: 0, duration: 0.6 }, 14.0);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

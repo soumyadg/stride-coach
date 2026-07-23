@@ -1,8 +1,8 @@
 /* Strivon service worker — offline shell + cached map tiles */
-const CACHE = 'stride-v41';
+const CACHE = 'stride-v42';
 const TILES = 'stride-tiles-v1';
 const ASSETS = ['./app.html', './manifest.webmanifest', './icon.svg', './icon-512.png', './splash-logo.png',
-  './config.js', './sync.js', './native-bridge.js', './vendor/supabase.js'];
+  './intro.mp4', './config.js', './sync.js', './native-bridge.js', './vendor/supabase.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
