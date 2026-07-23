@@ -918,16 +918,19 @@ function startProfileOnboarding(m){
 function renderProfileSwitch(){
   const el=$('#profile-switch');if(!el)return;
   const active=(store&&store.activeMode&&store.activeMode())||(S&&S.mode)||'run';
-  const runOn=active==='run', walkOn=active==='walk';   // Dog walking is its own mode (chosen at onboarding), not a walk sub-toggle
+  const dog=active==='walk'&&S&&S.dogWalk;                // Dog is its own profile — separate from plain Walk, not in the walk goal list
+  const runOn=active==='run', walkOn=active==='walk'&&!dog;
   el.innerHTML=`<div class="prof-switch">`
     +`<button class="ps-btn${runOn?' on':''}" onclick="pickProfile('run')">🏃 Run</button>`
     +`<button class="ps-btn${walkOn?' on':''}" onclick="pickProfile('walk')">🚶 Walk</button>`
+    +`<button class="ps-btn${dog?' on':''}" onclick="pickProfile('dog')">🐕 Dog</button>`
     +`</div>`;
 }
 function pickProfile(x){
   const targetMode=x==='run'?'run':'walk';
   if(!store||store.activeMode()!==targetMode)switchProfile(targetMode);   // may launch onboarding if that profile is empty
-  if(typeof renderToday==='function')renderToday();                       // dogWalk is set by the Dog-walking mode at onboarding, not here
+  if(S){S.dogWalk=(x==='dog');store.set(S);if(typeof renderToday==='function')renderToday();}   // Dog vs plain Walk share the walk slot, distinguished by this flag
+  if(x==='dog')setTimeout(()=>{const d=document.getElementById('dogwalk-details');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});}},220);
 }
 // ---- AI Running Coach (Pro, Claude via edge function) ----
 let coachMsgs=[];
@@ -1392,7 +1395,7 @@ function renderToday(){
   renderRisk();
   $('#today-date').textContent=`${DOW[now.getDay()]} ${now.getDate()} ${MON[now.getMonth()]}`;
   const tp=$('#today-plan');if(tp){const n=(S.plans&&S.plans.length)||1;
-    tp.innerHTML=`<div onclick="go('why');setTimeout(()=>{const c=document.querySelector('#plans-card');c&&c.scrollIntoView({behavior:'smooth'})},80)" style="display:inline-flex;align-items:center;gap:8px;margin:2px 0 12px;padding:7px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:999px;cursor:pointer;font-size:13px">🏁 <b>${S.goalName||distLabel(S.goal)||'Plan'}</b><span class="sub">· Wk ${S.curWeek}/${S.weeks}</span>${n>1?` <span class="pill">${n} plans</span>`:''}<span class="sub">⌄</span></div>`;}
+    tp.innerHTML=`<div onclick="go('why');setTimeout(()=>{const c=document.querySelector('#plans-card');c&&c.scrollIntoView({behavior:'smooth'})},80)" style="display:inline-flex;align-items:center;gap:8px;margin:2px 0 2px;padding:7px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:999px;cursor:pointer;font-size:13px">🏁 <b>${S.goalName||distLabel(S.goal)||'Plan'}</b><span class="sub">· Wk ${S.curWeek}/${S.weeks}</span>${n>1?` <span class="pill">${n} plans</span>`:''}<span class="sub">⌄</span></div>`;}
   const wk=S.plan[(S.curWeek-1)%S.plan.length], sesh=wk.sessions[0], adj=S.readiness;
   let s=sesh;
   if(adj&&adj.level==='amber')s={...sesh,km:+(sesh.km*0.8).toFixed(1),note:'Trimmed 20% — you flagged fatigue.'};
@@ -1418,9 +1421,10 @@ function renderWelcome(){
   const w=S.mode==='walk';const goalDate=new Date(S.created);goalDate.setDate(goalDate.getDate()+S.weeks*7);
   el.innerHTML=`<div class="card" style="border:1px solid var(--accent,#2ee6c6);background:linear-gradient(180deg,rgba(46,230,198,.08),rgba(46,230,198,.02))">
     <div class="kicker">✨ Your plan is ready</div>
-    <div style="margin-top:8px;font-size:17px;line-height:1.45"><b>You'll get there by ${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}.</b> We build you up <b>gently</b> — a little more each week, never enough to hurt you.</div>
-    ${(function(){var p=computeProjection();if(!p)return '';var e=p.points[Math.min(1,p.points.length-1)];var lost=(e.weight&&p.canLose)?+(p.weight-e.weight).toFixed(1):0;var lead=lost>=0.3?('<b>'+lost+'kg lighter</b>, '):'';return '<div style="margin-top:10px;font-size:14px;line-height:1.5;color:var(--muted)">📈 By <b>week '+e.week+'</b>: '+lead+'more energy, less out of breath.</div>';})()}
-    <div class="row" style="margin-top:12px;gap:8px"><button class="btn p" onclick="go('run')">Start your first ${actWord()} →</button><button class="btn ghost" style="flex:.5" onclick="dismissWelcome()">Got it</button></div></div>`;
+    <div class="sub" style="margin-top:8px">You'll get there by</div>
+    <div class="tick" style="font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.05">${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}</div>
+    <div class="sub" style="margin-top:6px">Built up gently — never enough to hurt you.</div>
+    <div class="row" style="margin-top:14px;gap:8px"><button class="btn p" onclick="go('run')">Start your first ${actWord()} →</button><button class="btn ghost" style="flex:.5" onclick="dismissWelcome()">Got it</button></div></div>`;
 }
 function dismissWelcome(){if(S){delete S.justOnboarded;store.set(S);}const el=$('#today-welcome');if(el)el.innerHTML='';}
 // ---- tangible projected progress (weight, resting HR, fitness) over the plan ----
@@ -1442,8 +1446,9 @@ function computeProjection(){
 function renderProjection(){
   const det=$('#projection-details');if(!det)return;
   if(!S||!S.plan){det.style.display='none';return;}
+  const p=computeProjection(),el=$('#projection-card');
+  if(!p||!el){det.style.display='none';return;}   // no projection data → hide the card entirely (no empty gap)
   det.style.display='';
-  const p=computeProjection(),el=$('#projection-card');if(!p||!el)return;
   const lastLost=(p.weight&&p.canLose)?+(p.weight-p.points[p.points.length-1].weight).toFixed(1):0;
   const ps=$('#proj-sum');if(ps)ps.textContent=lastLost>=0.3?(lastLost+' kg lighter'):'how you\'ll feel';
   const fmtD=d=>`${d.getDate()} ${MON[d.getMonth()]}`;
