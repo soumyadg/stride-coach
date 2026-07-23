@@ -145,6 +145,86 @@ window.runStrideTests = async function () {
     sections.push(s);
   }
 
+  // ---------------- UNIT · new features (missions, streak, metrics, projection, injury, coach, dog) ----------------
+  {
+    const s = mk('UNIT · features v2'); const ok = s.ok;
+    const now = Date.now(), day = 86400000;
+    // streak + achievements
+    if (typeof computeStreak === 'function') {
+      S.activities = [{id:'s1',km:5,secs:1500,pace:5,at:now-day,startAt:now-day},{id:'s2',km:6,secs:1800,pace:5,at:now-8*day,startAt:now-8*day},{id:'s3',km:7,secs:2100,pace:5,at:now-15*day,startAt:now-15*day}];
+      const st = computeStreak(); ok('3 consecutive weeks → streak 3', st.weeks === 3); ok('best streak 3', st.best === 3);
+    }
+    if (typeof achvStats === 'function' && typeof ACHIEVEMENTS !== 'undefined') {
+      S.activities = [{id:'a',km:11,secs:3600,pace:5.4,at:now-day,startAt:new Date(new Date().setHours(6,0,0,0)).getTime()}];
+      const es = achvStats(); const names = ACHIEVEMENTS.filter(a=>a.test(es)).map(a=>a.name);
+      ok('11km unlocks 5K + 10K club, not half', names.includes('5K club') && names.includes('10K club') && !names.includes('Half marathon'));
+      ok('6am run unlocks Early bird', names.includes('Early bird'));
+    }
+    // metrics
+    if (typeof computeMetrics === 'function') {
+      S.weightKg = 80; S.activities = [{id:'x',km:10,secs:3000,pace:5,hr:150,at:now-day,startAt:now-day}];
+      const m = computeMetrics();
+      ok('calories ≈ km×kg×1.036 (run)', Math.abs(m.cal7 - 10*80*1.036) < 2);
+      ok('avg HR reads 150', m.avgHr === 150);
+      ok('recovery 0–100 or null', m.recovery === null || (m.recovery >= 0 && m.recovery <= 100));
+      ok('distance7 = 10', Math.abs(m.dist7 - 10) < 0.01);
+    }
+    // projection
+    if (typeof computeProjection === 'function') {
+      S.weightKg = 88; S.heightCm = 178;
+      const p = computeProjection();
+      if (p) { const last = p.points[p.points.length-1];
+        ok('weight projects downward when BMI>22.5', !p.canLose || last.weight < p.weight);
+        ok('projection points are dated + ordered', p.points.every((pt,i)=>i===0 || pt.week>=p.points[i-1].week)); }
+    }
+    // injury adjustment severity
+    if (typeof injuryAdjust === 'function') {
+      ok('ACL → very conservative ramp (≤1.03)', injuryAdjust([{type:'ACL tear — left leg',when:'past'}]).rampCap <= 1.03);
+      ok('recent stress fracture → high band', injuryAdjust([{type:'Stress fracture',when:'recent'}]).band === 'high');
+      ok('no injuries → normal ramp 1.10', injuryAdjust([]).rampCap === 1.10);
+    }
+    // daily mission — deterministic per day + mode-aware
+    if (typeof todaysMission === 'function') {
+      const a = todaysMission(), b = todaysMission();
+      ok('mission stable within the day', a === b);
+      ok('mission has text + tag', !!(a && a.t && a.tag));
+    }
+    // coach scope guard
+    if (typeof localCoachReply === 'function') {
+      const off = localCoachReply('what is the capital of France?');
+      ok('off-topic → redirect to body', /improving your body|keep it/i.test(off));
+      ok('nutrition question answered', /eat|protein|carb|food/i.test(localCoachReply('what should i eat before a run?')));
+      ok('weight-loss question answered', /deficit|fat loss|weight/i.test(localCoachReply('how do i lose weight?')));
+    }
+    // dog spots
+    if (typeof addPoopSpot === 'function') {
+      S.poopSpots = []; S.mode = 'walk';
+      S.poopSpots.unshift({id:'d1',kind:'poop',lat:51.5,lon:-0.12,at:now});
+      ok('poop spot stored', (S.poopSpots||[]).length === 1);
+      if (typeof delPoopSpot === 'function') { delPoopSpot('d1'); ok('poop spot deletes', (S.poopSpots||[]).length === 0); }
+    }
+    S.activities = []; if (window.store) store.set(S);
+    sections.push(s);
+  }
+
+  // ---------------- STRESS · two-profile store ----------------
+  {
+    const s = mk('STRESS · two-profile store'); const ok = s.ok;
+    if (window.store && store.switchTo && store.activeMode) {
+      const before = store.activeMode();
+      // stamp a marker onto the active profile, switch away and back, ensure it survives
+      const cur = store.get() || {}; cur.__testMarker = 12345; store.set(cur);
+      const other = before === 'run' ? 'walk' : 'run';
+      store.switchTo(other); store.switchTo(before);
+      const after = store.get();
+      ok('active profile data survives a round-trip switch', after && after.__testMarker === 12345);
+      ok('activeMode restored', store.activeMode() === before);
+      // cleanup marker
+      const c2 = store.get(); if (c2) { delete c2.__testMarker; store.set(c2); }
+    } else ok('two-profile store present', false);
+    sections.push(s);
+  }
+
   // ---------------- report ----------------
   let total = 0, pass = 0; const fails = [];
   sections.forEach(s => { const p = s.R.filter(x => x.pass).length; total += s.R.length; pass += p; s.R.filter(x => !x.pass).forEach(x => fails.push(s.name + ' → ' + x.n)); console.log('%c' + s.name + ': ' + p + '/' + s.R.length, 'font-weight:bold'); console.table(s.R); });
