@@ -210,7 +210,7 @@ window.runStrideTests = async function () {
   // ---------------- STRESS · two-profile store ----------------
   {
     const s = mk('STRESS · two-profile store'); const ok = s.ok;
-    if (window.store && store.switchTo && store.activeMode) {
+    if (typeof store !== 'undefined' && store && store.switchTo && store.activeMode) {
       const before = store.activeMode();
       // stamp a marker onto the active profile, switch away and back, ensure it survives
       const cur = store.get() || {}; cur.__testMarker = 12345; store.set(cur);
