@@ -236,10 +236,10 @@
     .hero-inner .sub{margin-left:0;margin-right:0}
     .cta-row{justify-content:flex-start!important}
     .hero-vid{margin:0;flex:0 0 auto}
-    .hv-frame{width:390px}
+    .hero-inner .hv-frame{width:390px}
     header.hero{padding-top:0;padding-bottom:0}
   }
-  @media(min-width:940px) and (max-height:820px){.hv-frame{width:330px}}  /* shorter screens: keep it in-viewport */
+  @media(min-width:940px) and (max-height:820px){.hero-inner .hv-frame{width:330px}}  /* shorter screens: keep it in-viewport */
   .hv-frame{position:relative;width:250px;aspect-ratio:9/16;border-radius:34px;overflow:hidden;
     border:8px solid #1c1f2b;background:#0c0e16;box-shadow:0 34px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.05)}
   .hv-frame video{width:100%;height:100%;object-fit:cover;display:block}
