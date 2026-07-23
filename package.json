@@ -23,15 +23,15 @@
   },
   "homepage": "https://github.com/soumyadg/stride-coach#readme",
   "dependencies": {
-    "@capacitor-community/background-geolocation": "^1.2.26",
-    "@capacitor-community/bluetooth-le": "^8.2.0",
-    "@capacitor/android": "^8.4.2",
-    "@capacitor/core": "^8.4.2",
-    "@capacitor/geolocation": "^8.2.0",
-    "@capacitor/ios": "^8.4.2",
-    "@capacitor/local-notifications": "^8.2.1"
+    "@capacitor-community/background-geolocation": "1.2.26",
+    "@capacitor-community/bluetooth-le": "7.3.2",
+    "@capacitor/android": "7.6.8",
+    "@capacitor/core": "7.6.8",
+    "@capacitor/geolocation": "7.1.8",
+    "@capacitor/ios": "7.6.8",
+    "@capacitor/local-notifications": "7.0.7"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.4.2"
+    "@capacitor/cli": "7.6.8"
   }
 }
