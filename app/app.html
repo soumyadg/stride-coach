@@ -1520,23 +1520,40 @@ const LESSONS=[
   ['Cross-training','Swap a run for cycling or swimming now and then. You keep the fitness while giving your joints a break from impact.'],
   ['Listen to niggles','Sharp or one-sided pain is a stop sign, not something to push through. Catching a niggle early prevents a real injury.']
 ];
+const WALK_LESSONS=[
+  ['Posture','Walk tall — shoulders relaxed and down, eyes up and forward. Good posture opens your lungs and eases your back.'],
+  ['Brisk pace','A brisk walk means you can talk but not sing. That gentle breathlessness is where the heart and mood benefits begin.'],
+  ['Arm swing','Let your arms swing naturally from the shoulder, elbows softly bent. It lifts your pace and turns a stroll into real exercise.'],
+  ['Roll your foot','Land on your heel and roll smoothly through to your toes, then push off. A confident push-off powers each step.'],
+  ['Breathe & unwind','Match your breathing to your steps and let your shoulders drop. Walking is one of the best ways to lower stress.'],
+  ['Consistency','A daily walk beats an occasional big one. Even ten minutes counts — the habit is what changes your health.'],
+  ['Nature boost','Walking among trees or near water measurably lowers stress. A green route does more for your mind than a grey one.'],
+  ['Hydration','Sip water before and after, especially on warm days. Thirst is a late signal — don\'t wait for it.'],
+  ['Footwear','Cushioned, well-fitting shoes prevent most walking aches. Replace them once the tread wears smooth.'],
+  ['Hills','Uphill, lean slightly from the ankles and shorten your steps. Hills are a gentle way to build strength and stamina.'],
+  ['Mindful minutes','Spend a few minutes just noticing sounds, colours and your breath. A walk doubles as a moving meditation.'],
+  ['Little and often','A short stroll after meals steadies blood sugar and energy — three small walks can beat one long one.'],
+  ['Warm up gently','Ease into the first few minutes to let joints and muscles wake up, then settle into your rhythm.'],
+  ['Listen to your body','A niggle is a message, not a challenge. Ease off or rest — a walk should leave you feeling better, not worse.']
+];
 function lessonsOn(){return !(S&&S.lessonsOff);}
 function lessonCheck(){
   if(!run||!run.active||run.paused||!lessonsOn())return;
-  if(S&&S.mode==='walk')return;                                        // running-form tips don't fit walkers
   if(window._weatherNow&&window._weatherNow.wb>=23)return;              // heat → safety audio only
-  if(/interval|tempo|hill|rep|race|trial/i.test(run.name||''))return;   // easy/long runs only
-  if(run.elapsed<90)return;                                            // let the run settle first
+  const walk=S&&S.mode==='walk';
+  if(!walk&&/interval|tempo|hill|rep|race|trial/i.test(run.name||''))return;   // running: easy/long only (walks always qualify)
+  if(run.elapsed<90)return;                                            // let the session settle first
   if(run.elapsed-(run.lastHydrate||0)<25)return;                       // don't collide with a hydration cue
   if(run.elapsed-(run.lastLesson||0)<300)return;                       // ~5 min apart
   run.lastLesson=run.elapsed;
-  const [t,m]=LESSONS[(run.lessonIdx||0)%LESSONS.length];run.lessonIdx=(run.lessonIdx||0)+1;
+  const set=walk?WALK_LESSONS:LESSONS;
+  const [t,m]=set[(run.lessonIdx||0)%set.length];run.lessonIdx=(run.lessonIdx||0)+1;
   coach('📚 '+t+' — '+m);speak(m);
 }
 function toggleTips(){S=store.get()||S;S.lessonsOff=lessonsOn();store.set(S);reflectTips();coach(lessonsOn()?'📚 Coaching tips on — I\'ll teach you as you run.':'Coaching tips off.');}
 function reflectTips(){const walk=S&&S.mode==='walk';
-  const b=$('#tips-btn');if(b){b.style.display=walk?'none':'';b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}
-  const h=$('#tips-hint');if(h){h.style.display=walk?'none':'';h.textContent=lessonsOn()?'📚 Coaching tips play during easy runs':'📚 Coaching tips off';}}
+  const b=$('#tips-btn');if(b){b.style.display='';b.textContent=lessonsOn()?'📚 Tips':'📚 Off';b.classList.toggle('off',!lessonsOn());}
+  const h=$('#tips-hint');if(h){h.style.display='';h.textContent=lessonsOn()?('📚 Coaching tips play during easy '+(walk?'walks':'runs')):'📚 Coaching tips off';}}
 // warn on the RUN screen if current wet-bulb is unsafe
 function checkHeat(speakIt){
   const el=$('#heat-warn');if(!el)return;
