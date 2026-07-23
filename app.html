@@ -1686,7 +1686,7 @@ function toggleRun(){
   if(!run){const cs=window._chosen||curSession();window._chosen=null;
     run={active:true,dist:0,elapsed:0,moving:0,last:null,paused:false,pts:[],name:cs.t,target:cs.km,
       laps:buildLaps(cs),lap:0,lapDist:0,lapStart:0,startedAt:Date.now(),lastHydrate:0,lessonIdx:0,lastLesson:0};}
-  else run.active=true;
+  else {run.active=true;run.finished=false;}
   $('#r-start').textContent='Pause';$('#rpe-card').classList.add('hide');
   $('#r-next').classList.toggle('show',run.laps.length>1);
   checkHeat(true);
@@ -1997,7 +1997,7 @@ function drawRoute(){
 function clearMap(){$('#map-tiles').innerHTML='';$('#r-marker').classList.remove('on');$('#r-line').setAttribute('points','');}
 function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();coach('Paused.');}
 function stopRun(){
-  if(!run)return;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();
+  if(!run||run.finished)return;run.finished=true;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();
   $('#r-start').textContent='Start '+actWord();$('#r-next').classList.remove('show');$('#r-lap').textContent='Finished';
   speak(`Workout complete. ${(run.dist/1000).toFixed(1)} kilometres. Nice work.`);
   $('#rpe-card').classList.remove('hide');coach(`Nice — ${(run.dist/1000).toFixed(2)}km done. How'd it feel?`);
@@ -2612,7 +2612,8 @@ function renderImport(){
 function activityExists(a){
   return (S.activities||[]).some(x=>Math.abs((x.startAt||x.at||0)-(a.startAt||0))<120000 && Math.abs((x.km||0)-(a.km||0))<0.05);
 }
-function haversine(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r,la1=a.lat*r,la2=b.lat*r;const h=Math.sin(dLa/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+// km between two {lat,lon} points — named distinctly so it can't shadow the 4-arg (metres) haversine() used by the live run tracker.
+function haversineKm(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r,la1=a.lat*r,la2=b.lat*r;const h=Math.sin(dLa/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
 function parseTrack(xml){
   const doc=new DOMParser().parseFromString(xml,'application/xml');
   if(doc.getElementsByTagName('parsererror').length)throw new Error('That file isn’t valid GPX/TCX.');
@@ -2632,7 +2633,7 @@ function parseTrack(xml){
   }
   const timed=pts.filter(p=>p.time);const secs=timed.length>1?Math.round((timed[timed.length-1].time-timed[0].time)/1000):0;
   let km=0;const geo=pts.filter(p=>isFinite(p.lat)&&isFinite(p.lon));
-  if(cumDist&&cumDist>0)km=cumDist/1000;else for(let i=1;i<geo.length;i++)km+=haversine(geo[i-1],geo[i]);
+  if(cumDist&&cumDist>0)km=cumDist/1000;else for(let i=1;i<geo.length;i++)km+=haversineKm(geo[i-1],geo[i]);
   if(km<=0)throw new Error('Couldn’t read a distance from that file.');
   const startAt=timed.length?timed[0].time:Date.now();
   const hr=hrs.length?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length):null;
