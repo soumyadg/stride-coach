@@ -180,6 +180,12 @@
   details.card[open]>summary{padding-bottom:4px}
   details.card .cx-body{padding:0 18px 18px}
   details.card .cx-body>.card{margin:0;padding:0;background:none;border:none}
+  /* Run ⇄ Walk profile switcher */
+  #profile-switch{margin:12px 0 2px}
+  .prof-switch{display:inline-flex;background:var(--surface2,rgba(255,255,255,.05));border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+  .ps-btn{background:none;border:none;color:var(--muted);font:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .ps-btn.on{background:var(--accent,#2ee6c6);color:#04121f}
+  .ps-btn .ps-add{opacity:.6;font-weight:800;margin-left:1px}
   .card.glow{border-color:var(--safe-dim);box-shadow:0 0 0 1px rgba(47,227,160,.18)}
   .kicker{font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
   .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.3px}
@@ -446,6 +452,7 @@
     <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:6px">
       <h1>Today</h1><span class="sub" id="today-date"></span>
     </div>
+    <div id="profile-switch"></div>
     <div id="today-plan"></div>
     <div id="today-welcome"></div>
     <!-- HERO: today's workout — the one thing you came for, first -->
@@ -707,7 +714,25 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 // installed-app detection (iOS navigator.standalone + display-mode) → drives safe-area CSS
 if(window.navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode:standalone)').matches)){document.documentElement.classList.add('standalone');}
-const store={get:()=>JSON.parse(localStorage.getItem('stride')||'null'),set:d=>{try{d._mut=Date.now();}catch(e){}localStorage.setItem('stride',JSON.stringify(d));if(window.StrideSync)StrideSync.markDirty();}};
+/* Two profiles per user (Run + Walk). 'stride' always holds the ACTIVE profile
+   (so cloud sync — which reads/writes 'stride' directly — keeps working untouched);
+   each profile is also backed up under stride_p_<mode>, and switching swaps them. */
+const store=(function(){
+  const AK='stride_active', PK=m=>'stride_p_'+m;
+  const _read=k=>{try{return JSON.parse(localStorage.getItem(k)||'null');}catch(e){return null;}};
+  // migrate: first run under the two-profile schema → adopt existing single profile
+  (function(){ if(localStorage.getItem(AK))return; const cur=_read('stride'); if(cur){const m=cur.mode==='walk'?'walk':'run';localStorage.setItem(PK(m),JSON.stringify(cur));localStorage.setItem(AK,m);} })();
+  const activeMode=()=>localStorage.getItem(AK)||null;
+  return {
+    get:()=>_read('stride'),
+    set:d=>{try{d._mut=Date.now();}catch(e){}const j=JSON.stringify(d);localStorage.setItem('stride',j);const m=activeMode()||d.mode||'run';localStorage.setItem(AK,m);localStorage.setItem(PK(m),j);if(window.StrideSync)StrideSync.markDirty();},
+    activeMode,
+    hasProfile:m=>!!_read(PK(m)),
+    getProfile:m=>_read(PK(m)),
+    useMode:m=>localStorage.setItem(AK,m),
+    switchTo:m=>{const cur=_read('stride');if(cur){const cm=activeMode()||cur.mode||'run';localStorage.setItem(PK(cm),JSON.stringify(cur));}localStorage.setItem(AK,m);const prof=_read(PK(m));localStorage.setItem('stride',prof?JSON.stringify(prof):'null');return prof;}
+  };
+})();
 // ---- lightweight private error log (on-device ring buffer, never auto-sent) ----
 function logErr(where,e){try{const log=JSON.parse(localStorage.getItem('stride_errlog')||'[]');log.push({t:Date.now(),where:where,msg:(e&&(e.message||e.reason&&e.reason.message))||String(e).slice(0,200)});while(log.length>40)log.shift();localStorage.setItem('stride_errlog',JSON.stringify(log));}catch(_){}}
 window.addEventListener('error',ev=>logErr('window',ev.error||ev.message));
@@ -813,9 +838,34 @@ function buildPlan(){
     delete S._addPlan;
     store.set(S); runBuildLoader(); return;
   }
+  store.useMode(mode);   // build into this mode's profile slot
   S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[],justOnboarded:true};
   S.plans=[planSnapshot()];
   store.set(S); runBuildLoader();
+}
+// ---- Profile switcher: Run profile ⇄ Walk profile (each its own plan/activities/stats) ----
+function switchProfile(m){
+  if(!store||m===store.activeMode())return;
+  const prof=store.switchTo(m);
+  if(prof&&prof.plan){ S=prof; enterApp(); }
+  else { S=null; startProfileOnboarding(m); }   // no profile for this mode yet → set it up
+}
+function startProfileOnboarding(m){
+  $('#nav').classList.add('hide');
+  ['s-today','s-plan','s-run','s-stats','s-atlas','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});
+  $('#s-onboard').classList.remove('hide');
+  ['ob2','ob3'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});
+  const o0=$('#ob0');if(o0)o0.classList.add('hide');
+  if(typeof setMode==='function')setMode(m);            // sets _mode, mode labels, shows ob1
+  const o1=$('#ob1');if(o1&&typeof playStep==='function')playStep(o1);
+}
+function renderProfileSwitch(){
+  const el=$('#profile-switch');if(!el)return;
+  const active=(store&&store.activeMode&&store.activeMode())||(S&&S.mode)||'run';
+  const other=active==='run'?'walk':'run';
+  const has=store&&store.hasProfile&&store.hasProfile(other);
+  const btn=(m,ic,lab)=>`<button class="ps-btn${active===m?' on':''}" onclick="switchProfile('${m}')">${ic} ${lab}${(m===other&&!has)?' <span class="ps-add">+</span>':''}</button>`;
+  el.innerHTML=`<div class="prof-switch">${btn('run','🏃','Run')}${btn('walk','🚶','Walk')}</div>`;
 }
 // ---- AI Running Coach (Pro, Claude via edge function) ----
 let coachMsgs=[];
@@ -1246,6 +1296,7 @@ function renderRisk(){
 }
 function renderToday(){
   const now=new Date();
+  renderProfileSwitch();
   renderWelcome();
   renderRisk();
   $('#today-date').textContent=`${DOW[now.getDay()]} ${now.getDate()} ${MON[now.getMonth()]}`;
