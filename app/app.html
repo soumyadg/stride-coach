@@ -1391,7 +1391,7 @@ function renderWelcome(){
   el.innerHTML=`<div class="card" style="border:1px solid var(--accent,#2ee6c6);background:linear-gradient(180deg,rgba(46,230,198,.08),rgba(46,230,198,.02))">
     <div class="kicker">✨ Your plan is ready</div>
     <div style="margin-top:8px;font-size:15px;line-height:1.5">Here's the difference: your load rises <b>≤${cap}% a week</b> — the injury-safe ramp most apps ignore. You build from <b>${wk1.vol}${w?' walks':'km'}/wk</b> to a peak of <b>${peakWk.vol}${w?'':'km'}</b>, arriving at <b>${S.goalName||distLabel(S.goal)}</b> around <b>${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}</b>.</div>
-    ${(function(){var p=computeProjection();if(!p)return '';var e=p.points[Math.min(1,p.points.length-1)];var bits=[];if(e.weight&&p.canLose)bits.push('about <b>'+e.weight+'kg</b>');bits.push('resting HR down');bits.push('noticeably fitter');return '<div style="margin-top:10px;font-size:14px;line-height:1.5;color:var(--muted)">📈 By <b>week '+e.week+'</b> ('+e.date.getDate()+' '+MON[e.date.getMonth()]+'): '+bits.join(', ')+'. See the full trajectory below.</div>';})()}
+    ${(function(){var p=computeProjection();if(!p)return '';var e=p.points[Math.min(1,p.points.length-1)];var lost=(e.weight&&p.canLose)?+(p.weight-e.weight).toFixed(1):0;var lead=lost>=0.3?('<b>'+lost+'kg lighter</b>, '):'';return '<div style="margin-top:10px;font-size:14px;line-height:1.5;color:var(--muted)">📈 By <b>week '+e.week+'</b> ('+e.date.getDate()+' '+MON[e.date.getMonth()]+'): '+lead+'more energy and less out of breath. See the full picture below.</div>';})()}
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn p" onclick="go('run')">Start your first ${actWord()} →</button><button class="btn ghost" style="flex:.5" onclick="dismissWelcome()">Got it</button></div></div>`;
 }
 function dismissWelcome(){if(S){delete S.justOnboarded;store.set(S);}const el=$('#today-welcome');if(el)el.innerHTML='';}
@@ -1416,17 +1416,23 @@ function renderProjection(){
   if(!S||!S.plan){det.style.display='none';return;}
   det.style.display='';
   const p=computeProjection(),el=$('#projection-card');if(!p||!el)return;
-  const ps=$('#proj-sum');if(ps)ps.textContent=p.canLose&&p.weight?('to ~'+p.points[p.points.length-1].weight+'kg'):'where this takes you';
+  const lastLost=(p.weight&&p.canLose)?+(p.weight-p.points[p.points.length-1].weight).toFixed(1):0;
+  const ps=$('#proj-sum');if(ps)ps.textContent=lastLost>=0.3?(lastLost+' kg lighter'):'how you\'ll feel';
   const fmtD=d=>`${d.getDate()} ${MON[d.getMonth()]}`;
+  const feel=wk=>wk<=4?'more energy · stairs feel easier · sleeping deeper'
+    :wk<=8?'less out of breath · movement feels easy · steadier, brighter mood'
+    :'fitter and stronger than day one · endurance you can feel';
   const rows=p.points.map(pt=>{
     let right;
-    if(pt.week===0){right=p.weight?`baseline ${p.weight}kg`:'your baseline today';}
-    else{const b=[];if(pt.weight&&p.canLose)b.push(`~${pt.weight}kg`);b.push(`resting HR −${pt.hrDrop}`);b.push(`${pt.fitPct}% fitter`);right=b.join(' · ');}
-    return `<div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)"><div style="font-weight:700;font-size:13px;flex:none">${pt.week===0?'Today':'Week '+pt.week}<div class="sub" style="font-weight:400;font-size:11px">${fmtD(pt.date)}</div></div><div class="sub" style="text-align:right;font-size:12.5px;align-self:center">${right}</div></div>`;
+    if(pt.week===0){right=p.weight?`starting at ${p.weight} kg`:'your starting point';}
+    else{const parts=[];const lost=(p.weight&&p.canLose)?+(p.weight-pt.weight).toFixed(1):0;
+      if(lost>=0.3)parts.push(`<b style="color:#5ff0d0">${lost} kg lighter</b>`);
+      parts.push(feel(pt.week));right=parts.join(' · ');}
+    return `<div style="display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-top:1px solid rgba(255,255,255,.05)"><div style="font-weight:700;font-size:13px;flex:none;min-width:64px">${pt.week===0?'Today':'Week '+pt.week}<div class="sub" style="font-weight:400;font-size:11px">${fmtD(pt.date)}</div></div><div class="sub" style="text-align:right;font-size:13px;align-self:center;line-height:1.45">${right}</div></div>`;
   }).join('');
-  el.innerHTML=`<div class="sub" style="margin-bottom:4px">Where consistent ${p.walk?'walking':'training'} takes you${p.canLose&&p.weight?' — with a modest calorie balance':''}. You'll burn about <b>${p.kcalWeek} kcal/week</b> from ${p.walk?'walking':'running'} alone.</div>
+  el.innerHTML=`<div class="sub" style="margin-bottom:4px">Stick with it and here’s how you’ll feel${p.canLose&&p.weight?' — plus the weight coming off with a sensible diet':''}. You burn about <b>${p.kcalWeek} calories a week</b> from ${p.walk?'walking':'running'} alone.</div>
     ${rows}
-    <div class="sub" style="margin-top:10px;font-size:11px;opacity:.6">Realistic estimates, not promises — sleep, food and consistency drive the real result. Not medical advice.</div>`;
+    <div class="sub" style="margin-top:10px;font-size:11px;opacity:.6">A realistic guide, not a promise — sleep, food and showing up are what make it real. Not medical advice.</div>`;
 }
 
 // ---- readiness ----
