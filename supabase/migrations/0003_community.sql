@@ -62,3 +62,9 @@ create table if not exists post_reports (
 alter table post_reports enable row level security;
 drop policy if exists "insert reports" on post_reports;
 create policy "insert reports" on post_reports for insert with check (auth.uid() = reporter);
+
+-- role privileges (RLS still restricts rows)
+grant select, insert, delete on community_posts to authenticated;
+grant select on community_posts to anon;
+grant insert on route_prints to authenticated;
+grant insert on post_reports to authenticated;

@@ -16,3 +16,6 @@ drop policy if exists "own profile_state update"  on profile_state;
 create policy "own profile_state read"   on profile_state for select using (auth.uid() = user_id);
 create policy "own profile_state write"  on profile_state for insert with check (auth.uid() = user_id);
 create policy "own profile_state update" on profile_state for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- role privileges (RLS still restricts rows)
+grant select, insert, update, delete on profile_state to authenticated;
