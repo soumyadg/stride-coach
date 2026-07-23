@@ -96,7 +96,7 @@
   .screen::-webkit-scrollbar{display:none}
   /* desktop: present the phone app as a centered device frame instead of a floating strip */
   @media(min-width:820px){
-    #s-onboard{display:flex;flex-direction:column;justify-content:center}
+    #s-onboard{display:flex;flex-direction:column;justify-content:flex-start;padding-top:12px}
     body{align-items:center;min-height:100vh;padding:22px 0;
       background:radial-gradient(120% 90% at 82% 8%,rgba(255,106,61,.10),transparent 46%),radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.11),transparent 46%),#07060c}
     #app{min-height:0;height:min(900px,94vh);border-radius:34px;
@@ -809,7 +809,6 @@ var RUN_GOALS='<div class="opt on" data-v="race"><div class="tile">🏁</div><di
 var WALK_GOALS='<div class="opt on" data-v="wgeneral"><div class="tile">🌿</div><div><div class="t">Daily walking habit</div><div class="d">A gentle, consistent daily walk for body &amp; mind.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="explore"><div class="tile">🧭</div><div><div class="t">Explore &amp; wellbeing</div><div class="d">Wander, discover, de-stress — movement for the mind.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="w5k"><div class="tile">🎯</div><div><div class="t">Walk a 5K / 10K</div><div class="d">Work up to walking a distance, comfortably.</div></div><div class="chev">›</div></div>'+
-'<div class="opt" data-v="dog"><div class="tile">🐕</div><div><div class="t">Walk the dog</div><div class="d">Routes &amp; habits built around your dog walks.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="hike"><div class="tile">⛰️</div><div><div class="t">Hiking &amp; long walks</div><div class="d">Build up to longer walks &amp; weekend hikes.</div></div><div class="chev">›</div></div>';
 function setMode(m){
   window._wantDog=(m==='dog'); if(m==='dog')m='walk';   // dog walking = walk profile + dog features on
@@ -858,7 +857,7 @@ function buildPlan(){
     const sessions=makeSessions(vol,days,goal,w,weeks,mode);
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
-  const heightCm=+$('#o-height').value||null, weightKg=+$('#o-weight').value||null;
+  const heightCm=+$('#o-height').value||(S&&S.heightCm)||null, weightKg=+$('#o-weight').value||(S&&S.weightKg)||null;
   const p={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1};
   if(S&&S.plan&&S._addPlan){                                    // Pro: adding an extra race plan — keep account data + existing plans
     saveActiveToPlans();
@@ -1255,7 +1254,14 @@ function saveActiveToPlans(){if(!S||!S.plan)return;S.plans=S.plans||[];const i=S
 function loadSnapshot(p){Object.assign(S,{planId:p.planId,goal:p.goal,goalName:p.goalName,mode:p.mode,base:p.base,days:p.days,exp:p.exp,pref:p.pref,weeks:p.weeks,plan:p.plan,created:p.created,curWeek:p.curWeek});}
 function switchPlan(id){if(!S||id===S.planId)return;saveActiveToPlans();const p=(S.plans||[]).find(x=>x.planId===id);if(!p)return;loadSnapshot(p);store.set(S);renderAll();go('today');}
 function deletePlan(id){const plans=S.plans||[];if(plans.length<=1)return;if(!confirm('Delete this plan? This can’t be undone.'))return;const wasActive=id===S.planId;S.plans=plans.filter(p=>p.planId!==id);if(wasActive)loadSnapshot(S.plans[0]);store.set(S);renderAll();renderPlans();}
-function startNewPlan(){if(!isPro())return;saveActiveToPlans();store.set(S);S._addPlan=true;$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');window._mode=null;['ob1','ob2','ob3'].forEach(function(id){$('#'+id).classList.add('hide');});$('#ob0').classList.remove('hide');playStep($('#ob0'));}
+// Height/weight/walks/experience are personal — captured once at first registration.
+// When a returning user makes another plan, pre-fill them so we don't ask again.
+function prefillFromProfile(){if(!S)return;
+  if(S.heightCm){var h=$('#o-height');if(h)h.value=S.heightCm;}
+  if(S.weightKg){var w=$('#o-weight');if(w)w.value=S.weightKg;}
+  [['o-days',S.days],['o-exp',S.exp]].forEach(function(p){var seg=$('#'+p[0]);if(seg&&p[1]!=null)seg.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',b.dataset.v==String(p[1]));});});
+}
+function startNewPlan(){if(!isPro())return;saveActiveToPlans();store.set(S);S._addPlan=true;$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-why'].forEach(id=>{const e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');window._mode=null;['ob1','ob2','ob3'].forEach(function(id){$('#'+id).classList.add('hide');});$('#ob0').classList.remove('hide');prefillFromProfile();playStep($('#ob0'));}
 function distLabel(g){return({'5k':'5K','10k':'10K','half':'Half','marathon':'Marathon'})[g]||g||'';}
 function renderPlans(){
   const el=$('#plans-card');if(!el||!S){if(el)el.style.display='none';return;}
