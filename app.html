@@ -628,7 +628,6 @@
       <div class="banner g" style="margin-top:14px"><span class="tick">✓</span> The safety promise is <b>always free</b> — Pro never paywalls what keeps you injury-free.</div>
       <div class="sub center" style="margin-top:8px">Typical coaching apps: <b>£15.99/mo, no free tier</b>. Our Pro is less than half — and the core stays free.</div>
     </div>
-    <div class="sub center" style="padding:8px 0 4px">Prototype · app #1 of 30 🤖</div>
   </div>
 
   <!-- ================= STATS ================= -->
@@ -886,10 +885,19 @@ function startProfileOnboarding(m){
 function renderProfileSwitch(){
   const el=$('#profile-switch');if(!el)return;
   const active=(store&&store.activeMode&&store.activeMode())||(S&&S.mode)||'run';
-  const other=active==='run'?'walk':'run';
-  const has=store&&store.hasProfile&&store.hasProfile(other);
-  const btn=(m,ic,lab)=>`<button class="ps-btn${active===m?' on':''}" onclick="switchProfile('${m}')">${ic} ${lab}${(m===other&&!has)?' <span class="ps-add">+</span>':''}</button>`;
-  el.innerHTML=`<div class="prof-switch">${btn('run','🏃','Run')}${btn('walk','🚶','Walk')}</div>`;
+  const dog=active==='walk'&&S&&S.dogWalk;
+  const runOn=active==='run', walkOn=active==='walk'&&!dog;
+  el.innerHTML=`<div class="prof-switch">`
+    +`<button class="ps-btn${runOn?' on':''}" onclick="pickProfile('run')">🏃 Run</button>`
+    +`<button class="ps-btn${walkOn?' on':''}" onclick="pickProfile('walk')">🚶 Walk</button>`
+    +`<button class="ps-btn${dog?' on':''}" onclick="pickProfile('dog')">🐕 Dog</button>`
+    +`</div>`;
+}
+function pickProfile(x){
+  const targetMode=x==='run'?'run':'walk';
+  if(!store||store.activeMode()!==targetMode)switchProfile(targetMode);   // may launch onboarding if that profile is empty
+  if(S){S.dogWalk=(x==='dog');store.set(S);if(typeof renderToday==='function')renderToday();}
+  if(x==='dog')setTimeout(()=>{const d=document.getElementById('dogwalk-details');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});}},220);
 }
 // ---- AI Running Coach (Pro, Claude via edge function) ----
 let coachMsgs=[];
@@ -944,20 +952,41 @@ function localCoachReply(q){
     if(tsb!=null)return tsb<-20?`Signs of overreaching — form is ${tsb} (fatigue well over fitness). Take 2–3 easy/rest days and reassess.`:`Not overtrained — form is ${tsb>0?'+':''}${tsb}, a normal range. Keep weekly load rises ≤10% and you'll stay in the safe zone.`;
     return `Keep weekly load jumps ≤10% and don't stack hard days. Persistent fatigue, bad sleep or niggles = back off. Real pain → see a physio.`;
   }
-  if(/next|explain|workout|session|what.*(do|run)/.test(q)&&cs)
+  if(/warm.?up|pre.?run|pre.?walk|before.*(run|walk)|stretch before|dynamic|limber/.test(q))
+    return `Before you head out: 5 minutes truly easy, then dynamic moves — leg swings, walking lunges, high knees, ankle circles. Save static stretching for after. Cold muscles get hurt.`;
+  if(/cool.?down|after.*(run|walk)|post.?run|stretch after/.test(q))
+    return `After: walk it out 3–5 minutes, then gentle static stretches for calves, quads, hamstrings and hips (~30s each). Rehydrate and get protein + carbs within the hour.`;
+  if(/\beat|food|diet|nutrition|fuel|carb|protein|meal|breakfast/.test(q))
+    return `Eat mostly whole foods: carbs to fuel your ${act}s, protein to repair (~1.6g/kg/day), healthy fats, plenty of veg. A light carb snack 30–60 min before longer sessions; protein + carbs within the hour after. Avoid training hard fasted too often.`;
+  if(/lose weight|weight loss|fat loss|slim|leaner|burn fat/.test(q))
+    return `Fat loss = a gentle, consistent calorie deficit + your ${act}s + enough protein to keep muscle. Don't crash-diet — it tanks training and mood. Steady movement plus a small deficit beats punishing workouts, and sleep matters as much as food.`;
+  if(/hydrat|water|drink|thirsty|dehydr/.test(q))
+    return `Sip to thirst through the day — pale-straw urine is the target. For sessions over an hour or hot days, carry water (add electrolytes if you sweat salty). Don't over-drink either.`;
+  if(/strength|gym|weight.?train|lift|squat|core|cross.?train|cycling|swim|yoga/.test(q))
+    return `Two short strength sessions a week — squats, lunges, calf raises, planks, single-leg work — build the resilience that prevents most ${act} injuries. Cross-training (cycle, swim, yoga) keeps fitness while sparing your joints.`;
+  if(/motivat|lazy|don.?t want|can.?t be|quit|give up|struggl|consisten|keep going/.test(q))
+    return `Everyone has flat days. Shrink it: just get dressed and do the first 10 minutes — you can stop after, but you rarely will. Consistency beats intensity, and your streak is worth protecting. You've got this. 💪`;
+  if(/shoe|gear|kit|clothes|trainers|what.*wear/.test(q))
+    return `Comfortable, well-fitting ${w?'walking':'running'} shoes matter most — replace them when the tread wears smooth (~500–800km). Dress for about 10°C warmer than it is; you'll heat up fast.`;
+  if(/vo2|vo₂|fitness level|how fit/.test(q)){let v=null;try{v=vdotEstimate&&vdotEstimate();}catch(e){}return v?`Your estimated VO₂max is about ${v} — solid. It climbs with consistent easy volume plus the odd faster session.`:`Log a few ${act}s and I'll estimate your VO₂max and fitness trend.`;}
+  if(/next|explain|workout|session|what.*(do|run|walk)/.test(q)&&cs)
     return `Today: ${cs.t}${cs.km?' — '+cs.km+'km':''}. ${w?'Keep a comfortable, conversational pace.':'Run at an effort where you could still talk in short sentences, unless it says otherwise.'}`;
   if(/pace|how fast|how slow|speed|target time/.test(q)){
     let p=null;try{p=predictRaces();}catch(e){}
     if(p&&p.out)return `From your recent ${act}s: `+Object.keys(p.out).slice(0,3).map(k=>`${k} ${fmtHMS(p.out[k].secs)}`).join(', ')+`. Easy days should feel 60–90s/km slower than that.`;
     return `Easy = conversational; hard = controlled but strong. Log a few ${act}s and I'll predict your paces.`;
   }
-  if(/rest|recover|day off|sore|sleep/.test(q))
-    return `Recovery is where you get faster. Prioritise sleep, easy movement and food. If you're flat${tsb!=null?` (form ${tsb})`:''}, an extra rest day rarely hurts a plan — chronic fatigue does.`;
+  if(/rest|recover|day off|sore|sleep|tired|fatigue/.test(q))
+    return `Recovery is where you get faster. Prioritise 7–9h sleep, easy movement and food. If you're flat${tsb!=null?` (form ${tsb})`:''}, an extra rest day rarely hurts a plan — chronic fatigue does.`;
+  // scope guard — Strivon coach stays about your body & training
+  const fitnessy=/run|walk|jog|pace|train|fit|body|weight|sleep|food|eat|diet|injur|muscle|pain|tired|rest|breath|stretch|warm|hydrat|heart|distance|km|mile|race|marathon|goal|plan|exercise|gym|strength|cardio|calorie|recover|stride|step|health|energy|mood|stress|leg|knee|foot|hip|shoe|coach|effort|nutri|protein|fuel|water|motivat|vo2|10k|5k/;
+  if(q.length>3&&!fitnessy.test(q))
+    return `Let's keep it to improving your body 💪 — ask me about your ${act}s, training, pace, recovery, nutrition or sleep, and I'm all yours.`;
   const bits=[];
   if(S.goalName)bits.push(`Week ${S.curWeek}/${S.weeks} toward ${S.goalName}.`);
   if(f)bits.push(`Fitness ${f.ctl}, fatigue ${f.atl}, form ${tsb>0?'+':''}${tsb} (${formVerdict(tsb)[0]}).`);
   if(cs)bits.push(`Today: ${cs.t}${cs.km?' '+cs.km+'km':''}.`);
-  bits.push(`Ask me "should I ${act} today?", "am I overtraining?" or "what's my pace?"`);
+  bits.push(`Ask me about your ${act}s, pace, recovery, nutrition, strength or sleep.`);
   return bits.join(' ');
 }
 function scrollCoach(){const t=$('#coach-thread');if(t)t.scrollTop=t.scrollHeight;}
