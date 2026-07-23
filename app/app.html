@@ -484,6 +484,10 @@
         </div>
       </div>
     </details>
+    <!-- walk-only: dog-walk poop/bin spots -->
+    <details class="card" id="dogwalk-details" style="display:none"><summary>🐕 Dog walk <span class="cx-sum" id="dog-sum">poop &amp; bin spots</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body"><div id="dogwalk-card"></div></div>
+    </details>
   </div>
 
   <!-- ================= PLAN / CALENDAR ================= -->
@@ -1314,6 +1318,7 @@ function renderToday(){
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
   if(typeof renderRouteFinder==='function')renderRouteFinder();
+  if(typeof renderDogWalk==='function')renderDogWalk();
   if(typeof reflectMode==='function')reflectMode();
 }
 // #12 value in <60s — a one-time welcome that shows the plan is real & injury-safe
@@ -1696,6 +1701,65 @@ function drawRouteMini(geo){
   const pp=geo.map(p=>{const w=project(p[0],p[1],Z);return `${(w.x-ox).toFixed(1)},${(w.y-oy).toFixed(1)}`;}).join(' ');
   const s0=geo[0],sw=project(s0[0],s0[1],Z);
   svg.innerHTML=`<polyline points="${pp}" fill="none" stroke="#2ee6c6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px rgba(46,230,198,.6))"/><circle cx="${(sw.x-ox).toFixed(1)}" cy="${(sw.y-oy).toFixed(1)}" r="6" fill="#ff6a3d" stroke="#fff" stroke-width="2"/>`;
+}
+// ===================== DOG WALK — poop & bin spots (walk-only) =====================
+// Drop pins where your dog goes / where the bins are, so whoever walks the dog knows.
+function ensureDog(){if(!S)return;if(!Array.isArray(S.poopSpots))S.poopSpots=[];}
+function renderDogWalk(){
+  const det=$('#dogwalk-details');if(!det)return;
+  const walk=S&&S.mode==='walk';
+  det.style.display=walk?'':'none';           // walk profile only
+  if(!walk)return;
+  ensureDog();
+  const el=$('#dogwalk-card');if(!el)return;
+  const on=!!(S&&S.dogWalk);
+  const n=(S.poopSpots||[]).length;
+  const ds=$('#dog-sum');if(ds)ds.textContent=on?(n?n+' spot'+(n>1?'s':''):'no spots yet'):'walking a dog?';
+  if(!on){
+    el.innerHTML=`<div class="sub" style="margin-bottom:10px">Walking a dog? 🐾 Mark <b>poop spots</b> and <b>bins</b> along your routes — so anyone who walks ${dogName()} knows exactly where to go.</div>
+      <button class="btn p" onclick="toggleDogWalk(true)">🐕 I'm walking a dog</button>`;
+    return;
+  }
+  const spots=(S.poopSpots||[]).slice().sort((a,b)=>b.at-a.at);
+  const list=spots.length?spots.map(s=>`<div class="atlas-mem" onclick="viewSpotOnMap('${s.id}')"><div class="am-thumb">${s.kind==='bin'?'🗑️':'💩'}</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${s.kind==='bin'?'Bin':'Poop spot'}${s.note?' · '+s.note.replace(/</g,'&lt;'):''}</div><div class="sub">${timeAgo(s.at)}</div></div><button class="gpxbtn" title="Delete" aria-label="Delete spot" onclick="event.stopPropagation();delPoopSpot('${s.id}')" style="width:28px;height:28px;font-size:12px">✕</button></div>`).join(''):'<div class="sub">No spots yet — tap ➕ at a good spot on your walk.</div>';
+  el.innerHTML=`<div class="sub" style="margin-bottom:8px">Tap ➕ where you are to save a spot. ${dogName()}'s next walker sees them all. 🐾</div>
+    <div id="dog-map" style="position:relative;height:180px;border-radius:12px;overflow:hidden;background:#0c0e16"><div id="dog-tiles" style="position:absolute;inset:0"></div><svg id="dog-svg" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"></svg><div style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · CARTO</div></div>
+    <div class="row" style="gap:6px;margin-top:10px"><button class="btn p" onclick="addPoopSpot('poop')">➕💩 Poop spot here</button><button class="btn ghost" style="flex:0 0 auto;width:auto;padding:12px 14px" onclick="addPoopSpot('bin')">🗑️ Bin</button></div>
+    <div id="dog-msg"></div>
+    <div style="margin-top:12px">${list}</div>
+    <button class="btn ghost" style="margin-top:12px;font-size:12px;padding:8px 12px;width:auto" onclick="toggleDogWalk(false)">Not walking a dog</button>`;
+  setTimeout(()=>drawDogMap(),50);
+}
+function dogName(){return (S&&S.dogName)||'your dog';}
+function toggleDogWalk(on){ensureDog();S.dogWalk=!!on;store.set(S);renderDogWalk();}
+async function addPoopSpot(kind){
+  ensureDog();const m=$('#dog-msg');if(m)m.innerHTML='<div class="sub" style="margin-top:8px">Getting your location…</div>';
+  const l=await getLoc();
+  if(!l.ok){if(m)m.innerHTML='<div class="banner a" style="margin-top:8px">Couldn’t get GPS — enable location and try again.</div>';return;}
+  S.poopSpots.unshift({id:uuid(),kind:kind||'poop',lat:l.lat,lon:l.lon,note:'',at:Date.now()});
+  store.set(S);renderDogWalk();
+}
+function delPoopSpot(id){ensureDog();S.poopSpots=S.poopSpots.filter(s=>s.id!==id);store.set(S);renderDogWalk();}
+let _dogFocus=null;
+function viewSpotOnMap(id){_dogFocus=id;drawDogMap();}
+function drawDogMap(){
+  const wrap=$('#dog-map'),tiles=$('#dog-tiles'),svg=$('#dog-svg');if(!wrap)return;
+  ensureDog();const spots=(S.poopSpots||[]).filter(s=>isFinite(s.lat));
+  const W=wrap.clientWidth||320,H=wrap.clientHeight||180;
+  const done=(ctr)=>{
+    let Z=16;const n=Math.pow(2,Z),c=project(ctr[0],ctr[1],Z),ox=c.x-W/2,oy=c.y-H/2;
+    const t0x=Math.floor(ox/256),t1x=Math.floor((ox+W)/256),t0y=Math.floor(oy/256),t1y=Math.floor((oy+H)/256);
+    let html='';for(let tx=t0x;tx<=t1x;tx++)for(let ty=t0y;ty<=t1y;ty++){if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n;html+=`<img src="https://basemaps.cartocdn.com/dark_all/${Z}/${wx}/${ty}.png" style="position:absolute;width:256px;height:256px;left:${Math.round(tx*256-ox)}px;top:${Math.round(ty*256-oy)}px" onerror="this.style.visibility='hidden'">`;}
+    tiles.innerHTML=html;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    let pins='';spots.forEach(s=>{const w=project(s.lat,s.lon,Z),x=w.x-ox,y=w.y-oy;if(x<-16||x>W+16||y<-16||y>H+16)return;pins+=`<text x="${x.toFixed(0)}" y="${(y+6).toFixed(0)}" font-size="20" text-anchor="middle">${s.kind==='bin'?'🗑️':'💩'}</text>`;});
+    svg.innerHTML=pins;
+  };
+  if(spots.length){
+    let laMin=90,laMax=-90,loMin=180,loMax=-180;const foc=spots.find(s=>s.id===_dogFocus);
+    if(foc){done([foc.lat,foc.lon]);_dogFocus=null;return;}
+    spots.forEach(s=>{laMin=Math.min(laMin,s.lat);laMax=Math.max(laMax,s.lat);loMin=Math.min(loMin,s.lon);loMax=Math.max(loMax,s.lon);});
+    done([(laMin+laMax)/2,(loMin+loMax)/2]);
+  } else { getLoc().then(l=>done([l.lat,l.lon])); }
 }
 let _rfBusy=false;
 async function findRoute(){
