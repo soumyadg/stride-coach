@@ -228,6 +228,17 @@
 
   /* hero launch-video (phone frame, muted-autoplay + click-for-sound) */
   .hero-vid{margin-top:42px;margin-bottom:72px;display:flex;justify-content:center}
+  /* desktop: two-column hero (text + phone side by side) so it all fits one screen — no scroll */
+  @media(min-width:940px){
+    .hero-inner{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:64px;text-align:left}
+    .hero-copy{flex:1 1 0;max-width:640px}
+    .hero-inner .chiprow{justify-content:flex-start}
+    .hero-inner .sub{margin-left:0;margin-right:0}
+    .cta-row{justify-content:flex-start!important}
+    .hero-vid{margin:0;flex:0 0 auto}
+    .hv-frame{width:300px}
+    header.hero{padding-top:0;padding-bottom:0}
+  }
   .hv-frame{position:relative;width:250px;aspect-ratio:9/16;border-radius:34px;overflow:hidden;
     border:8px solid #1c1f2b;background:#0c0e16;box-shadow:0 34px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.05)}
   .hv-frame video{width:100%;height:100%;object-fit:cover;display:block}
