@@ -488,6 +488,10 @@
     <details class="card" id="dogwalk-details" style="display:none"><summary>🐕 Dog walk <span class="cx-sum" id="dog-sum">poop &amp; bin spots</span> <span class="cx-chev">⌄</span></summary>
       <div class="cx-body"><div id="dogwalk-card"></div></div>
     </details>
+    <!-- run-only: injury history → injury-aware plan -->
+    <details class="card" id="injury-details" style="display:none"><summary>🩹 Injury history <span class="cx-sum" id="inj-sum">tune the plan</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body"><div id="injury-card"></div></div>
+    </details>
   </div>
 
   <!-- ================= PLAN / CALENDAR ================= -->
@@ -893,6 +897,7 @@ function coachConfigured(){return !!(window.StrideSync&&StrideSync.state().confi
 function buildCoachContext(){
   const L=[];
   if(S.goalName)L.push(`Goal: ${S.goalName} (${S.mode||'run'}), week ${S.curWeek}/${S.weeks}.`);
+  if(S.injuries&&S.injuries.length)L.push('Injury history: '+S.injuries.map(i=>i.type+' ('+((INJURY_WHEN.find(w=>w[0]===i.when)||['',i.when])[1])+')').join('; ')+'. Adapt all advice to protect these — favour easy running, rest and gradual load; flag pain to a physio.');
   try{const cs=curSession();if(cs)L.push(`Today's planned session: ${cs.t}${cs.km?' '+cs.km+'km':''}.`);}catch(e){}
   if(S.readiness)L.push(`Latest readiness: ${S.readiness.level} (score ${S.readiness.score}/6).`);
   const acts=(S.activities||[]).slice(0,6);
@@ -1319,6 +1324,7 @@ function renderToday(){
   reflectReminders();
   if(typeof renderRouteFinder==='function')renderRouteFinder();
   if(typeof renderDogWalk==='function')renderDogWalk();
+  if(typeof renderInjuries==='function')renderInjuries();
   if(typeof reflectMode==='function')reflectMode();
 }
 // #12 value in <60s — a one-time welcome that shows the plan is real & injury-safe
@@ -1760,6 +1766,52 @@ function drawDogMap(){
     spots.forEach(s=>{laMin=Math.min(laMin,s.lat);laMax=Math.max(laMax,s.lat);loMin=Math.min(loMin,s.lon);loMax=Math.max(loMax,s.lon);});
     done([(laMin+laMax)/2,(loMin+loMax)/2]);
   } else { getLoc().then(l=>done([l.lat,l.lon])); }
+}
+// ===================== INJURY HISTORY → injury-aware plan (run-only) =====================
+const INJURY_TYPES=["Runner's knee (patellofemoral)","IT band syndrome","Shin splints","Plantar fasciitis","Achilles tendinopathy","Stress fracture","Hamstring strain","Calf strain","Ankle sprain","Hip / glute pain"];
+const INJURY_WHEN=[["recent","In the last month"],["recovering","1–3 months ago"],["past","Over 3 months ago"],["recurring","Keeps coming back"]];
+function ensureInj(){if(!S)return;if(!Array.isArray(S.injuries))S.injuries=[];}
+function injuryAdjust(list){
+  list=list||(S&&S.injuries)||[];
+  if(!list.length)return{rampCap:1.10,baseMul:1,tag:null,band:"none"};
+  const recent=list.some(i=>i.when==="recent"),recovering=list.some(i=>i.when==="recovering");
+  const bone=list.some(i=>/stress fracture/i.test(i.type)),recurring=list.some(i=>i.when==="recurring");
+  if(recent||bone)return{rampCap:1.05,baseMul:0.72,tag:"Returning from a recent injury — gentler ramp, lower start, more easy running and rest.",band:"high"};
+  if(recovering)return{rampCap:1.07,baseMul:0.85,tag:"Recovering — a cautious ramp to protect the comeback.",band:"mod"};
+  if(recurring)return{rampCap:1.07,baseMul:0.92,tag:"Recurring history — tighter load control to break the cycle.",band:"mod"};
+  return{rampCap:1.09,baseMul:1,tag:"Injury-aware — keeping load rises conservative.",band:"low"};
+}
+function injuryWhenLabel(v){const w=INJURY_WHEN.find(x=>x[0]===v);return w?w[1]:"";}
+function renderInjuries(){
+  const det=$('#injury-details');if(!det)return;
+  const run=S&&S.mode==='run';det.style.display=run?'':'none';if(!run)return;
+  ensureInj();const el=$('#injury-card');if(!el)return;
+  const list=S.injuries||[];const is=$('#inj-sum');if(is)is.textContent=list.length?(list.length+' logged'):'tune the plan';
+  const ia=injuryAdjust();
+  const chips=list.map(i=>`<span class="chip on" style="cursor:default">${i.type} · <b>${injuryWhenLabel(i.when)}</b> <span onclick="removeInjury('${i.id}')" style="cursor:pointer;opacity:.7;margin-left:5px">✕</span></span>`).join('');
+  el.innerHTML=`<div class="sub" style="margin-bottom:10px">Add past or current running injuries — Strivon builds a <b>gentler, injury-aware plan</b> and your AI coach factors them in. Not medical advice; see a physio for pain.</div>
+    ${list.length?`<div class="chiprow" style="margin-bottom:12px">${chips}</div>`:''}
+    <label>Injury</label><select id="inj-type" style="width:100%">${INJURY_TYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+    <label style="margin-top:10px">When</label><div class="seg" id="inj-when">${INJURY_WHEN.map((w,i)=>`<button data-v="${w[0]}"${i===0?' class="on"':''}>${w[1]}</button>`).join('')}</div>
+    <div class="row" style="margin-top:12px"><button class="btn p" onclick="addInjury()">＋ Add injury</button></div>
+    ${list.length?`<div class="banner ${ia.band==='high'?'a':'g'}" style="margin-top:12px">🩺 ${ia.tag}</div><button class="btn p" style="margin-top:10px" onclick="applyInjuryPlan()">Rebuild my plan, injury-aware →</button>`:''}
+    <div id="inj-msg"></div>`;
+  if(typeof wireSelect==='function')wireSelect('#inj-when');
+}
+function addInjury(){ensureInj();const t=$('#inj-type').value,wsel=$('#inj-when .on'),when=wsel?wsel.dataset.v:'past';S.injuries.unshift({id:uuid(),type:t,when,at:Date.now()});store.set(S);renderInjuries();}
+function removeInjury(id){ensureInj();S.injuries=S.injuries.filter(i=>i.id!==id);store.set(S);renderInjuries();}
+function applyInjuryPlan(){
+  if(!S||!S.plan)return;ensureInj();const ia=injuryAdjust(),m=$('#inj-msg');
+  if(!S._planBase)S._planBase=JSON.parse(JSON.stringify(S.plan));         // keep pre-injury baseline so re-applying doesn't compound
+  let plan=JSON.parse(JSON.stringify(S._planBase));
+  plan.forEach(w=>{w.vol=+(w.vol*ia.baseMul).toFixed(1);});
+  for(let i=1;i<plan.length;i++){if(plan[i].isDeload||plan[i].isTaper)continue;const cap=+(plan[i-1].vol*ia.rampCap).toFixed(1);if(plan[i].vol>cap)plan[i].vol=cap;}
+  plan.forEach(w=>{w.sessions=makeSessions(w.vol,S.days,S.goal,w.w,S.weeks,S.mode);w.days=assignDays(w.sessions);});
+  S.plan=plan;S.injuryTag=ia.tag;
+  if(S.plans&&S.plans.length){const idx=S.plans.findIndex(p=>p.planId===S.planId);if(idx>=0)S.plans[idx]=planSnapshot();}
+  store.set(S);
+  if(m)m.innerHTML='<div class="banner g" style="margin-top:10px"><span class="tick">✓</span> Plan rebuilt — gentler ramp &amp; lower load to protect you.</div>';
+  if(typeof renderAll==='function')renderAll();
 }
 let _rfBusy=false;
 async function findRoute(){
