@@ -247,3 +247,13 @@
     font-weight:600;padding:8px 15px;border-radius:999px;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:.15s}
   .hv-sound:hover{background:rgba(0,0,0,.78)}
   .hv-sound.on{background:linear-gradient(90deg,#ff6a3d,#2ee6c6);color:#08070e;border-color:transparent}
+
+  /* legal pages — airy, centered reading column (no crammed card) */
+  .legal{max-width:720px;margin:0 auto;padding:8px 0 20px}
+  .legal h3{font-size:21px;font-weight:750;color:var(--ink);margin:38px 0 12px;letter-spacing:-.01em}
+  .legal h3:first-child{margin-top:0}
+  .legal p{color:var(--muted);line-height:1.78;margin:0 0 6px;font-size:16px}
+  .legal p+p{margin-top:12px}
+  .legal a{color:var(--teal);text-decoration:underline;text-underline-offset:2px}
+  .legal b{color:var(--ink);font-weight:650}
+  .legal .sub{margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
