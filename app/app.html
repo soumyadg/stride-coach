@@ -465,6 +465,7 @@
     <!-- HERO: today's workout — the one thing you came for, first -->
     <div class="card" id="today-sesh"></div>
     <div class="card" id="risk-card"></div>
+    <div class="card" id="mission-card"></div>
     <!-- secondary: tucked into taps so Today stays one-glance -->
     <details class="card"><summary>🩺 Daily readiness check <span class="cx-sum">tune today to how you feel</span> <span class="cx-chev">⌄</span></summary>
       <div class="cx-body">
@@ -1337,6 +1338,7 @@ function renderToday(){
       <div style="font-size:20px;font-weight:800" class="mono tick">${s.km?s.km+'km':'—'}</div></div>
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
+  if(typeof renderMission==='function')renderMission();
   if(typeof renderRouteFinder==='function')renderRouteFinder();
   if(typeof renderDogWalk==='function')renderDogWalk();
   if(typeof renderInjuries==='function')renderInjuries();
@@ -2101,6 +2103,48 @@ function saveBMI(){
 function editBMI(){$('#bmi-card').innerHTML=`<div class="kicker">Body · BMI</div>
   <div class="row" style="margin-top:8px"><input id="bmi-h" type="number" value="${S.heightCm||''}" placeholder="Height cm"><input id="bmi-w" type="number" value="${S.weightKg||''}" placeholder="Weight kg"></div>
   <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;}
+// ===================== DAILY MISSIONS (adventures) =====================
+const MISSIONS=[
+  {ic:'🧭',t:'Explore a street you’ve never set foot on — turn down the road you always walk past.',tag:'Explore'},
+  {ic:'💧',t:'Head toward water — a river, canal, pond or the sea. Let it be your finish line.',tag:'Nature'},
+  {ic:'🚪',t:'Spot a blue door on your way. When you find one, you’ve won.',tag:'Discover'},
+  {ic:'🌳',t:'Find the greenest spot near you — a park or tree-lined street — and pause there a moment.',tag:'Nature'},
+  {ic:'🎨',t:'Hunt for something colourful — a mural, a bright shopfront, a garden in bloom.',tag:'Discover'},
+  {ic:'👂',t:'Spend the first five minutes noticing three different sounds. A moving meditation.',tag:'Mindful',modes:['walk']},
+  {ic:'📷',t:'Snap one photo of a spot you’d never noticed before — add it to your Atlas later.',tag:'Capture'},
+  {ic:'⛰️',t:'Reach the highest point you can today and look back at where you came from.',tag:'Explore'},
+  {ic:'🔄',t:'Take a completely new route home — no repeats, even if it’s a little longer.',tag:'Explore'},
+  {ic:'🐦',t:'Count how many birds you can spot or hear. Nature is closer than you think.',tag:'Mindful',modes:['walk']},
+  {ic:'😊',t:'Smile or say hello to one stranger — a tiny act that lifts two moods.',tag:'Kindness',modes:['walk']},
+  {ic:'🏛️',t:'Find the oldest building on your route. Every place has a story.',tag:'Discover'},
+  {ic:'🌅',t:'Notice the light — how it hits a wall, a tree, the pavement. Beauty on an ordinary day.',tag:'Mindful'},
+  {ic:'🫀',t:'Make a loop that draws a shape on the map — a heart, a square, your initial.',tag:'Play'},
+  {ic:'🪑',t:'Find a bench you’ve never sat on and take sixty seconds just to breathe.',tag:'Mindful',modes:['walk']},
+  {ic:'🐕',t:'Say hello to a dog (ask the human first!). Instant serotonin.',tag:'Kindness',modes:['walk']},
+  {ic:'✨',t:'Go a little further than you planned — just to the next corner.',tag:'Push'}
+];
+function todaysMission(){
+  const mode=(S&&S.mode)||'run';
+  const pool=MISSIONS.filter(m=>!m.modes||m.modes.includes(mode));
+  const d=new Date(),seed=d.getFullYear()*372+d.getMonth()*31+d.getDate();
+  return pool[seed%pool.length];
+}
+function missionKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'-'+((S&&S.mode)||'run');}
+function missionCount(){return Object.keys((S&&S.missionsDone)||{}).length;}
+function renderMission(){
+  const el=$('#mission-card');if(!el||!S)return;
+  const m=todaysMission(),done=(S.missionsDone||{})[missionKey()];
+  el.innerHTML=`<div class="kicker">🗺️ Today’s mission <span class="pill">${m.tag}</span></div>
+    <div style="display:flex;gap:14px;margin-top:10px;align-items:flex-start"><div style="font-size:32px;flex:none">${m.ic}</div><div style="font-size:15px;line-height:1.5">${m.t}</div></div>
+    ${done?`<div class="banner g" style="margin-top:12px"><span class="tick">✓</span> Done — nice one! ${missionCount()} adventure${missionCount()>1?'s':''} logged.</div>`
+      :`<button class="btn p" style="margin-top:12px" onclick="completeMission()">Mark it done ✓</button>`}`;
+}
+function completeMission(){
+  if(!S)return;S.missionsDone=S.missionsDone||{};const k=missionKey();if(S.missionsDone[k])return;
+  S.missionsDone[k]=Date.now();store.set(S);const n=missionCount();
+  if(typeof coach==='function')coach('🗺️ Mission complete — '+n+' adventure'+(n>1?'s':'')+' logged. Explorers see the world others walk past.');
+  renderMission();if(typeof renderAchievements==='function')renderAchievements();
+}
 // ===================== STREAK + ACHIEVEMENTS =====================
 function actWeekKey(ts){const d=new Date(ts);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);d.setHours(0,0,0,0);return d.getTime();}  // Monday 00:00 of that week
 function computeStreak(){
@@ -2116,7 +2160,8 @@ function achvStats(){
   const a=(S&&S.activities)||[];const st=computeStreak();
   const hours=a.map(x=>new Date(x.startAt||x.at).getHours());
   return{count:a.length,totalKm:a.reduce((s,x)=>s+(x.km||0),0),longest:a.reduce((m,x)=>Math.max(m,x.km||0),0),
-    early:hours.some(h=>h<7),night:hours.some(h=>h>=20),streak:st.weeks,best:st.best};
+    early:hours.some(h=>h<7),night:hours.some(h=>h>=20),streak:st.weeks,best:st.best,
+    missions:Object.keys((S&&S.missionsDone)||{}).length};
 }
 const ACHIEVEMENTS=[
   {id:'first',ic:'👟',name:'First steps',desc:'Complete your first activity',test:s=>s.count>=1},
@@ -2131,7 +2176,8 @@ const ACHIEVEMENTS=[
   {id:'streak3',ic:'🔥',name:'On a roll',desc:'3-week streak',test:s=>s.best>=3},
   {id:'streak8',ic:'⚡',name:'Unstoppable',desc:'8-week streak',test:s=>s.best>=8},
   {id:'early',ic:'🌅',name:'Early bird',desc:'Start before 7am',test:s=>s.early},
-  {id:'night',ic:'🌙',name:'Night owl',desc:'Start after 8pm',test:s=>s.night}
+  {id:'night',ic:'🌙',name:'Night owl',desc:'Start after 8pm',test:s=>s.night},
+  {id:'adv',ic:'🗺️',name:'Adventurer',desc:'Complete 10 daily missions',test:s=>s.missions>=10}
 ];
 function renderAchievements(){
   const el=$('#achv-card');if(!el||!S)return;
