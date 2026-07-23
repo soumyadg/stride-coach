@@ -18,6 +18,13 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 - [x] P4 — Build the app in `app/index.html` — MVP built + browser-verified (onboarding, SafeRamp plan w/ proven ≤10% cap, readiness, run tracker + auto-pause, adaptive RPE recalibration, persistence)
 - [x] P5 — Updated root TRACKER.md, app #1 = DONE (MVP)
 
+## 🐞 BUGFIX SESSION (2026-07-23) — two real run-tracker bugs, live
+Found while Soumya downloaded Xcode. Both shipped + deployed (SW **v58**), battery **79/79 green**.
+- **haversine() name collision** — a 2-arg `{lat,lon}→km` GPX-import helper globally shadowed the 4-arg `lat,lo,lat,lo→metres` version the LIVE GPS tracker uses (`onPos`, app.html:1750). Live run distance came back NaN → `d>1&&d<40` never passed → **outdoor runs never accumulated distance (finished at 0.0 km)**. Renamed import helper → `haversineKm()`.
+- **stopRun() not idempotent** — Finish button stays visible after a run ends (run not cleared until RPE rated), so every extra tap re-spoke "Workout complete. 0.0 km." Added `run.finished` guard (cleared on fresh Start) → announces once. (Soumya reported both.)
+- battery.js two-profile guard used `window.store` (store is a lexical const) → fixed guard; test now runs + passes.
+- **Xcode note:** Soumya's Mac = **Intel i7 / macOS 15.7** → CANNOT run Xcode 26 (needs M1+ & macOS 26). He must use **Xcode 16.2** (App Store "download older version", or developer.apple.com/download/all). 16.2 builds+submits the iOS/watchOS app fine.
+
 ## ✅ PROGRESS LOG (2026-07-22, live build)
 ✅ ALL CODE-BUILDABLE ITEMS DONE (2026-07-22). Done: #1 bg GPS · #5 bulk import · #6 coach turnkey · #7 route finder robustness · #8 shareable card · #9 Atlas journey replay · #11 copy honest · #12 60s onboarding value · #14 data export/delete · #15 accessibility (WCAG AA focus/aria/live) · #16 error telemetry · #17 spoken km splits · #18 weather fallback · #19 test battery (science) · #21 privacy policy · Batch B website text cut. SW v38.
 #2 Apple Watch — CODE WRITTEN (Soumya has a watch now): standalone watchOS app in ios/StrivonWatch/ (HealthKit workout + GPS + HR, saves to Apple Health). WATCH.md = Xcode build steps. Soumya builds/tests on his own watch. v2 = live WatchConnectivity sync.
