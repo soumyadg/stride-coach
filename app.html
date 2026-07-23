@@ -1421,9 +1421,9 @@ function renderWelcome(){
   const w=S.mode==='walk';const goalDate=new Date(S.created);goalDate.setDate(goalDate.getDate()+S.weeks*7);
   el.innerHTML=`<div class="card" style="border:1px solid var(--accent,#2ee6c6);background:linear-gradient(180deg,rgba(46,230,198,.08),rgba(46,230,198,.02))">
     <div class="kicker">✨ Your plan is ready</div>
-    <div class="sub" style="margin-top:8px">You'll get there by</div>
+    <div class="sub" style="margin-top:8px">Your <b style="color:var(--ink)">${S.goalName||distLabel(S.goal)||'training'}</b> plan — you'll be ready by</div>
     <div class="tick" style="font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.05">${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}</div>
-    <div class="sub" style="margin-top:6px">Built up gently — never enough to hurt you.</div>
+    <div class="sub" style="margin-top:6px">We build you up gently — a little more each week, never enough to hurt you.</div>
     <div class="row" style="margin-top:14px;gap:8px"><button class="btn p" onclick="go('run')">Start your first ${actWord()} →</button><button class="btn ghost" style="flex:.5" onclick="dismissWelcome()">Got it</button></div></div>`;
 }
 function dismissWelcome(){if(S){delete S.justOnboarded;store.set(S);}const el=$('#today-welcome');if(el)el.innerHTML='';}
