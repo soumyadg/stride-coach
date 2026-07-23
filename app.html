@@ -2152,7 +2152,12 @@ function exportCurrentRun(){if(!run)return;
   coach('GPX saved — upload it to Strava or Garmin.');}
 
 // ---- PWA: register service worker ----
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+if('serviceWorker' in navigator){
+  // Self-heal stale installs: always fetch sw.js fresh, check on load, and reload once when a new worker takes over.
+  let _swReloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(_swReloaded)return;_swReloaded=true;location.reload();});
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{try{reg.update();}catch(e){}}).catch(()=>{});});
+}
 
 // ---- PWA install prompt ----
 let deferredPrompt=null;
