@@ -180,6 +180,12 @@
   details.card[open]>summary{padding-bottom:4px}
   details.card .cx-body{padding:0 18px 18px}
   details.card .cx-body>.card{margin:0;padding:0;background:none;border:none}
+  /* achievements / streak */
+  .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px;margin-top:6px}
+  .badge-t{text-align:center;padding:12px 5px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);opacity:.38;filter:grayscale(1);transition:.2s}
+  .badge-t.on{opacity:1;filter:none;background:linear-gradient(180deg,rgba(255,106,61,.14),rgba(46,230,198,.08));border-color:rgba(46,230,198,.32)}
+  .bt-ic{font-size:29px;line-height:1}
+  .bt-n{font-size:10.5px;font-weight:700;margin-top:6px;line-height:1.15;color:var(--ink)}
   /* Run ⇄ Walk profile switcher */
   #profile-switch{margin:12px 0 2px}
   .prof-switch{display:inline-flex;background:var(--surface2,rgba(255,255,255,.05));border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
@@ -635,6 +641,7 @@
         <div class="stat"><div class="v" id="st-runs">0</div><div class="k">Runs</div></div>
       </div>
     </div>
+    <div class="card" id="achv-card"></div>
     <div class="card" id="insights-card"></div>
     <div class="card">
       <div class="kicker">Weekly volume</div>
@@ -2094,7 +2101,55 @@ function saveBMI(){
 function editBMI(){$('#bmi-card').innerHTML=`<div class="kicker">Body · BMI</div>
   <div class="row" style="margin-top:8px"><input id="bmi-h" type="number" value="${S.heightCm||''}" placeholder="Height cm"><input id="bmi-w" type="number" value="${S.weightKg||''}" placeholder="Weight kg"></div>
   <button class="btn p" style="margin-top:10px" onclick="saveBMI()">Save</button><div id="bmi-msg"></div>`;}
+// ===================== STREAK + ACHIEVEMENTS =====================
+function actWeekKey(ts){const d=new Date(ts);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);d.setHours(0,0,0,0);return d.getTime();}  // Monday 00:00 of that week
+function computeStreak(){
+  const acts=(S&&S.activities)||[];if(!acts.length)return{weeks:0,best:0};
+  const WK=7*86400000, weeks=new Set(acts.map(a=>actWeekKey(a.startAt||a.at)));
+  let w=actWeekKey(Date.now());if(!weeks.has(w))w-=WK;            // grace: current week not required yet
+  let streak=0;while(weeks.has(w)){streak++;w-=WK;}
+  const sorted=[...weeks].sort((a,b)=>a-b);let best=0,run=0,prev=null;
+  sorted.forEach(wk=>{run=(prev!==null&&wk-prev===WK)?run+1:1;best=Math.max(best,run);prev=wk;});
+  return{weeks:streak,best};
+}
+function achvStats(){
+  const a=(S&&S.activities)||[];const st=computeStreak();
+  const hours=a.map(x=>new Date(x.startAt||x.at).getHours());
+  return{count:a.length,totalKm:a.reduce((s,x)=>s+(x.km||0),0),longest:a.reduce((m,x)=>Math.max(m,x.km||0),0),
+    early:hours.some(h=>h<7),night:hours.some(h=>h>=20),streak:st.weeks,best:st.best};
+}
+const ACHIEVEMENTS=[
+  {id:'first',ic:'👟',name:'First steps',desc:'Complete your first activity',test:s=>s.count>=1},
+  {id:'ten',ic:'🔟',name:'Perfect ten',desc:'10 activities logged',test:s=>s.count>=10},
+  {id:'fifty',ic:'🎯',name:'Half-century',desc:'50 activities logged',test:s=>s.count>=50},
+  {id:'5k',ic:'🥉',name:'5K club',desc:'5km in one outing',test:s=>s.longest>=5},
+  {id:'10k',ic:'🥈',name:'10K club',desc:'10km in one outing',test:s=>s.longest>=10},
+  {id:'half',ic:'🥇',name:'Half marathon',desc:'21km in one outing',test:s=>s.longest>=21},
+  {id:'full',ic:'🏆',name:'Marathon',desc:'42km in one outing',test:s=>s.longest>=42},
+  {id:'century',ic:'💯',name:'Century',desc:'100km total',test:s=>s.totalKm>=100},
+  {id:'500',ic:'🚀',name:'500 club',desc:'500km total',test:s=>s.totalKm>=500},
+  {id:'streak3',ic:'🔥',name:'On a roll',desc:'3-week streak',test:s=>s.best>=3},
+  {id:'streak8',ic:'⚡',name:'Unstoppable',desc:'8-week streak',test:s=>s.best>=8},
+  {id:'early',ic:'🌅',name:'Early bird',desc:'Start before 7am',test:s=>s.early},
+  {id:'night',ic:'🌙',name:'Night owl',desc:'Start after 8pm',test:s=>s.night}
+];
+function renderAchievements(){
+  const el=$('#achv-card');if(!el||!S)return;
+  const st=achvStats(),earned=ACHIEVEMENTS.filter(a=>a.test(st));
+  const badges=ACHIEVEMENTS.map(a=>`<div class="badge-t${a.test(st)?' on':''}" title="${a.desc}"><div class="bt-ic">${a.ic}</div><div class="bt-n">${a.name}</div></div>`).join('');
+  const flame=st.streak>0
+    ?`<div style="display:flex;align-items:center;gap:12px"><div style="font-size:38px">🔥</div><div><div style="font-weight:800;font-size:21px">${st.streak}-week streak</div><div class="sub">Best ${st.best} weeks · keep it alive this week</div></div></div>`
+    :`<div class="sub">Move this week to light a 🔥 streak — consistency beats intensity.</div>`;
+  el.innerHTML=`<div class="kicker">🏅 Milestones &amp; streak</div>
+    <div style="margin:10px 0 14px">${flame}</div>
+    <div class="badge-grid">${badges}</div>
+    <div class="sub" style="margin-top:10px">${earned.length}/${ACHIEVEMENTS.length} unlocked</div>`;
+  // celebrate new unlocks once
+  const seen=new Set(S.badgesSeen||[]),fresh=earned.filter(a=>!seen.has(a.id));
+  if(fresh.length){S.badgesSeen=earned.map(a=>a.id);store.set(S);if(seen.size&&typeof coach==='function'){const a=fresh[0];coach('🏅 Achievement unlocked — '+a.ic+' '+a.name+'! '+a.desc+'.');}}
+}
 function renderStats(){
+  if(typeof renderAchievements==='function')renderAchievements();
   renderBMI();
   if(typeof renderInsights==='function')renderInsights();
   const acts=S.activities||[],now=Date.now(),wkms=7*86400000;
