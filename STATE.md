@@ -18,6 +18,9 @@ Build a running-coach app like **the leading app** (App Store id1594204443), but
 - [x] P4 — Build the app in `app/index.html` — MVP built + browser-verified (onboarding, SafeRamp plan w/ proven ≤10% cap, readiness, run tracker + auto-pause, adaptive RPE recalibration, persistence)
 - [x] P5 — Updated root TRACKER.md, app #1 = DONE (MVP)
 
+## 📱 NATIVE iOS BUILD WORKING (2026-07-23) — runs in simulator
+Xcode 16.2 installed (Intel Mac max). **Capacitor 8→7 downgrade was required** (8.4.2 binary = Swift 6.2/Xcode 26, unloadable by Xcode 16.2's Swift 6.0.3 → 38 phantom errors). Pinned exact: @capacitor/{core,cli,ios,android}@7.6.8, geolocation@7.1.8, local-notifications@7.0.7, bluetooth-le@7.3.2, background-geolocation@1.2.26. **BUILD SUCCEEDED**, app installs + runs in iOS 18.3 sim (onboarding → app). index.html native-guard redirects Capacitor → app.html. **DO NOT `npm update` Capacitor back to 8** unless on Apple Silicon. Next: run on Soumya's real iPhone (needs free Apple ID signing in Xcode → Signing & Capabilities → select Team).
+
 ## 🐞 BUGFIX SESSION (2026-07-23) — two real run-tracker bugs, live
 Found while Soumya downloaded Xcode. Both shipped + deployed (SW **v58**), battery **79/79 green**.
 - **haversine() name collision** — a 2-arg `{lat,lon}→km` GPX-import helper globally shadowed the 4-arg `lat,lo,lat,lo→metres` version the LIVE GPS tracker uses (`onPos`, app.html:1750). Live run distance came back NaN → `d>1&&d<40` never passed → **outdoor runs never accumulated distance (finished at 0.0 km)**. Renamed import helper → `haversineKm()`.
