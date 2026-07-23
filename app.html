@@ -42,6 +42,13 @@
   #splash{position:absolute;inset:0;z-index:300;background:radial-gradient(circle at 50% 42%,#141024,#05050a 78%);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .55s ease}
   #splash.gone{opacity:0;pointer-events:none}
+  /* first-launch video intro (once, skippable, muted for autoplay) */
+  #intro{position:absolute;inset:0;z-index:400;background:#08070e;display:none;transition:opacity .5s ease}
+  #intro.show{display:block}
+  #intro.gone{opacity:0;pointer-events:none}
+  #intro video{width:100%;height:100%;object-fit:cover;display:block}
+  #intro-skip{position:absolute;right:18px;bottom:calc(26px + env(safe-area-inset-bottom));background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.2);color:#fff;font:inherit;font-size:14px;font-weight:600;padding:10px 18px;border-radius:999px;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
   #splash-logo{width:min(82vw,360px);height:auto;mix-blend-mode:screen;
     opacity:0;transform:scale(.93) translateY(10px);animation:splashIn 1s cubic-bezier(.2,.75,.25,1) .15s forwards}
   @keyframes splashIn{to{opacity:1;transform:none}}
@@ -340,6 +347,10 @@
 </head>
 <body>
 <div id="app">
+  <div id="intro">
+    <video id="intro-vid" muted playsinline preload="auto" src="intro.mp4"></video>
+    <button id="intro-skip" onclick="skipIntro()">Skip →</button>
+  </div>
   <div id="splash">
     <img id="splash-logo" src="splash-logo.png" alt="Strivon — Train smarter" decoding="async">
   </div>
@@ -2270,11 +2281,33 @@ function tintSplash(){
 // ---- boot (welcome splash → app) ----
 function runBoot(){if(S&&S.plan)enterApp();else{$('#ob1').classList.add('hide');$('#ob0').classList.remove('hide');playStep($('#ob0'));}}
 function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dataset.done='1';runBoot();s.classList.add('gone');setTimeout(()=>{s.style.display='none';},650);}
+// first-launch video intro (plays once, muted, skippable) → then normal boot
+function endIntro(){
+  const iv=$('#intro');if(!iv||iv.dataset.done)return;iv.dataset.done='1';
+  try{localStorage.setItem('stride_intro_seen','1');}catch(e){}
+  try{const v=$('#intro-vid');if(v)v.pause();}catch(e){}
+  iv.classList.add('gone');setTimeout(()=>{iv.style.display='none';},520);
+  const s=$('#splash');if(s){s.dataset.done='1';s.style.display='none';}  // video WAS the intro; skip the logo splash
+  runBoot();
+}
+function skipIntro(){endIntro();}
 (function(){
+  let seen=null;try{seen=localStorage.getItem('stride_intro_seen');}catch(e){}
+  const iv=$('#intro'),vid=$('#intro-vid'),reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  // FIRST LAUNCH (no plan yet, never seen, motion allowed) → play the intro film
+  if(iv&&vid&&!seen&&!(S&&S.plan)&&!reduce){
+    iv.classList.add('show');
+    const s0=$('#splash');if(s0){s0.style.display='none';s0.dataset.done='1';}
+    vid.addEventListener('ended',endIntro);
+    vid.addEventListener('error',endIntro);
+    setTimeout(endIntro,7000);                       // safety if autoplay is blocked/stalls
+    const pr=vid.play();if(pr&&pr.catch)pr.catch(endIntro);
+    return;
+  }
+  // normal splash path (repeat launches)
   const s=$('#splash');if(!s){runBoot();return;}
   tintSplash();
   try{const p=s.querySelector('.route');const L=p.getTotalLength();if(L)p.style.setProperty('--L',L);}catch(e){}
-  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   s.addEventListener('click',dismissSplash);
   setTimeout(dismissSplash,reduce?600:2700);
 })();
