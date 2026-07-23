@@ -249,6 +249,10 @@
   .feat li::before{content:'✓';color:var(--safe);font-weight:800;flex:none}
   .feat li.lock::before{content:'★';color:var(--accent)}
   .badge{position:absolute;top:-10px;right:14px;background:var(--accent);color:#1a0704;font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.5px}
+  .plan.max{border-color:#9d78f0;background:linear-gradient(var(--surface),#181427)}
+  .plan.max .badge{background:linear-gradient(90deg,#4b6eff,#9d78f0);color:#fff}
+  .plan.max .feat li.lock::before{content:'★';color:#9d78f0}
+  .plan.max .btn.p{background:linear-gradient(90deg,#4b6eff,#9d78f0);border-color:transparent;color:#fff}
   /* modal / workout library */
   .modal{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:flex-end}
   .sheet{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:20px 20px 30px;max-height:86%;overflow-y:auto;border-top:1px solid var(--line)}
@@ -389,7 +393,9 @@
       <div class="rows">
         <div class="opt modeopt" onclick="setMode('walk')"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Explore, wander &amp; de-stress. For casual walkers, hikers, families &amp; explorers.</div></div><div class="chev">›</div></div>
         <div class="opt modeopt" onclick="setMode('dog')"><div class="tile">🐕</div><div><div class="t">Dog walking</div><div class="d">Walks built around your dog — mark poop &amp; bin spots so anyone can take them out.</div></div><div class="chev">›</div></div>
+        <div class="opt modeopt" onclick="setMode('strollerwalk')"><div class="tile">🚼</div><div><div class="t">Stroller walking</div><div class="d">Walks with the pram — gentle &amp; postnatal-aware, baby along for the ride.</div></div><div class="chev">›</div></div>
         <div class="opt modeopt" onclick="setMode('run')"><div class="tile">🏃</div><div><div class="t">Running</div><div class="d">Train, race and get faster — safely, without injury.</div></div><div class="chev">›</div></div>
+        <div class="opt modeopt" onclick="setMode('strollerrun')"><div class="tile">🏃‍♀️</div><div><div class="t">Stroller running</div><div class="d">Run with the pram — rebuild strength safely after birth.</div></div><div class="chev">›</div></div>
       </div>
     </div>
 
@@ -631,6 +637,23 @@
         <div id="trial-note" class="banner a hide" style="margin-top:10px">Checkout isn't configured yet — add your Stripe payment link in <b>config.js</b> (see PRO.md).</div>
       </div>
 
+      <div class="plan max">
+        <div class="badge">LIVE COACH</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="pname">Max Pro</div>
+          <div class="price">£10.99<small>/mo</small></div>
+        </div>
+        <div class="sub" style="margin-top:2px">Everything in Pro — plus a real human in your corner.</div>
+        <ul class="feat">
+          <li class="lock"><b>Talk to a live fitness coach</b> — a real person, 1:1</li>
+          <li class="lock">Everything in Pro (imports · voice coaching · HR zones · multiple plans · analytics)</li>
+          <li class="lock">Personal form &amp; injury check-ins with your coach</li>
+        </ul>
+        <button class="btn p" id="max-btn" style="margin-top:14px" onclick="goMax()">Go Max Pro — £10.99/mo</button>
+        <div class="sub center" style="margin-top:7px">Secure checkout via Stripe · cancel anytime</div>
+        <div id="max-note" class="banner a hide" style="margin-top:10px">Live coaching is rolling out — add your Max Pro Stripe link in <b>config.js</b> to enable checkout.</div>
+      </div>
+
       <div class="banner g" style="margin-top:14px"><span class="tick">✓</span> The safety promise is <b>always free</b> — Pro never paywalls what keeps you injury-free.</div>
       <div class="sub center" style="margin-top:8px">Typical coaching apps: <b>£15.99/mo, no free tier</b>. Our Pro is less than half — and the core stays free.</div>
     </div>
@@ -811,7 +834,9 @@ var WALK_GOALS='<div class="opt on" data-v="wgeneral"><div class="tile">🌿</di
 '<div class="opt" data-v="w5k"><div class="tile">🎯</div><div><div class="t">Walk a 5K / 10K</div><div class="d">Work up to walking a distance, comfortably.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="hike"><div class="tile">⛰️</div><div><div class="t">Hiking &amp; long walks</div><div class="d">Build up to longer walks &amp; weekend hikes.</div></div><div class="chev">›</div></div>';
 function setMode(m){
-  window._wantDog=(m==='dog'); if(m==='dog')m='walk';   // dog walking = walk profile + dog features on
+  window._wantDog=(m==='dog');                          // dog walking = walk profile + dog features on
+  window._stroller=(m==='strollerwalk'||m==='strollerrun');   // pram walking/running = gentler, postnatal-aware
+  if(m==='dog'||m==='strollerwalk')m='walk'; else if(m==='strollerrun')m='run';
   window._mode=m;
   var gr=$('#goal-rows');if(gr){gr.innerHTML=(m==='walk'?WALK_GOALS:RUN_GOALS);wireSelect('#goal-rows');}
   var set=function(id,t){var e=$('#'+id);if(e)e.textContent=t;};
@@ -839,11 +864,12 @@ function buildPlan(){
   const peak=(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
   let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
   if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
+  if(window._stroller)rampCap=Math.min(rampCap,1.07);   // pushing a pram + postnatal recovery → extra-gentle ramp
   // injury-aware from the start (running): gentler ramp + lower starting load
   const _ia=(mode==='run'&&window._obInjuries&&window._obInjuries.length)?injuryAdjust(window._obInjuries):{rampCap:1.10,baseMul:1,tag:null};
   rampCap=Math.min(rampCap,_ia.rampCap);
   const start=new Date(); start.setHours(0,0,0,0);
-  const startBase=Math.max(3,+(base*_ia.baseMul).toFixed(1));
+  const startBase=Math.max(3,+(base*_ia.baseMul*(window._stroller?0.9:1)).toFixed(1));
   let vol=startBase, plan=[], recent=[startBase];
   for(let w=1;w<=weeks;w++){
     const isDeload=(w%4===0)&&w<weeks-1, isTaper=w>weeks-2;
@@ -869,7 +895,7 @@ function buildPlan(){
   }
   store.useMode(mode);   // build into this mode's profile slot
   S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[],justOnboarded:true,
-     injuries:(mode==='run'&&window._obInjuries)?window._obInjuries.slice():[],injuryTag:_ia.tag||null,dogWalk:!!window._wantDog};
+     injuries:(mode==='run'&&window._obInjuries)?window._obInjuries.slice():[],injuryTag:_ia.tag||null,dogWalk:!!window._wantDog,stroller:!!window._stroller};
   S.plans=[planSnapshot()];
   store.set(S); runBuildLoader();
 }
@@ -2502,7 +2528,24 @@ async function acctSync(){const m=$('#acct-msg');m.innerHTML='<div class="sub" s
 async function acctSignOut(){await StrideSync.signOut();}
 
 // ---- Pro subscription (Stripe) ----
-function isPro(){return !!(S&&(S.pro||(S.subscription&&S.subscription.tier==='pro')));}
+function isMax(){return !!(S&&(S.max||(S.subscription&&S.subscription.tier==='max')));}
+function isPro(){return !!(S&&(S.pro||S.max||(S.subscription&&(S.subscription.tier==='pro'||S.subscription.tier==='max'))));}
+function goMax(){
+  if(isMax()){talkToCoach();return;}                                      // already Max → jump straight to booking
+  const cfg=window.STRIDE_CONFIG||{},link=cfg.STRIPE_MAX_LINK;
+  if(!link){const n=$('#max-note');if(n)n.classList.remove('hide');return;}
+  const st=(window.StrideSync&&StrideSync.state())||{};
+  if(st.configured&&!st.signedIn){go('why');const m=$('#acct-msg');if(m)m.innerHTML='<div class="banner a" style="margin-top:10px">Create a free account or sign in first — it links your subscription to you so Max Pro unlocks on every device.</div>';return;}
+  const uid=st.userId||'';const ret=location.origin+location.pathname+'?max=success';
+  const q=[];if(uid)q.push('client_reference_id='+encodeURIComponent(uid));q.push('success_url='+encodeURIComponent(ret));
+  location.href=link+(link.includes('?')?'&':'?')+q.join('&');
+}
+function talkToCoach(){
+  const cfg=window.STRIDE_CONFIG||{},email=cfg.COACH_EMAIL||'coach@strivon.run';
+  const subj=encodeURIComponent('Strivon Max Pro — book a coaching session');
+  const body=encodeURIComponent("Hi Strivon coaching team,\n\nI'm a Max Pro member and I'd like to book a 1:1 session.\n\nMy goal: "+((S&&S.goalName)||'')+"\nBest times to talk:\n\nThanks!");
+  location.href='mailto:'+email+'?subject='+subj+'&body='+body;
+}
 function goPro(){
   if(isPro())return;
   const cfg=window.STRIDE_CONFIG||{},link=cfg.STRIPE_PAYMENT_LINK;
@@ -2518,13 +2561,16 @@ function goPro(){
   const q=[];if(uid)q.push('client_reference_id='+encodeURIComponent(uid));q.push('success_url='+encodeURIComponent(ret));
   location.href=link+(link.includes('?')?'&':'?')+q.join('&');
 }
-function reflectPro(){const b=$('#pro-btn');if(!b)return;if(isPro()){b.textContent='✓ Pro active';b.disabled=true;b.style.opacity='.7';}else{b.textContent='Go Pro — £6.99/mo';b.disabled=false;b.style.opacity='';}}
+function reflectPro(){
+  const b=$('#pro-btn');if(b){if(isPro()){b.textContent='✓ Pro active';b.disabled=true;b.style.opacity='.7';}else{b.textContent='Go Pro — £6.99/mo';b.disabled=false;b.style.opacity='';}}
+  const mb=$('#max-btn');if(mb){if(isMax()){mb.textContent='📞 Talk to your coach';}else{mb.textContent='Go Max Pro — £10.99/mo';}mb.disabled=false;mb.style.opacity='';}
+}
 function proInit(){
-  try{const p=new URLSearchParams(location.search);if(p.get('pro')==='success'){
-    if(S){S.pro=true;store.set(S);}                                     // optimistic unlock; webhook confirms server-side
+  try{const p=new URLSearchParams(location.search);const pr=p.get('pro')==='success',mx=p.get('max')==='success';if(pr||mx){
+    if(S){S.pro=true;if(mx)S.max=true;store.set(S);}                    // optimistic unlock; webhook confirms server-side
     history.replaceState(null,'',location.pathname);
     if(window.StrideSync&&StrideSync.state().signedIn)StrideSync.syncNow();
-    go('why');coach&&0;
+    go('why');
   }}catch(e){}
 }
 
