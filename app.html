@@ -647,6 +647,7 @@
         <div class="stat"><div class="v" id="st-runs">0</div><div class="k">Runs</div></div>
       </div>
     </div>
+    <div class="card" id="metrics-card"></div>
     <div class="card" id="achv-card"></div>
     <div class="card" id="insights-card"></div>
     <div class="card">
@@ -2273,7 +2274,38 @@ function renderAchievements(){
   const seen=new Set(S.badgesSeen||[]),fresh=earned.filter(a=>!seen.has(a.id));
   if(fresh.length){S.badgesSeen=earned.map(a=>a.id);store.set(S);if(seen.size&&typeof coach==='function'){const a=fresh[0];coach('🏅 Achievement unlocked — '+a.ic+' '+a.name+'! '+a.desc+'.');}}
 }
+// ===================== BODY METRICS (run + walk) =====================
+function computeMetrics(){
+  const a=(S&&S.activities)||[], now=Date.now(), WK=7*86400000, w=S&&S.mode==='walk', wt=(S&&S.weightKg)||70;
+  const recent=a.filter(x=>now-(x.at||0)<WK);
+  const dist7=recent.reduce((s,x)=>s+(x.km||0),0);
+  const time7=recent.reduce((s,x)=>s+(x.secs||0),0);
+  const hrs=a.filter(x=>x.hr).slice(0,10).map(x=>x.hr);
+  const avgHr=hrs.length?Math.round(hrs.reduce((s,x)=>s+x,0)/hrs.length):null;
+  const cal7=Math.round(dist7*wt*(w?0.53:1.036));                 // kcal ≈ km × kg × factor (walk vs run)
+  let vo2=null;try{vo2=vdotEstimate();}catch(e){}
+  let tsb=null;try{const f=trainingForm();if(f)tsb=f.tsb;}catch(e){}
+  const recovery=tsb!=null?Math.max(0,Math.min(100,Math.round(50+tsb*2.2))):null;
+  return {dist7,time7,avgHr,cal7,vo2,recovery,walk:w};
+}
+function recoveryLabel(r){return r>=66?'well recovered':r>=40?'moderate':'go easy';}
+function renderMetrics(){
+  const el=$('#metrics-card');if(!el||!S)return;
+  const m=computeMetrics();
+  const tile=(v,lab,sub)=>`<div class="stat" style="padding:2px 0"><div class="v tick" style="font-size:21px">${v}</div><div class="k">${lab}</div>${sub?`<div class="sub" style="font-size:10px;margin-top:3px;opacity:.7">${sub}</div>`:''}</div>`;
+  el.innerHTML=`<div class="kicker">📊 Body metrics <span class="sub" style="font-weight:400">· this week</span></div>
+    <div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px;gap:14px 10px">
+      ${tile(m.dist7.toFixed(1)+'<span style="font-size:12px">km</span>','Distance')}
+      ${tile((Math.floor(m.time7/3600)?Math.floor(m.time7/3600)+'h ':'')+Math.round(m.time7%3600/60)+'m','Active time')}
+      ${tile(m.cal7||'—','Calories',m.cal7?'kcal':'')}
+      ${tile(m.avgHr||'—','Avg HR',m.avgHr?'bpm':'connect a strap')}
+      ${tile(m.recovery!=null?m.recovery:'—','Recovery',m.recovery!=null?recoveryLabel(m.recovery):'log a few')}
+      ${tile(m.vo2||'—','VO₂max',m.vo2?'ml/kg/min':'log a few')}
+    </div>
+    <div class="sub" style="margin-top:12px;font-size:11px;opacity:.6">Calories from distance &amp; weight · heart rate from a connected strap · recovery &amp; VO₂max from your recent ${m.walk?'walks':'runs'}. Estimates, not clinical readings.</div>`;
+}
 function renderStats(){
+  if(typeof renderMetrics==='function')renderMetrics();
   if(typeof renderAchievements==='function')renderAchievements();
   renderBMI();
   if(typeof renderInsights==='function')renderInsights();
