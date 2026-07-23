@@ -6,6 +6,7 @@
     --tang:#ff6a3d; --amber:#ffb057; --teal:#2ee6c6; --mint:#5ff0d0;
     --grad:linear-gradient(105deg,var(--tang),var(--amber) 42%,var(--teal));
     --grad-soft:linear-gradient(105deg,rgba(255,106,61,.16),rgba(46,230,198,.14));
+    --axiomar:linear-gradient(90deg,#4b6eff,#8f5cf6 55%,#c04adf);
     --disp:-apple-system,"SF Pro Display",system-ui,"Segoe UI",Roboto,sans-serif;
     --mono:ui-monospace,"SF Mono",Menlo,monospace;
     --r:18px;
@@ -18,6 +19,8 @@
   .wrap{max-width:1320px;margin:0 auto;padding:0 40px}
   @media(max-width:640px){.wrap{padding:0 22px}}
   .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:600}
+  /* Axiomar Capital wordmark — blue→purple brand gradient wherever the parent company is named */
+  .axiomar{background:var(--axiomar);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-weight:700;white-space:nowrap}
   h1,h2,h3{font-family:var(--disp);font-weight:800;letter-spacing:-.03em;line-height:1.02;text-wrap:balance;margin:0}
   h2{font-size:clamp(25px,3.6vw,40px);letter-spacing:-.035em}
   h3{font-size:22px;letter-spacing:-.02em}
