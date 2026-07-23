@@ -1386,12 +1386,10 @@ function renderToday(){
 function renderWelcome(){
   const el=$('#today-welcome');if(!el)return;
   if(!S||!S.justOnboarded){el.innerHTML='';return;}
-  const wk1=S.plan[0],peakWk=S.plan.reduce((m,w)=>w.vol>m.vol?w:m,S.plan[0]);
-  const cap=Math.round(((S.exp==='new'?1.08:S.exp==='return'?1.09:1.10)-1)*100);
   const w=S.mode==='walk';const goalDate=new Date(S.created);goalDate.setDate(goalDate.getDate()+S.weeks*7);
   el.innerHTML=`<div class="card" style="border:1px solid var(--accent,#2ee6c6);background:linear-gradient(180deg,rgba(46,230,198,.08),rgba(46,230,198,.02))">
     <div class="kicker">✨ Your plan is ready</div>
-    <div style="margin-top:8px;font-size:15px;line-height:1.5">Here's the difference: your load rises <b>≤${cap}% a week</b> — the injury-safe ramp most apps ignore. You build from <b>${wk1.vol}${w?' walks':'km'}/wk</b> to a peak of <b>${peakWk.vol}${w?'':'km'}</b>, arriving at <b>${S.goalName||distLabel(S.goal)}</b> around <b>${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}</b>.</div>
+    <div style="margin-top:8px;font-size:15px;line-height:1.5">Here's what makes us different: we build you up <b>gently</b> — a little more each week, never a jump big enough to set you back. Most apps rush it and get people hurt. You'll reach <b>${S.goalName||distLabel(S.goal)}</b> by <b>${DOW[goalDate.getDay()]} ${goalDate.getDate()} ${MON[goalDate.getMonth()]}</b> — one comfortable ${w?'walk':'run'} at a time.</div>
     ${(function(){var p=computeProjection();if(!p)return '';var e=p.points[Math.min(1,p.points.length-1)];var lost=(e.weight&&p.canLose)?+(p.weight-e.weight).toFixed(1):0;var lead=lost>=0.3?('<b>'+lost+'kg lighter</b>, '):'';return '<div style="margin-top:10px;font-size:14px;line-height:1.5;color:var(--muted)">📈 By <b>week '+e.week+'</b> ('+e.date.getDate()+' '+MON[e.date.getMonth()]+'): '+lead+'more energy and less out of breath. See the full picture below.</div>';})()}
     <div class="row" style="margin-top:12px;gap:8px"><button class="btn p" onclick="go('run')">Start your first ${actWord()} →</button><button class="btn ghost" style="flex:.5" onclick="dismissWelcome()">Got it</button></div></div>`;
 }
