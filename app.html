@@ -558,6 +558,8 @@
         <div id="r-marker"></div>
         <div class="gpspill" id="r-gps">GPS ●</div>
         <button class="hrpill" id="hr-pill" onclick="connectHR()">❤️ Connect HR</button>
+        <button class="hrpill" id="cam-pill" style="top:auto;bottom:12px;left:10px;right:auto" onclick="document.getElementById('run-cam').click()">📸 Moment</button>
+        <input id="run-cam" type="file" accept="image/*" capture="environment" style="display:none" onchange="captureRunMoment(this)">
         <div id="tread-panel" class="tread hide">
           <div class="tlabel">🏢 Treadmill speed</div>
           <div class="tspeed"><button class="tstep" onclick="setSpeed(-0.5)">−</button><div><span id="t-speed">8.0</span><small>km/h</small></div><button class="tstep" onclick="setSpeed(0.5)">+</button></div>
@@ -1248,6 +1250,24 @@ async function saveMoment(){
   S.memories.unshift({id:(crypto.randomUUID?crypto.randomUUID():'m'+Date.now()),at:Date.now(),lat:loc.lat,lon:loc.lon,feeling:feel,note:note,photo:window._amPhoto||null});
   try{store.set(S);}catch(e){S.memories.shift();if(msg)msg.textContent='Storage full — try a moment without a photo.';return;}
   window._amPhoto=null;closeAtlasModal();renderAtlas();
+}
+// 📸 Capture a photo mid-activity → pins a moment to your route (flows into the Atlas story).
+async function captureRunMoment(inp){
+  const f=inp&&inp.files&&inp.files[0];if(!f)return;inp.value='';
+  if(typeof coach==='function')coach('📸 Saving your moment…');
+  let photo=null;try{photo=await downscaleImg(f,720,.6);}catch(e){}
+  const act=walkLike(S&&S.mode)?'walk':(S&&S.mode==='swim'?'swim':'run');
+  const km=(typeof run!=='undefined'&&run)?+(run.dist/1000).toFixed(2):0;
+  const save=(lat,lon)=>{
+    ensureAtlas();
+    S.memories.unshift({id:(crypto.randomUUID?crypto.randomUUID():'m'+Date.now()),at:Date.now(),lat:lat,lon:lon,feeling:'📸',note:'On my '+act+(km>0?` — ${km}km in`:''),photo:photo});
+    try{store.set(S);}catch(e){S.memories.shift();if(typeof coach==='function')coach('Storage full — try again without a photo.');return;}
+    if(typeof run!=='undefined'&&run){run.moments=run.moments||[];run.moments.push([lat,lon]);}
+    if(typeof coach==='function')coach('📸 Moment pinned to your route — find it in Atlas.');
+    if(typeof renderAtlas==='function')try{renderAtlas();}catch(e){}
+  };
+  if(typeof run!=='undefined'&&run&&run.last){save(run.last.la,run.last.lo);}
+  else{try{const l=await getLoc();save(l.lat,l.lon);}catch(e){save(51.5074,-0.1278);}}
 }
 function sealCapsule(){
   const d=new Date();d.setFullYear(d.getFullYear()+1);const def=d.toISOString().slice(0,10),min=new Date(Date.now()+86400000).toISOString().slice(0,10);
