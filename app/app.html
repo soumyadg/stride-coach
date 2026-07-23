@@ -575,6 +575,7 @@
         <div class="kicker">How did that feel?</div>
         <div class="sub" style="margin:3px 0">Recalibrates next week — the injury-safe loop.</div>
         <div class="seg" id="rpe-seg"><button data-v="easy">Easy</button><button data-v="right" class="on">Just right</button><button data-v="hard">Hard</button><button data-v="painful">Painful</button></div>
+        <div class="sub" id="rpe-preview" style="margin-top:8px">✅ Perfect — next week holds course.</div>
         <div class="row" style="margin-top:12px"><button class="btn p" onclick="saveRPE()">Log &amp; recalibrate</button><button class="btn ghost" style="flex:.55" onclick="exportCurrentRun()">⬇ GPX</button></div>
       </div>
     </div>
@@ -791,7 +792,10 @@ function uuid(){return crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-
 function wireSelect(sel){$$(sel+' > *').forEach(el=>el.onclick=()=>{el.parentElement.children&&[...el.parentElement.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');});}
 ['#goal-rows','#o-days','#o-exp','#pref-grid'].forEach(wireSelect);
 $$('.rd button').forEach(b=>b.onclick=()=>{[...b.parentElement.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');});
-$$('#rpe-seg button').forEach(b=>b.onclick=()=>{[...b.parentElement.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+$$('#rpe-seg button').forEach(b=>b.onclick=()=>{[...b.parentElement.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');rpePreview(b.dataset.v);});
+function rpePreview(v){const el=$('#rpe-preview');if(!el)return;const w=walkLike(S&&S.mode),a=w?'walk':'run';
+  const m={easy:'💪 Felt easy — next week nudges up ~5%.',right:'✅ Perfect — next week holds course.',hard:'🟠 Tough — next week eases ~7% to keep you safe.',painful:'🩹 We\'ll ease off ~18% next week — recovery IS training, not weakness.'};
+  el.textContent=m[v]||'';}
 
 // ---- onboarding steps ----
 function obStep(n){
@@ -1694,7 +1698,8 @@ let run=null,watchId=null,tick=null,muted=false;
 const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,race:4.4,cool:6.3,walk:11.0,wwarm:12.5,brisk:9.0};
 function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=0;}return `${m}:${String(s).padStart(2,'0')}`;}
 function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy '+(S&&S.mode==='walk'?'walk':'run'),km:5,kind:'easy',note:''};}
-function actWord(){return S&&S.mode==='walk'?'walk':'run';}
+function walkLike(m){m=m||(S&&S.mode);return m==='walk'||m==='dog';}   // dog is a walk-family activity (its own profile slot)
+function actWord(){return walkLike(S&&S.mode)?'walk':'run';}
 function reflectMode(){var w=S&&S.mode==='walk';var i=document.getElementById('nav-run-i'),t=document.getElementById('nav-run-t');if(i)i.textContent=w?'🚶':'🏃';if(t)t.textContent=w?'Walk':'Run';var rs=document.getElementById('r-start');if(rs&&(typeof run==='undefined'||!run||!run.active))rs.textContent='Start '+(w?'walk':'run');}
 function buildLaps(se){
   const t=se.t||'',km=se.km||5,kind=se.kind;
@@ -1872,7 +1877,7 @@ function renderDogWalk(){
   }
   const spots=(S.poopSpots||[]).slice().sort((a,b)=>b.at-a.at);
   const list=spots.length?spots.map(s=>`<div class="atlas-mem" onclick="viewSpotOnMap('${s.id}')"><div class="am-thumb">${s.kind==='bin'?'🗑️':'💩'}</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${s.kind==='bin'?'Bin':'Poop spot'}${s.note?' · '+s.note.replace(/</g,'&lt;'):''}</div><div class="sub">${timeAgo(s.at)}</div></div><button class="gpxbtn" title="Delete" aria-label="Delete spot" onclick="event.stopPropagation();delPoopSpot('${s.id}')" style="width:28px;height:28px;font-size:12px">✕</button></div>`).join(''):'<div class="sub">No spots yet — tap ➕ at a good spot on your walk.</div>';
-  el.innerHTML=`<div class="sub" style="margin-bottom:8px">Tap ➕ where you are to save a spot. ${dogName()}'s next walker sees them all. 🐾</div>
+  el.innerHTML=`<div class="sub" style="margin-bottom:8px">Tap ➕ where you are to save a spot — ${dogName()}'s next walker sees them all. 🐾</div>
     <div id="dog-map" style="position:relative;height:180px;border-radius:12px;overflow:hidden;background:#0c0e16"><div id="dog-tiles" style="position:absolute;inset:0"></div><svg id="dog-svg" style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"></svg><div style="position:absolute;right:6px;bottom:5px;font-size:9px;color:#9aa;background:rgba(0,0,0,.4);padding:1px 5px;border-radius:5px">© OSM · CARTO</div></div>
     <div class="row" style="gap:6px;margin-top:10px"><button class="btn p" onclick="addPoopSpot('poop')">➕💩 Poop spot here</button><button class="btn ghost" style="flex:0 0 auto;width:auto;padding:12px 14px" onclick="addPoopSpot('bin')">🗑️ Bin</button></div>
     <div id="dog-msg"></div>
