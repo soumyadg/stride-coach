@@ -1,5 +1,6 @@
 {
   "appId": "com.stridecoach.app",
   "appName": "Strivon",
-  "webDir": "app"
+  "webDir": "app",
+  "server": { "hostname": "strivon.app", "iosScheme": "https", "androidScheme": "https" }
 }
