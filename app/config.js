@@ -7,10 +7,10 @@ window.STRIDE_CONFIG = {
 
   // Pro subscription (Stripe). Web only — the App Store requires Apple IAP instead. See PRO.md.
   // Create a recurring Payment Link in the Stripe dashboard (£6.99/mo) and paste its URL here.
-  STRIPE_PAYMENT_LINK: 'https://buy.stripe.com/6oUfZigar2healY2sT6g800',  // Strivon Pro £6.99/mo
+  STRIPE_PAYMENT_LINK: 'https://buy.stripe.com/6oUfZigar2healY2sT6g800',  // Strivon Tempo £6.99/mo
   // Max Pro £10.99/mo — everything in Pro + a real human coach. Create a second recurring
   // Payment Link in Stripe and paste it here; leave blank to show a "coming soon" note.
-  STRIPE_MAX_LINK: '',  // Strivon Max Pro £10.99/mo
+  STRIPE_MAX_LINK: '',  // Strivon Summit £10.99/mo
   // Where "Talk to a live coach" requests are sent until the booking flow is built.
   COACH_EMAIL: 'coach@strivon.run',
 
