@@ -960,7 +960,7 @@ function localCoachReply(q){
     if(tsb!=null)return tsb<-20?`Signs of overreaching — form is ${tsb} (fatigue well over fitness). Take 2–3 easy/rest days and reassess.`:`Not overtrained — form is ${tsb>0?'+':''}${tsb}, a normal range. Keep weekly load rises ≤10% and you'll stay in the safe zone.`;
     return `Keep weekly load jumps ≤10% and don't stack hard days. Persistent fatigue, bad sleep or niggles = back off. Real pain → see a physio.`;
   }
-  if(/warm.?up|pre.?run|pre.?walk|before.*(run|walk)|stretch before|dynamic|limber/.test(q))
+  if(!/\beat|food|drink|nutrition|fuel|carb|protein|meal/.test(q)&&/warm.?up|pre.?run|pre.?walk|before.*(run|walk)|stretch before|dynamic|limber/.test(q))
     return `Before you head out: 5 minutes truly easy, then dynamic moves — leg swings, walking lunges, high knees, ankle circles. Save static stretching for after. Cold muscles get hurt.`;
   if(/cool.?down|after.*(run|walk)|post.?run|stretch after/.test(q))
     return `After: walk it out 3–5 minutes, then gentle static stretches for calves, quads, hamstrings and hips (~30s each). Rehydrate and get protein + carbs within the hour.`;
