@@ -249,6 +249,7 @@
   .feat li::before{content:'✓';color:var(--safe);font-weight:800;flex:none}
   .feat li.lock::before{content:'★';color:var(--accent)}
   .badge{position:absolute;top:-10px;right:14px;background:var(--accent);color:#1a0704;font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.5px}
+  .plan.free{border-color:var(--safe,#2ee6c6);background:linear-gradient(var(--surface),#0e1c1a)}
   .plan.max{border-color:#9d78f0;background:linear-gradient(var(--surface),#181427)}
   .plan.max .badge{background:linear-gradient(90deg,#4b6eff,#9d78f0);color:#fff}
   .plan.max .feat li.lock::before{content:'★';color:#9d78f0}
@@ -393,9 +394,13 @@
       <div class="rows">
         <div class="opt modeopt" onclick="setMode('walk')"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Explore, wander &amp; de-stress. For casual walkers, hikers, families &amp; explorers.</div></div><div class="chev">›</div></div>
         <div class="opt modeopt" onclick="setMode('dog')"><div class="tile">🐕</div><div><div class="t">Dog walking</div><div class="d">Walks built around your dog — mark poop &amp; bin spots so anyone can take them out.</div></div><div class="chev">›</div></div>
-        <div class="opt modeopt" onclick="setMode('strollerwalk')"><div class="tile">🚼</div><div><div class="t">Stroller walking</div><div class="d">Walks with the pram — gentle &amp; postnatal-aware, baby along for the ride.</div></div><div class="chev">›</div></div>
         <div class="opt modeopt" onclick="setMode('run')"><div class="tile">🏃</div><div><div class="t">Running</div><div class="d">Train, race and get faster — safely, without injury.</div></div><div class="chev">›</div></div>
-        <div class="opt modeopt" onclick="setMode('strollerrun')"><div class="tile">🏃‍♀️</div><div><div class="t">Stroller running</div><div class="d">Run with the pram — rebuild strength safely after birth.</div></div><div class="chev">›</div></div>
+        <div class="opt modeopt" onclick="toggleMommy()"><div class="tile">🤱</div><div><div class="t">Mommy runners</div><div class="d">With the pram — gentle &amp; postnatal-aware. Choose walk or run.</div></div><div class="chev" id="mommy-chev">›</div></div>
+        <div id="mommy-sub" style="display:none;flex-direction:column;gap:8px;margin:0 0 0 16px;padding-left:8px;border-left:2px solid rgba(46,230,198,.4)">
+          <div class="opt modeopt" onclick="setMode('strollerwalk')"><div class="tile">🚼</div><div><div class="t">Walk with the pram</div><div class="d">Gentle stroller walks — baby along for the ride.</div></div><div class="chev">›</div></div>
+          <div class="opt modeopt" onclick="setMode('strollerrun')"><div class="tile">🏃‍♀️</div><div><div class="t">Run with the pram</div><div class="d">Rebuild running strength safely after birth.</div></div><div class="chev">›</div></div>
+        </div>
+        <div class="opt modeopt" onclick="setMode('swim')"><div class="tile">🏊</div><div><div class="t">Swimming</div><div class="d">Pool or open water — build distance safely, shoulder-aware. Low-impact, kind to joints.</div></div><div class="chev">›</div></div>
       </div>
     </div>
 
@@ -429,7 +434,7 @@
       </div>
       <div class="row">
         <div><label id="lbl-base">Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
-        <div><label>Longest run (km)</label><input id="o-long" type="number" value="7" min="0"></div>
+        <div><label id="lbl-long">Longest run (km)</label><input id="o-long" type="number" value="7" min="0"></div>
       </div>
       <div class="row">
         <div><label>Height (cm)</label><input id="o-height" type="number" value="" placeholder="175" min="100" max="230"></div>
@@ -489,7 +494,7 @@
     <details class="card"><summary>🌤️ Weather · when to move <span class="cx-sum" id="weather-sum"></span> <span class="cx-chev">⌄</span></summary>
       <div class="cx-body"><div id="weather-card"><div class="sub">Checking conditions…</div></div></div>
     </details>
-    <details class="card"><summary>🧭 Route finder <span class="cx-sum">a fresh loop near you</span> <span class="cx-chev">⌄</span></summary>
+    <details class="card" id="routefinder-details"><summary>🧭 Route finder <span class="cx-sum">a fresh loop near you</span> <span class="cx-chev">⌄</span></summary>
       <div class="cx-body"><div id="route-card"></div></div>
     </details>
     <details class="card"><summary>🔔 Training reminders <span class="cx-sum" id="rem-sum">a nudge on run days</span> <span class="cx-chev">⌄</span></summary>
@@ -606,7 +611,7 @@
     <div class="card" style="padding:16px 16px 18px">
       <div class="kicker">Simple, honest pricing</div>
 
-      <div class="plan">
+      <div class="plan free">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="pname">Trailhead <span class="pill g">free forever</span></div>
           <div class="price">£0</div>
@@ -839,38 +844,49 @@ var WALK_GOALS='<div class="opt on" data-v="wgeneral"><div class="tile">🌿</di
 '<div class="opt" data-v="explore"><div class="tile">🧭</div><div><div class="t">Explore &amp; wellbeing</div><div class="d">Wander, discover, de-stress — movement for the mind.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="w5k"><div class="tile">🎯</div><div><div class="t">Walk a 5K / 10K</div><div class="d">Work up to walking a distance, comfortably.</div></div><div class="chev">›</div></div>'+
 '<div class="opt" data-v="hike"><div class="tile">⛰️</div><div><div class="t">Hiking &amp; long walks</div><div class="d">Build up to longer walks &amp; weekend hikes.</div></div><div class="chev">›</div></div>';
+var SWIM_GOALS='<div class="opt on" data-v="swimdist"><div class="tile">🏊</div><div><div class="t">Swim a distance</div><div class="d">Build to your first 1km, 1500m or a mile — steadily &amp; safely.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="tri"><div class="tile">🌊</div><div><div class="t">Triathlon / open-water</div><div class="d">Race-swim endurance &amp; open-water confidence.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="swimfit"><div class="tile">💪</div><div><div class="t">General fitness</div><div class="d">Low-impact cardio — easy on the joints, kind to your body.</div></div><div class="chev">›</div></div>'+
+'<div class="opt" data-v="technique"><div class="tile">🧘</div><div><div class="t">Technique &amp; endurance</div><div class="d">Smoother stroke, better breathing, longer sets.</div></div><div class="chev">›</div></div>';
 function setMode(m){
   window._wantDog=(m==='dog');                          // dog walking = walk profile + dog features on
   window._stroller=(m==='strollerwalk'||m==='strollerrun');   // pram walking/running = gentler, postnatal-aware
   if(m==='dog'||m==='strollerwalk')m='walk'; else if(m==='strollerrun')m='run';
   window._mode=m;
-  var gr=$('#goal-rows');if(gr){gr.innerHTML=(m==='walk'?WALK_GOALS:RUN_GOALS);wireSelect('#goal-rows');}
+  var isW=(m==='walk'), isS=(m==='swim');
+  var gr=$('#goal-rows');if(gr){gr.innerHTML=(isS?SWIM_GOALS:isW?WALK_GOALS:RUN_GOALS);wireSelect('#goal-rows');}
   var set=function(id,t){var e=$('#'+id);if(e)e.textContent=t;};
-  set('ob1-h', m==='walk'?'What brings you walking?':"What's your goal?");
-  set('ob2-h', m==='walk'?'Your walking now':'Your running now');
-  set('lbl-dist', m==='walk'?'Target distance (optional)':'Race distance');
-  set('lbl-weeks', m==='walk'?'Weeks to build':'Weeks to race');
-  set('lbl-base', m==='walk'?'Weekly km now (walking)':'Weekly km now');
-  set('lbl-perweek', m==='walk'?'Walks per week':'Runs per week');
-  if(m==='walk'){var og=$('#o-goal');if(og)og.value='5k';}
+  set('ob1-h', isS?'What brings you swimming?':isW?'What brings you walking?':"What's your goal?");
+  set('ob2-h', isS?'Your swimming now':isW?'Your walking now':'Your running now');
+  set('lbl-dist', isS?'Target (m)':isW?'Target distance (optional)':'Race distance');
+  set('lbl-weeks', (isS||isW)?'Weeks to build':'Weeks to race');
+  set('lbl-base', isS?'Weekly metres now':isW?'Weekly km now (walking)':'Weekly km now');
+  set('lbl-perweek', isS?'Swims per week':isW?'Walks per week':'Runs per week');
+  set('lbl-long', isS?'Longest swim (m)':'Longest run (km)');
+  if(isW){var og=$('#o-goal');if(og)og.value='5k';}
+  if(isS){var ob=$('#o-base');if(ob)ob.value='1500';var ol=$('#o-long');if(ol)ol.value='400';}
   _obInjuries=[];   // fresh injury capture per onboarding
   $('#ob0').classList.add('hide');$('#ob1').classList.remove('hide');obStep(1);
 }
 function backToMode(){window._mode=null;var o1=document.getElementById("ob1");if(o1)o1.classList.add("hide");var o0=document.getElementById("ob0");if(o0)o0.classList.remove("hide");if(typeof playStep=="function")playStep(o0);}
+function toggleMommy(){var s=document.getElementById('mommy-sub'),c=document.getElementById('mommy-chev');var open=s&&s.style.display!=='none';if(s)s.style.display=open?'none':'flex';if(c)c.textContent=open?'›':'⌄';}
 function buildPlan(){
+  const swim=(window._mode==='swim');
   const goal=$('#o-goal').value;
-  const base=Math.max(5,+$('#o-base').value||10);
+  const base=swim?Math.max(0.3,(+$('#o-base').value||1500)/1000):Math.max(5,+$('#o-base').value||10);   // swim inputs are in metres → km internally
   const days=+$('#o-days .on').dataset.v;
-  const longNow=+$('#o-long').value||base*0.4;
+  const longNow=swim?((+$('#o-long').value||400)/1000):(+$('#o-long').value||base*0.4);
   const weeks=Math.min(24,Math.max(4,+$('#o-weeks').value||12));
   const exp=$('#o-exp .on').dataset.v;
   const pref=$('#pref-grid .on').dataset.v;
   const goalName=$('#goal-rows .on .t').textContent;
   const mode=window._mode||(($('#goal-rows .on')&&$('#goal-rows .on').dataset.v==='walk')?'walk':'run');
-  const peak=(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
+  const peak=swim?(exp==='new'?3:exp==='return'?4.5:6)   // weekly swim volume ceiling (km) — swimming volumes are lower
+    :(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
   let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
   if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
   if(window._stroller)rampCap=Math.min(rampCap,1.07);   // pushing a pram + postnatal recovery → extra-gentle ramp
+  if(swim)rampCap=Math.min(rampCap,1.08);               // swimmer's shoulder is an overuse injury — keep the ramp conservative
   // injury-aware from the start (running): gentler ramp + lower starting load
   const _ia=(mode==='run'&&window._obInjuries&&window._obInjuries.length)?injuryAdjust(window._obInjuries):{rampCap:1.10,baseMul:1,tag:null};
   rampCap=Math.min(rampCap,_ia.rampCap);
@@ -930,10 +946,11 @@ function renderProfileSwitch(){
     +`<button class="ps-btn${runOn?' on':''}" onclick="pickProfile('run')">🏃 Run</button>`
     +`<button class="ps-btn${walkOn?' on':''}" onclick="pickProfile('walk')">🚶 Walk</button>`
     +`<button class="ps-btn${dog?' on':''}" onclick="pickProfile('dog')">🐕 Dog</button>`
+    +`<button class="ps-btn${active==='swim'?' on':''}" onclick="pickProfile('swim')">🏊 Swim</button>`
     +`</div>`;
 }
 function pickProfile(x){
-  const targetMode=x==='run'?'run':'walk';
+  const targetMode=x==='run'?'run':x==='swim'?'swim':'walk';
   if(!store||store.activeMode()!==targetMode)switchProfile(targetMode);   // may launch onboarding if that profile is empty
   if(S){S.dogWalk=(x==='dog');store.set(S);if(typeof renderToday==='function')renderToday();}   // Dog vs plain Walk share the walk slot, distinguished by this flag
   if(x==='dog')setTimeout(()=>{const d=document.getElementById('dogwalk-details');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});}},220);
@@ -1333,6 +1350,14 @@ function renderPlans(){
 function makeSessions(vol,days,goal,w,total,mode){
   const longFrac=goal==='marathon'?0.34:goal==='half'?0.32:0.30;
   const long=+(vol*longFrac).toFixed(1);
+  if(mode==='swim'){
+    const longS=+(vol*0.4).toFixed(2), n=Math.max(1,days-1), each=+((vol-longS)/n).toFixed(2), s=[];
+    s.push({t:'Endurance swim',km:longS,kind:'long',note:'Steady continuous swim — build your aerobic base.'});
+    s.push({t:'Intervals',km:each,kind:'quality',note:'e.g. 8×100m with 20s rest — controlled &amp; smooth.'});
+    for(let i=1;i<n;i++)s.push(i===1?{t:'Technique',km:each,kind:'easy',note:'Drills + easy laps — smoother stroke, better breathing.'}
+                                    :{t:'Easy swim',km:each,kind:'easy',note:'Relaxed, low-effort — recovery in the water.'});
+    return s;
+  }
   if(mode==='walk'){
     let rest=vol-long, easyN=Math.max(1,days-1), easy=+(rest/easyN).toFixed(1), s=[];
     s.push({t:'Long walk',km:long,kind:'long',note:'Steady, relaxed pace — enjoy the time out.'});
@@ -1433,7 +1458,8 @@ function renderToday(){
   reflectReminders();
   if(typeof renderMission==='function')renderMission();
   if(typeof renderProjection==='function')renderProjection();
-  if(typeof renderRouteFinder==='function')renderRouteFinder();
+  const rfDet=$('#routefinder-details');if(rfDet)rfDet.style.display=(S&&S.mode==='swim')?'none':'';   // no route finder for swimming
+  if(S&&S.mode!=='swim'&&typeof renderRouteFinder==='function')renderRouteFinder();
   if(typeof renderDogWalk==='function')renderDogWalk();
   if(typeof renderInjuries==='function')renderInjuries();
   if(typeof reflectMode==='function')reflectMode();
