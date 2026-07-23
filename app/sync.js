@@ -52,64 +52,75 @@ window.StrideSync = (function () {
     async syncNow() { if (!user) return; await pull(); await push(); emit(); }
   };
 
-  // ---- row mappers (local S <-> DB) ----
-  function profileRow(s) { return { id: user.id, email: user.email, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days_per_week: s.days, experience: s.exp, pref: s.pref, max_hr: s.maxHR || 190, height_cm: s.heightCm || null, weight_kg: s.weightKg || null, reminders_on: !!(s.reminders && s.reminders.on), current_week: s.curWeek }; }
-  function planRow(s) { if (!s.planId) { s.planId = uuid(); saveS(s); } return { id: s.planId, user_id: user.id, goal: s.goal, goal_name: s.goalName, weeks: s.weeks, days: s.days, experience: s.exp, pref: s.pref, mode: s.mode || 'run', start_date: (s.created || '').slice(0, 10) || null, data: s.plan, cur_week: s.curWeek, is_active: true, updated_at: new Date(s._mut || Date.now()).toISOString() }; }
-  function planRowFrom(p, activeId) { return { id: p.planId, user_id: user.id, goal: p.goal, goal_name: p.goalName, weeks: p.weeks, days: p.days, experience: p.exp, pref: p.pref, mode: p.mode || 'run', start_date: (p.created || '').slice(0, 10) || null, data: p.plan, cur_week: p.curWeek, is_active: p.planId === activeId, updated_at: new Date(p._mut || Date.now()).toISOString() }; }
-  function planRowToSnap(r) { return { planId: r.id, goal: r.goal, goalName: r.goal_name, mode: r.mode || 'run', days: r.days, exp: r.experience, pref: r.pref, weeks: r.weeks, plan: r.data, created: (r.start_date || '') + 'T00:00:00.000Z', curWeek: r.cur_week || 1, _mut: +new Date(r.updated_at || 0) }; }
-  function actRows(s) { return (s.activities || []).map(a => { if (!a.id) a.id = uuid(); return { id: a.id, user_id: user.id, name: a.name, started_at: new Date(a.startAt || a.at).toISOString(), duration_s: a.secs, distance_km: a.km, avg_pace: a.pace, avg_hr: a.hr || null, rpe: a.rpe, wet_bulb: a.wb || null, source: a.source || 'gps', route: a.pts && a.pts.length ? a.pts : null }; }); }
-  function fromActRow(a) { const start = +new Date(a.started_at); return { id: a.id, name: a.name, km: +a.distance_km, secs: a.duration_s, pace: +a.avg_pace, hr: a.avg_hr, rpe: a.rpe, wb: a.wet_bulb, source: a.source, startAt: start, at: start + (a.duration_s * 1000 || 0), pts: a.route || [] }; }
-  function rebuildLocal(prof, plan, acts) {
-    const s = plan ? { goal: plan.goal, goalName: plan.goal_name, mode: plan.mode || 'run', base: 0, days: plan.days, exp: plan.experience, pref: plan.pref, weeks: plan.weeks, plan: plan.data, created: (plan.start_date || '') + 'T00:00:00.000Z', curWeek: plan.cur_week || 1, planId: plan.id, readiness: null, history: [], activities: [] } : { activities: [] };
-    if (prof) { s.maxHR = prof.max_hr; s.heightCm = prof.height_cm; s.weightKg = prof.weight_kg; s.reminders = { on: !!prof.reminders_on }; if (prof.current_week) s.curWeek = prof.current_week; }
-    s.activities = (acts || []).map(fromActRow).sort((a, b) => b.at - a.at);
-    return s;
+  // ---- two-profile blob sync (Run + Walk) ----
+  const MODES = ['run', 'walk'];
+  const PK = m => 'stride_p_' + m;
+  const readProf = m => { try { return JSON.parse(localStorage.getItem(PK(m)) || 'null'); } catch (e) { return null; } };
+  const writeProf = (m, d) => localStorage.setItem(PK(m), JSON.stringify(d));
+  const unionById = (a, b) => { const o = {}; (a || []).forEach(x => { if (x && x.id) o[x.id] = x; }); (b || []).forEach(x => { if (x && x.id && !o[x.id]) o[x.id] = x; }); return Object.values(o); };
+
+  // merge a local profile blob with the remote one: LWW on plan/fields, UNION on runs/plans/memories
+  function mergeProfile(local, remote) {
+    const lm = local._mut || 0, rm = remote._mut || 0;
+    const base = Object.assign({}, rm > lm ? remote : local);         // newer wins for scalar fields + active plan
+    base.activities = unionById(local.activities, remote.activities).sort((x, y) => (y.at || 0) - (x.at || 0));  // keep every device's runs
+    const pm = {}; (local.plans || []).forEach(p => { if (p && p.planId) pm[p.planId] = p; });
+    (remote.plans || []).forEach(p => { if (p && p.planId) { const c = pm[p.planId]; if (!c || (p._mut || 0) > (c._mut || 0)) pm[p.planId] = p; } });
+    if (Object.keys(pm).length) base.plans = Object.values(pm);
+    base.memories = unionById(local.memories, remote.memories);
+    base.capsules = unionById(local.capsules, remote.capsules);
+    return base;
   }
-  function applyRemote(local, prof, plan) {
-    Object.assign(local, { plan: plan.data, curWeek: plan.cur_week, goal: plan.goal, goalName: plan.goal_name, weeks: plan.weeks, days: plan.days, exp: plan.experience, pref: plan.pref, planId: plan.id });
-    if (prof) { local.maxHR = prof.max_hr; local.reminders = { on: !!prof.reminders_on }; }
+  function mirrorActive() {
+    const am = localStorage.getItem('stride_active') || 'run';
+    const act = localStorage.getItem(PK(am));
+    if (act) localStorage.setItem('stride', act);
   }
 
-  // ---- push / pull ----
   async function push() {
-    if (!user || syncing) return; const s = getS(); if (!s) return; syncing = true;
+    if (!user || syncing) return; syncing = true;
     try {
-      await sb.from('profiles').upsert(profileRow(s));
-      if (s.plans && s.plans.length) await sb.from('plans').upsert(s.plans.map(p => planRowFrom(p, s.planId)));  // back up every plan
-      else if (s.plan) await sb.from('plans').upsert(planRow(s));
-      const rows = actRows(s); saveS(s); // saveS to persist any new activity ids
-      if (rows.length) await sb.from('activities').upsert(rows);
-      localStorage.setItem(OUTBOX, '');
-      stamp();
+      const rows = [];
+      MODES.forEach(m => {
+        const blob = readProf(m); if (!blob) return;
+        (blob.activities || []).forEach(a => { if (!a.id) a.id = uuid(); });      // stable ids for union merges
+        writeProf(m, blob);
+        rows.push({ user_id: user.id, mode: m, data: blob, updated_at: new Date(blob._mut || Date.now()).toISOString() });
+      });
+      if (rows.length) await sb.from('profile_state').upsert(rows);
+      mirrorActive();
+      localStorage.setItem(OUTBOX, ''); stamp();
     } finally { syncing = false; }
   }
+
   async function pull() {
-    if (!user) return; const s = getS();
-    const [{ data: prof }, { data: plan }, { data: acts }, { data: sub }] = await Promise.all([
-      sb.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-      sb.from('plans').select('*').eq('user_id', user.id).eq('is_active', true).order('updated_at', { ascending: false }).limit(1).maybeSingle(),
-      sb.from('activities').select('*').eq('user_id', user.id),
+    if (!user) return;
+    const [{ data: states }, { data: sub }] = await Promise.all([
+      sb.from('profile_state').select('*').eq('user_id', user.id),
       sb.from('subscriptions').select('*').eq('user_id', user.id).maybeSingle()
     ]);
-    if (!s && (plan || prof)) { saveS(rebuildLocal(prof, plan, acts)); }       // fresh device → restore
-    else if (s) {
-      if (plan) { const rt = +new Date(plan.updated_at || 0), lt = s._mut || 0; if (rt > lt) { applyRemote(s, prof, plan); } }  // LWW on plan
-      if (acts && acts.length) { const have = new Set((s.activities || []).map(a => a.id)); const add = acts.filter(a => !have.has(a.id)).map(fromActRow); if (add.length) s.activities = (s.activities || []).concat(add).sort((a, b) => b.at - a.at); } // union runs
-      saveS(s);
+    const byMode = {}; (states || []).forEach(r => { byMode[r.mode] = r.data; });
+    MODES.forEach(m => {
+      const remote = byMode[m], local = readProf(m);
+      let merged = null;
+      if (remote && local) merged = mergeProfile(local, remote);
+      else if (remote) merged = remote;
+      else merged = local;
+      if (merged) writeProf(m, merged);
+    });
+    // pick an active mode if none set yet (fresh device restoring from cloud)
+    if (!localStorage.getItem('stride_active')) {
+      const first = byMode['run'] ? 'run' : (byMode['walk'] ? 'walk' : null);
+      if (first) localStorage.setItem('stride_active', first);
     }
-    // multi-plan: restore/merge EVERY plan (the active plan is already reconciled above)
-    try {
-      const { data: allPlans } = await sb.from('plans').select('*').eq('user_id', user.id);
-      if (allPlans && allPlans.length) {
-        const sp = getS() || {}; const byId = {};
-        (sp.plans || []).forEach(p => { byId[p.planId] = p; });
-        allPlans.forEach(r => { const snap = planRowToSnap(r); const cur = byId[snap.planId]; if (!cur || snap._mut > (cur._mut || 0)) byId[snap.planId] = snap; });  // LWW per plan
-        if (sp.planId && sp.plan) byId[sp.planId] = { planId: sp.planId, goal: sp.goal, goalName: sp.goalName, mode: sp.mode, base: sp.base, days: sp.days, exp: sp.exp, pref: sp.pref, weeks: sp.weeks, plan: sp.plan, created: sp.created, curWeek: sp.curWeek, _mut: Date.now() };  // local active stays authoritative
-        sp.plans = Object.values(byId); saveS(sp);
-      }
-    } catch (e) { console.warn('[StrideSync] plans', e && e.message); }
-    // subscription status (server truth) → drives Pro gating
-    const s3 = getS(); if (s3) { s3.subscription = sub ? { tier: sub.tier, status: sub.status, period_end: sub.current_period_end } : (s3.subscription || { tier: 'free' }); if (s3.subscription.tier === 'pro') s3.pro = true; saveS(s3); }
+    // subscription (server truth) → Pro gating, applied to BOTH profiles + active
+    MODES.forEach(m => {
+      const p = readProf(m); if (!p) return;
+      p.subscription = sub ? { tier: sub.tier, status: sub.status, period_end: sub.current_period_end } : (p.subscription || { tier: 'free' });
+      if (p.subscription.tier === 'pro') p.pro = true;
+      writeProf(m, p);
+    });
+    mirrorActive();
     stamp();
   }
   async function firstSync() { try { await pull(); if (localStorage.getItem(OUTBOX)) await push(); } catch (e) { console.warn('[StrideSync]', e && e.message); } finally { emit(); } }
