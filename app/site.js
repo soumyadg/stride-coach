@@ -33,4 +33,12 @@
     if(tg)tg.addEventListener("click",function(){nav.classList.toggle("open");});
     nav.querySelectorAll(".nav-links a").forEach(function(a){a.addEventListener("click",function(){nav.classList.remove("open");});});
   }
+
+  // hero launch-video sound toggle — click is a user gesture, so audio is allowed
+  window.heroSound=function(){
+    var v=document.getElementById('heroVid'),b=document.getElementById('hvSound');if(!v)return;
+    if(v.muted){v.muted=false;v.loop=false;v.currentTime=0;var p=v.play();if(p&&p.catch)p.catch(function(){});b.textContent='🔇 Mute';b.classList.add('on');}
+    else{v.muted=true;b.textContent='🔊 Play with sound';b.classList.remove('on');}
+  };
+
 })();
