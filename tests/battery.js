@@ -139,7 +139,7 @@ window.runStrideTests = async function () {
     go('plan'); ok('Plan: curve + calendar', document.querySelectorAll('#curve .bar').length > 0 && document.querySelectorAll('#calendar .day').length > 0);
     go('run'); ok('Run screen', !!document.getElementById('r-target'));
     go('stats'); ok('Stats: PRs + chart', document.querySelectorAll('#st-prs .pr').length === 3 && document.querySelectorAll('#st-chart .cb').length === 6);
-    go('why'); ok('Why: account + pricing', !!document.getElementById('account-card') && document.querySelectorAll('.plan').length === 2);
+    go('why'); ok('Why: account + pricing', !!document.getElementById('account-card') && document.querySelectorAll('.plan').length === 3);
     ok('no competitor name in UI', !document.body.innerText.includes('Runna'));
     openLib(); ok('workout library 8 tiles', document.querySelectorAll('#lib-run .wtile').length === 8); closeLib();
     sections.push(s);
