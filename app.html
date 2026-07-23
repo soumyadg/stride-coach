@@ -443,6 +443,7 @@
           <div style="text-align:right"><div class="kicker">Safety</div><div style="font-weight:800;margin-top:4px" class="tick">≤10% / wk ✓</div></div>
         </div>
       </div>
+      <div id="ob-injury" style="margin-top:18px"></div>
       <div class="cta"><div class="row"><button class="btn ghost" style="flex:.5" onclick="obStep(2)">Back</button><button class="btn p" onclick="buildPlan()">Build my safe plan →</button></div></div>
     </div>
   </div>
@@ -762,6 +763,7 @@ function obStep(n){
   $('#s-onboard').scrollTop=0;
   // sync goal choice into distance default
   if(n===2){const g=$('#goal-rows .on').dataset.v; if(g==='first5k')$('#o-goal').value='5k';}
+  if(n===3&&typeof renderObInjury==='function')renderObInjury();   // injury step (run only)
   playStep($('#ob'+n));
 }
 function playStep(el){
@@ -806,6 +808,7 @@ function setMode(m){
   set('lbl-base', m==='walk'?'Weekly km now (walking)':'Weekly km now');
   set('lbl-perweek', m==='walk'?'Walks per week':'Runs per week');
   if(m==='walk'){var og=$('#o-goal');if(og)og.value='5k';}
+  _obInjuries=[];   // fresh injury capture per onboarding
   $('#ob0').classList.add('hide');$('#ob1').classList.remove('hide');obStep(1);
 }
 function backToMode(){window._mode=null;var o1=document.getElementById("ob1");if(o1)o1.classList.add("hide");var o0=document.getElementById("ob0");if(o0)o0.classList.remove("hide");if(typeof playStep=="function")playStep(o0);}
@@ -822,8 +825,12 @@ function buildPlan(){
   const peak=(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
   let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
   if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
+  // injury-aware from the start (running): gentler ramp + lower starting load
+  const _ia=(mode==='run'&&window._obInjuries&&window._obInjuries.length)?injuryAdjust(window._obInjuries):{rampCap:1.10,baseMul:1,tag:null};
+  rampCap=Math.min(rampCap,_ia.rampCap);
   const start=new Date(); start.setHours(0,0,0,0);
-  let vol=base, plan=[], recent=[base];
+  const startBase=Math.max(3,+(base*_ia.baseMul).toFixed(1));
+  let vol=startBase, plan=[], recent=[startBase];
   for(let w=1;w<=weeks;w++){
     const isDeload=(w%4===0)&&w<weeks-1, isTaper=w>weeks-2;
     if(isDeload)vol=+(vol*0.65).toFixed(1);
@@ -847,7 +854,8 @@ function buildPlan(){
     store.set(S); runBuildLoader(); return;
   }
   store.useMode(mode);   // build into this mode's profile slot
-  S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[],justOnboarded:true};
+  S={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:p.planId,heightCm,weightKg,created:start.toISOString(),curWeek:1,readiness:null,history:[],activities:[],justOnboarded:true,
+     injuries:(mode==='run'&&window._obInjuries)?window._obInjuries.slice():[],injuryTag:_ia.tag||null};
   S.plans=[planSnapshot()];
   store.set(S); runBuildLoader();
 }
@@ -1782,6 +1790,22 @@ function injuryAdjust(list){
   return{rampCap:1.09,baseMul:1,tag:"Injury-aware — keeping load rises conservative.",band:"low"};
 }
 function injuryWhenLabel(v){const w=INJURY_WHEN.find(x=>x[0]===v);return w?w[1]:"";}
+// ---- injury capture DURING onboarding (run only), so the very first plan is injury-aware ----
+let _obInjuries=[];
+function renderObInjury(){
+  const el=$('#ob-injury');if(!el)return;
+  if((window._mode||'run')==='walk'){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='';
+  const chips=_obInjuries.map((i,ix)=>`<span class="chip on" style="cursor:default">${i.type} · <b>${injuryWhenLabel(i.when)}</b> <span onclick="obRemoveInjury(${ix})" style="cursor:pointer;opacity:.7;margin-left:5px">✕</span></span>`).join('');
+  el.innerHTML=`<label>Any injury history? <span class="sub" style="font-weight:400">— optional, makes your plan gentler</span></label>
+    ${_obInjuries.length?`<div class="chiprow" style="margin:8px 0">${chips}</div><div class="banner ${injuryAdjust(_obInjuries).band==='high'?'a':'g'}" style="margin:8px 0">🩺 ${injuryAdjust(_obInjuries).tag}</div>`:''}
+    <select id="ob-inj-type" style="width:100%;margin-top:8px">${INJURY_TYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+    <div class="seg" id="ob-inj-when" style="margin-top:8px">${INJURY_WHEN.map((w,i)=>`<button data-v="${w[0]}"${i===0?' class="on"':''}>${w[1]}</button>`).join('')}</div>
+    <button class="btn ghost" style="margin-top:10px;width:auto;padding:10px 14px" onclick="obAddInjury()">＋ Add injury</button>`;
+  if(typeof wireSelect==='function')wireSelect('#ob-inj-when');
+}
+function obAddInjury(){const t=$('#ob-inj-type').value,wsel=$('#ob-inj-when .on'),when=wsel?wsel.dataset.v:'past';_obInjuries.unshift({id:uuid(),type:t,when,at:Date.now()});renderObInjury();}
+function obRemoveInjury(ix){_obInjuries.splice(ix,1);renderObInjury();}
 function renderInjuries(){
   const det=$('#injury-details');if(!det)return;
   const run=S&&S.mode==='run';det.style.display=run?'':'none';if(!run)return;
