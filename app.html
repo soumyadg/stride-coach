@@ -579,12 +579,21 @@
       <div class="segbar" id="r-segbar"></div>
       <div id="heat-warn" class="hide"></div>
       <div class="stats">
-        <div class="stat"><div class="v mono" id="r-ldist">0m</div><div class="k">Lap distance</div></div>
+        <div class="stat"><div class="v mono" id="r-ldist">0m</div><div class="k" id="k-ldist">Lap distance</div></div>
         <div class="stat"><div class="v mono" id="r-ltime">0:00</div><div class="k">Lap time</div></div>
-        <div class="stat"><div class="v mono" id="r-lpace">--:--</div><div class="k">Lap pace</div></div>
-        <div class="stat"><div class="v mono" id="r-tdist">0.00</div><div class="k">Total km</div></div>
+        <div class="stat"><div class="v mono" id="r-lpace">--:--</div><div class="k" id="k-lpace">Lap pace</div></div>
+        <div class="stat"><div class="v mono" id="r-tdist">0.00</div><div class="k" id="k-tdist">Total km</div></div>
         <div class="stat"><div class="v mono" id="r-ttime">0:00</div><div class="k">Total time</div></div>
-        <div class="stat"><div class="v mono" id="r-tpace">--:--</div><div class="k">Avg pace</div></div>
+        <div class="stat"><div class="v mono" id="r-tpace">--:--</div><div class="k" id="k-tpace">Avg pace</div></div>
+      </div>
+      <div id="swim-panel" class="card hide" style="margin:12px 0 0;text-align:center">
+        <div class="sub">Pool length</div>
+        <div class="row" style="gap:8px;justify-content:center;margin-top:6px">
+          <button class="btn ghost" id="pool-25" style="width:auto;padding:8px 18px" onclick="setPool(25)">25 m</button>
+          <button class="btn ghost" id="pool-50" style="width:auto;padding:8px 18px" onclick="setPool(50)">50 m</button>
+        </div>
+        <button class="btn p" style="margin-top:12px;font-size:18px;padding:16px" onclick="addLength()">＋ Length done · <span id="swim-lengths">0</span></button>
+        <div class="sub" style="margin-top:6px">Tap each time you touch the wall.</div>
       </div>
       <div class="map">
         <div id="map-tiles"></div>
@@ -1848,7 +1857,7 @@ const PACES={warm:6.2,easy:6.0,long:6.25,tempo:5.0,hard:4.5,jog:6.5,hill:5.4,rac
 function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=0;}return `${m}:${String(s).padStart(2,'0')}`;}
 function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy '+(S&&S.mode==='walk'?'walk':'run'),km:5,kind:'easy',note:''};}
 function walkLike(m){m=m||(S&&S.mode);return m==='walk'||m==='dog';}   // dog is a walk-family activity (its own profile slot)
-function actWord(){return walkLike(S&&S.mode)?'walk':'run';}
+function actWord(){return walkLike(S&&S.mode)?'walk':(S&&S.mode==='swim'?'swim':'run');}
 function reflectMode(){var w=S&&S.mode==='walk';var i=document.getElementById('nav-run-i'),t=document.getElementById('nav-run-t');if(i)i.textContent=w?'🚶':'🏃';if(t)t.textContent=w?'Walk':'Run';var rs=document.getElementById('r-start');if(rs&&(typeof run==='undefined'||!run||!run.active))rs.textContent='Start '+(w?'walk':'run');}
 function buildLaps(se){
   const t=se.t||'',km=se.km||5,kind=se.kind;
@@ -1877,6 +1886,12 @@ function toggleRun(){
   $('#r-next').classList.toggle('show',run.laps.length>1);
   checkHeat(true);
   const L=run.laps[run.lap];
+  if(S&&S.mode==='swim'){                                   // pool swim: manual lengths, no GPS
+    run.pool=run.pool||swimPool;run.lengths=run.lengths||0;setPool(run.pool);swimSetup(true);
+    speak('Pool swim started. Tap Length each time you touch the wall.');coach('Pool mode — tap ＋ Length at each wall.');
+    tick=setInterval(()=>{if(run.active&&!run.paused){run.elapsed++;run.moving++;render();}},1000);
+    render();return;
+  }
   speak(`Starting ${run.name}. ${L.lab}: ${L.d} metres at ${paceStr(lapPace(L))} per kilometre.`);
   coach(`${L.lab} — ${L.d}m @ ${paceStr(lapPace(L))}/km`);
   if(treadmillMode){
@@ -1892,6 +1907,18 @@ function toggleRun(){
     tick=setInterval(()=>{if(run.active&&!run.paused&&!run.demo){run.elapsed++;render();}},1000);
   }
   render();
+}
+// ---- swim (pool) mode: manual length counting, metres + pace-per-100m ----
+let swimPool=25;
+function setPool(len){swimPool=len;if(typeof run!=='undefined'&&run)run.pool=len;var a=$('#pool-25'),b=$('#pool-50');if(a)a.classList.toggle('on',len===25);if(b)b.classList.toggle('on',len===50);}
+function addLength(){if(typeof run==='undefined'||!run||!run.active||run.paused)return;run.pool=run.pool||swimPool;run.dist+=run.pool;run.lapDist+=run.pool;run.lengths=(run.lengths||0)+1;var el=$('#swim-lengths');if(el)el.textContent=run.lengths;if(run.moving<run.elapsed)run.moving=run.elapsed;render();try{if(navigator.vibrate)navigator.vibrate(15);}catch(e){}}
+function swimSetup(on){
+  var sp=$('#swim-panel');if(sp)sp.classList.toggle('hide',!on);
+  ['#map-tiles','#r-route','#r-marker','#r-gps','.attrib','.map','#r-segbar'].forEach(function(s){var el=$(s);if(el)el.style.display=on?'none':'';});
+  var set=function(id,t){var e=$('#'+id);if(e)e.textContent=t;};
+  set('k-ldist',on?'Lengths':'Lap distance');set('k-lpace',on?'Pace /100m':'Lap pace');set('k-tdist',on?'Total (m)':'Total km');set('k-tpace',on?'Avg /100m':'Avg pace');
+  ['r-lap','r-target','r-up'].forEach(function(id){var e=$('#'+id);if(e)e.style.display=on?'none':'';});
+  var un=document.querySelector('.upnext');if(un)un.style.display=on?'none':'';
 }
 // ---- treadmill mode ----
 let treadmillMode=false,tSpeed=8.0,tIncline=0;
@@ -1944,6 +1971,16 @@ function onPos(p){
 function render(){
   if(!run)return;
   hydrationCheck();lessonCheck();
+  if(S&&S.mode==='swim'){                                   // pool swim view — metres + pace-per-100m
+    const distM=run.dist, per100=distM>25?(run.moving/60)/(distM/100):0;   // minutes per 100 m
+    $('#r-ldist').textContent=(run.lengths||0);
+    $('#r-ltime').textContent=fmt(run.elapsed);
+    $('#r-lpace').textContent=per100>0?paceStr(per100):'--:--';
+    $('#r-tdist').textContent=Math.round(distM);
+    $('#r-ttime').textContent=fmt(run.elapsed);
+    $('#r-tpace').textContent=per100>0?paceStr(per100):'--:--';
+    return;
+  }
   const L=run.laps[run.lap],rem=Math.max(0,L.d-run.lapDist),lapT=run.elapsed-run.lapStart;
   $('#r-lap').textContent=`Lap ${run.lap+1} / ${run.laps.length} · ${L.lab}`;
   $('#r-target').textContent=`${Math.round(rem)}m @ ${paceStr(lapPace(L))}/km`;
@@ -2222,8 +2259,9 @@ function pauseRun(){run.active=false;$('#r-start').textContent='Resume';clearInt
 function stopRun(){
   if(!run||run.finished)return;run.finished=true;run.active=false;clearInterval(tick);if(watchId)navigator.geolocation.clearWatch(watchId);if(window.StrideNative)StrideNative.stopGeo();
   $('#r-start').textContent='Start '+actWord();$('#r-next').classList.remove('show');$('#r-lap').textContent='Finished';
-  speak(`Workout complete. ${(run.dist/1000).toFixed(1)} kilometres. Nice work.`);
-  $('#rpe-card').classList.remove('hide');coach(`Nice — ${(run.dist/1000).toFixed(2)}km done. How'd it feel?`);
+  const _sw=(S&&S.mode==='swim');
+  speak(_sw?`Swim complete. ${Math.round(run.dist)} metres. Nice work.`:`Workout complete. ${(run.dist/1000).toFixed(1)} kilometres. Nice work.`);
+  $('#rpe-card').classList.remove('hide');coach(_sw?`Nice — ${Math.round(run.dist)}m swum. How'd it feel?`:`Nice — ${(run.dist/1000).toFixed(2)}km done. How'd it feel?`);
 }
 function demoRun(){let ang=0;run.pts=[[51.5,-0.12]];tick&&clearInterval(tick);
   tick=setInterval(()=>{if(!run.active)return;run.elapsed++;run.moving++;addDist(2.9+Math.random());
@@ -2671,7 +2709,7 @@ function go(v){['today','plan','run','stats','atlas','why'].forEach(x=>$('#s-'+x
   s.classList.remove('fx');void s.offsetWidth;s.classList.add('fx');
   $$('#nav button').forEach(b=>{const on=b.dataset.v===v;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');});
   if(v==='stats')renderStats();
-  if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();}
+  if(v==='run'&&typeof checkHeat==='function'){checkHeat(false);reflectTips();if(!run||!run.active)$('#r-start').textContent='Start '+actWord();if(typeof swimSetup==='function')swimSetup(!!(S&&S.mode==='swim'));}
   if(v==='why'){if(window.StrideSync)renderAccount(StrideSync.state());if(typeof reflectPro==='function')reflectPro();if(typeof renderStrava==='function')renderStrava();if(typeof renderImport==='function')renderImport();if(typeof renderPlans==='function')renderPlans();if(typeof renderCoach==='function')renderCoach();}
   if(v==='atlas'&&typeof renderAtlas==='function'){renderAtlas();if(typeof renderCommunity==='function'){renderCommunity();loadCommunity();}}
   s.scrollTop=0;}
