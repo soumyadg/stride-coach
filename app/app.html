@@ -455,11 +455,11 @@
       <div class="row">
         <div><label id="lbl-dist">Race distance</label>
           <select id="o-goal">
-            <option value="1k">1K — just starting</option><option value="2k">2K</option><option value="3k">3K</option>
-            <option value="5k" selected>5K</option><option value="10k">10K</option>
+            <option value="1k">1K — just starting</option><option value="2k" selected>2K</option><option value="3k">3K</option>
+            <option value="5k">5K</option><option value="10k">10K</option>
             <option value="half">Half marathon</option><option value="marathon">Marathon</option>
           </select></div>
-        <div><label id="lbl-weeks">Weeks to race</label><input id="o-weeks" type="number" value="12" min="4" max="24"></div>
+        <div><label id="lbl-weeks">Weeks to race</label><input id="o-weeks" type="number" value="2" min="2" max="24"></div>
       </div>
       <div class="row">
         <div><label id="lbl-base">Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
@@ -514,9 +514,9 @@
     <details class="card"><summary>🩺 Daily readiness check <span class="cx-sum">tune today to how you feel</span> <span class="cx-chev">⌄</span></summary>
       <div class="cx-body">
         <div class="sub" style="margin:0 0 6px">20 seconds — adapts today's run to how you feel.</div>
-        <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="2" class="on">Good</button><button data-v="1">OK</button><button data-v="0">Poor</button></div>
-        <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="2" class="on">None</button><button data-v="1">Some</button><button data-v="0">High</button></div>
-        <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="2" class="on">High</button><button data-v="1">Meh</button><button data-v="0">Low</button></div>
+        <label>Sleep</label><div class="seg rd" data-k="sleep"><button data-v="4">Great</button><button data-v="3" class="on">Good</button><button data-v="2">OK</button><button data-v="1">Poor</button><button data-v="0">Awful</button></div>
+        <label>Soreness</label><div class="seg rd" data-k="sore"><button data-v="4" class="on">None</button><button data-v="3">Slight</button><button data-v="2">Some</button><button data-v="1">Achy</button><button data-v="0">Sore</button></div>
+        <label>Energy</label><div class="seg rd" data-k="energy"><button data-v="4">High</button><button data-v="3" class="on">Good</button><button data-v="2">OK</button><button data-v="1">Low</button><button data-v="0">Flat</button></div>
         <button class="btn p" style="margin-top:16px" onclick="computeReadiness()">Check readiness</button>
         <div id="readiness-out"></div>
       </div>
@@ -908,7 +908,7 @@ function setMode(m){
   set('lbl-base', isS?'Weekly metres now':isW?'Weekly km now (walking)':'Weekly km now');
   set('lbl-perweek', isS?'Swims per week':isW?'Walks per week':'Runs per week');
   set('lbl-long', isS?'Longest swim (m)':'Longest run (km)');
-  if(isW){var og=$('#o-goal');if(og)og.value='5k';}
+  if(isW){var og=$('#o-goal');if(og)og.value='2k';}
   if(isS){var ob=$('#o-base');if(ob)ob.value='1500';var ol=$('#o-long');if(ol)ol.value='400';}
   _obInjuries=[];   // fresh injury capture per onboarding
   $('#ob0').classList.add('hide');$('#ob1').classList.remove('hide');obStep(1);
@@ -958,7 +958,7 @@ function buildPlan(){
   const base=swim?Math.max(0.3,(+$('#o-base').value||1500)/1000):Math.max(5,+$('#o-base').value||10);   // swim inputs are in metres → km internally
   const days=+$('#o-days .on').dataset.v;
   const longNow=swim?((+$('#o-long').value||400)/1000):(+$('#o-long').value||base*0.4);
-  const weeks=Math.min(24,Math.max(4,+$('#o-weeks').value||12));
+  const weeks=Math.min(24,Math.max(2,+$('#o-weeks').value||12));   // allow short 2-week starter plans
   const exp=$('#o-exp .on').dataset.v;
   const pref=$('#pref-grid .on').dataset.v;
   const goalName=$('#goal-rows .on .t').textContent;
@@ -977,7 +977,7 @@ function buildPlan(){
   const startBase=Math.max(walkLike(mode)?2:3,+(base*_ia.baseMul*(window._stroller?0.9:1)*beginnerMul).toFixed(1));
   let vol=startBase, plan=[], recent=[startBase];
   for(let w=1;w<=weeks;w++){
-    const isDeload=(w%4===0)&&w<weeks-1, isTaper=w>weeks-2;
+    const isDeload=(w%4===0)&&w<weeks-1, isTaper=weeks>=6&&w>weeks-2;   // short starter plans (<6wk) just build, no taper
     if(isDeload)vol=+(vol*0.65).toFixed(1);
     else if(isTaper)vol=+(vol*0.6).toFixed(1);
     else{const avg=recent.slice(-4).reduce((a,b)=>a+b,0)/Math.min(4,recent.length);
@@ -1537,7 +1537,7 @@ function renderToday(){
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
       <div style="display:flex;gap:11px;align-items:center"><span class="dot ${s.kind||'easy'}" style="width:12px;height:12px"></span>
         <div><div style="font-weight:800;font-size:17px">${s.t}</div><div class="sub">${s.note}</div></div></div>
-      <div style="font-size:20px;font-weight:800" class="mono tick">${s.km?s.km+'km':'—'}</div></div>
+      <div style="text-align:right"><div style="font-size:20px;font-weight:800" class="mono tick">${s.km?s.km+'km':'—'}</div>${(s.km&&S.mode!=='swim')?`<div class="sub" style="font-size:11px;margin-top:2px">~${stepsFor(s.km).toLocaleString()} steps</div>`:''}</div></div>
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
   if(typeof renderMission==='function')renderMission();
@@ -1571,7 +1571,7 @@ function computeProjection(){
   const bmi=(wt&&ht)?wt/Math.pow(ht/100,2):null;
   const canLose=bmi?bmi>22.5:false;                       // only project loss if not already lean
   const wkLoss=canLose?(w?0.28:0.38):0;                   // kg/week with training + a modest calorie balance
-  const pick=[0,4,Math.min(8,weeks),weeks].filter((v,i,a)=>a.indexOf(v)===i&&v<=weeks);
+  const step=weeks<=16?1:2, pick=[]; for(let w=0;w<=weeks;w+=step)pick.push(w); if(pick[pick.length-1]!==weeks)pick.push(weeks);   // weekly milestones — closer targets feel reachable
   const points=pick.map(wk=>{const d=new Date(start);d.setDate(start.getDate()+wk*7);
     return {week:wk,date:d,
       weight:wt?Math.max(+(wt*0.90).toFixed(1),+(wt-wkLoss*wk).toFixed(1)):null,
@@ -1631,8 +1631,8 @@ function computeReadiness(){
   const v=k=>+$(`.rd[data-k="${k}"] .on`).dataset.v;
   const score=v('sleep')+v('sore')+v('energy');
   let level='green',msg='',cls='g';
-  if(score<=1){level='red';cls='r';msg='Low readiness — today becomes rest. Pushing now is how injuries happen.';}
-  else if(score<=3){level='amber';cls='a';msg="Moderate — we'll trim today ~20%. Smart, not soft.";}
+  if(score<=4){level='red';cls='r';msg='Low readiness — today becomes rest. Pushing now is how injuries happen.';}
+  else if(score<=8){level='amber';cls='a';msg="Moderate — we'll trim today ~20%. Smart, not soft.";}
   else msg='Green light — full session ahead. 🟢';
   const cy=cyclePhase();
   if(cy.tracking&&cy.phase!=='unknown'&&cy.effortMod<=0.9&&level==='green'){   // ease intensity in the lower-effort phases even on a good day
@@ -1860,6 +1860,8 @@ function paceStr(p){let m=Math.floor(p),s=Math.round((p-m)*60);if(s===60){m++;s=
 function curSession(){const wk=S?S.plan[(S.curWeek-1)%S.plan.length]:null;return wk?wk.sessions[0]:{t:'Easy '+(S&&S.mode==='walk'?'walk':'run'),km:5,kind:'easy',note:''};}
 function walkLike(m){m=m||(S&&S.mode);return m==='walk'||m==='dog';}   // dog is a walk-family activity (its own profile slot)
 function actWord(){return walkLike(S&&S.mode)?'walk':(S&&S.mode==='swim'?'swim':'run');}
+// Approximate step count from distance — stride ≈ 0.415×height (walk) / 0.65×height (run); defaults if no height.
+function stepsFor(km,mode){if(!(km>0))return 0;var p=getPerson()||{},h=p.heightCm||(S&&S.heightCm)||175;var walk=walkLike(mode||(S&&S.mode));var strideM=(walk?0.415:0.65)*h/100;return Math.round(km*1000/strideM);}
 function reflectMode(){var w=S&&S.mode==='walk';var i=document.getElementById('nav-run-i'),t=document.getElementById('nav-run-t');if(i)i.textContent=w?'🚶':'🏃';if(t)t.textContent=w?'Walk':'Run';var rs=document.getElementById('r-start');if(rs&&(typeof run==='undefined'||!run||!run.active))rs.textContent='Start '+(w?'walk':'run');}
 function buildLaps(se){
   const t=se.t||'',km=se.km||5,kind=se.kind;
@@ -2171,7 +2173,7 @@ let _rfBusy=false;
 async function findRoute(){
   if(_rfBusy)return;_rfBusy=true;
   const el=$('#route-card');const a=lastAct();
-  const target=a?a.km:(function(){try{return curSession().km||5;}catch(e){return 5;}})();
+  const target=(function(){try{return curSession().km||(a?a.km:2);}catch(e){return a?a.km:2;}})();   // match today's planned session distance
   el.innerHTML=`<div class="kicker">🧭 Route finder</div><div class="sub" style="margin-top:8px">Finding a fresh ${actWord()} loop near you…</div>`;
   let start=routeStart();
   if(!start){try{const l=await getLoc();start=[l.lat,l.lon];}catch(e){start=[51.5074,-0.1278];}}
