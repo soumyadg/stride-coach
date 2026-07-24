@@ -96,7 +96,7 @@
   .screen::-webkit-scrollbar{display:none}
   /* desktop: present the phone app as a centered device frame instead of a floating strip */
   @media(min-width:820px){
-    #s-onboard{padding-top:12px}   /* plain scrolling block (like every other screen) — flex centering was trapping scroll */
+    #s-onboard{padding-top:12px;padding-bottom:28px}   /* plain scrolling block; no bottom nav here, so trim the 96px clearance to kill dead space */
     body{align-items:center;min-height:100vh;padding:22px 0;
       background:radial-gradient(120% 90% at 82% 8%,rgba(255,106,61,.10),transparent 46%),radial-gradient(120% 100% at 8% 96%,rgba(46,230,198,.11),transparent 46%),#07060c}
     #app{min-height:0;height:min(900px,94vh);border-radius:34px;
@@ -386,6 +386,34 @@
   <div id="s-onboard" class="screen">
     <div class="prog" id="ob-prog"><i style="width:33%"></i></div>
 
+    <!-- step −1: about you (once, account-level — shared by every activity) -->
+    <div id="ob-person" class="hide">
+      <div class="brand">Strivon</div>
+      <h2 style="margin-top:22px">About you</h2>
+      <div class="sub">Set this once — every plan (walk, run, swim…) uses it, so you’re never asked again.</div>
+      <label style="margin-top:16px">Your name</label>
+      <input id="p-name" placeholder="First name">
+      <div class="row">
+        <div><label>Date of birth</label><input id="p-dob" type="date"></div>
+        <div><label>Sex</label><select id="p-gender" onchange="onGenderChange()"><option value="">Select…</option><option value="female">Female</option><option value="male">Male</option><option value="other">Prefer not to say</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Height (cm)</label><input id="p-height" type="number" placeholder="175" min="100" max="230"></div>
+        <div><label>Weight (kg)</label><input id="p-weight" type="number" placeholder="70" min="30" max="250"></div>
+      </div>
+      <div id="p-cycle-wrap" class="hide" style="margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700"><input type="checkbox" id="p-cycle-on" onchange="onCycleToggle()" style="width:auto"> 🌸 Train with my cycle</label>
+        <div class="sub" style="margin-top:6px">We ease intensity around your period and flag injury-risk windows — training <i>with</i> your body. Private, stored on your device, delete anytime.</div>
+        <div id="p-cycle-fields" class="hide" style="margin-top:12px">
+          <div class="row">
+            <div><label>Last period started</label><input id="p-lastperiod" type="date"></div>
+            <div><label>Cycle length (days)</label><input id="p-cyclelen" type="number" value="28" min="21" max="45"></div>
+          </div>
+        </div>
+      </div>
+      <div class="cta"><div class="row"><button class="btn ghost" style="flex:.5" onclick="skipPersonStep()">Skip</button><button class="btn p" onclick="savePersonStep()">Continue →</button></div></div>
+    </div>
+
     <!-- step 0: how do you move -->
     <div id="ob0">
       <div class="brand">Strivon</div>
@@ -436,7 +464,7 @@
         <div><label id="lbl-base">Weekly km now</label><input id="o-base" type="number" value="15" min="0"></div>
         <div><label id="lbl-long">Longest run (km)</label><input id="o-long" type="number" value="7" min="0"></div>
       </div>
-      <div class="row">
+      <div class="row" id="ob2-hw-row">
         <div><label>Height (cm)</label><input id="o-height" type="number" value="" placeholder="175" min="100" max="230"></div>
         <div><label>Weight (kg)</label><input id="o-weight" type="number" value="" placeholder="70" min="30" max="250"></div>
       </div>
@@ -478,6 +506,7 @@
     <div id="today-welcome"></div>
     <!-- HERO: today's workout — the one thing you came for, first -->
     <div class="card" id="today-sesh"></div>
+    <div class="card hide" id="cycle-card"></div>
     <div class="card" id="risk-card"></div>
     <div class="card" id="mission-card"></div>
     <!-- secondary: tucked into taps so Today stays one-glance -->
@@ -781,6 +810,8 @@ const store=(function(){
     get:()=>_read('stride'),
     set:d=>{try{d._mut=Date.now();}catch(e){}const j=JSON.stringify(d);localStorage.setItem('stride',j);const m=activeMode()||d.mode||'run';localStorage.setItem(AK,m);localStorage.setItem(PK(m),j);if(window.StrideSync)StrideSync.markDirty();},
     activeMode,
+    getPerson:()=>_read('stride_person'),                                    // account-level 'about you' — shared across every mode
+    setPerson:p=>{try{p._mut=Date.now();}catch(e){}localStorage.setItem('stride_person',JSON.stringify(p));if(window.StrideSync)StrideSync.markDirty();},
     hasProfile:m=>!!_read(PK(m)),
     getProfile:m=>_read(PK(m)),
     useMode:m=>localStorage.setItem(AK,m),
@@ -810,7 +841,11 @@ function obStep(n){
   $('#ob-prog>i').style.width=(n*33.33)+'%';
   $('#s-onboard').scrollTop=0;
   // sync goal choice into distance default
-  if(n===2){const g=$('#goal-rows .on').dataset.v; if(g==='first5k')$('#o-goal').value='5k';}
+  if(n===2){const g=$('#goal-rows .on').dataset.v; if(g==='first5k')$('#o-goal').value='5k';
+    const pn=getPerson()||{},row=$('#ob2-hw-row');                 // height/weight captured once in 'About you' → don't re-ask
+    if(pn.heightCm){const h=$('#o-height');if(h)h.value=pn.heightCm;} if(pn.weightKg){const w=$('#o-weight');if(w)w.value=pn.weightKg;}
+    if(row)row.style.display=(pn.heightCm&&pn.weightKg)?'none':'';
+  }
   if(n===3&&typeof renderObInjury==='function')renderObInjury();   // injury step (run only)
   playStep($('#ob'+n));
 }
@@ -870,6 +905,43 @@ function setMode(m){
 }
 function backToMode(){window._mode=null;var o1=document.getElementById("ob1");if(o1)o1.classList.add("hide");var o0=document.getElementById("ob0");if(o0)o0.classList.remove("hide");if(typeof playStep=="function")playStep(o0);}
 function toggleMommy(){var s=document.getElementById('mommy-sub'),c=document.getElementById('mommy-chev');var open=s&&s.style.display!=='none';if(s)s.style.display=open?'none':'flex';if(c)c.textContent=open?'›':'⌄';}
+// ---- one-time 'About you' step (captured once, reused by every mode) ----
+function showPersonStep(){
+  ['ob0','ob1','ob2','ob3'].forEach(function(id){var e=$('#'+id);if(e)e.classList.add('hide');});
+  var p=getPerson()||{}, setv=function(id,v){var e=$('#'+id);if(e&&v!=null&&v!=='')e.value=v;};
+  setv('p-name',p.name);setv('p-dob',p.dob);setv('p-height',p.heightCm);setv('p-weight',p.weightKg);
+  var g=$('#p-gender');if(g&&p.gender)g.value=p.gender;
+  onGenderChange();
+  if(p.cycle&&p.cycle.track){var cb=$('#p-cycle-on');if(cb)cb.checked=true;onCycleToggle();setv('p-lastperiod',p.cycle.lastPeriod);setv('p-cyclelen',p.cycle.cycleLen);}
+  var op=$('#ob-person');if(op)op.classList.remove('hide');
+  if(typeof playStep==='function')playStep($('#ob-person'));
+}
+function onGenderChange(){var g=$('#p-gender'),w=$('#p-cycle-wrap');if(w)w.classList.toggle('hide',!(g&&g.value==='female'));}
+function onCycleToggle(){var cb=$('#p-cycle-on'),f=$('#p-cycle-fields');if(f)f.classList.toggle('hide',!(cb&&cb.checked));}
+function readPersonForm(){
+  var g=$('#p-gender'),cb=$('#p-cycle-on');
+  var p={name:(($('#p-name')||{}).value||'').trim(),gender:g?g.value:'',dob:($('#p-dob')||{}).value||'',heightCm:+($('#p-height')||{}).value||null,weightKg:+($('#p-weight')||{}).value||null};
+  if(g&&g.value==='female'&&cb&&cb.checked)p.cycle={track:true,lastPeriod:($('#p-lastperiod')||{}).value||'',cycleLen:+($('#p-cyclelen')||{}).value||28,periodLen:5};
+  return p;
+}
+function savePersonStep(){savePerson(readPersonForm());personToMode();}
+function skipPersonStep(){savePerson(getPerson()||{_skipped:true});personToMode();}   // record that we've shown it so it isn't re-asked
+function personToMode(){
+  var op=$('#ob-person');if(op)op.classList.add('hide');
+  if(S&&S.plan){$('#s-onboard').classList.add('hide');$('#nav').classList.remove('hide');if(typeof renderAll==='function')renderAll();go('today');return;}   // editing an existing user → straight back to the app
+  var o0=$('#ob0');if(o0)o0.classList.remove('hide');if(typeof playStep==='function')playStep($('#ob0'));
+}
+function editAboutYou(){$('#nav').classList.add('hide');['s-today','s-plan','s-run','s-stats','s-atlas','s-why'].forEach(function(id){var e=$('#'+id);if(e)e.classList.add('hide');});$('#s-onboard').classList.remove('hide');showPersonStep();}
+function renderCycle(){
+  var el=$('#cycle-card');if(!el)return;
+  var cy=cyclePhase();
+  if(!cy.tracking||cy.phase==='unknown'){el.classList.add('hide');el.innerHTML='';return;}
+  el.classList.remove('hide');
+  var daysToNext=cy.cycleLen-cy.day+1;
+  el.innerHTML='<div class="risk-hd"><div class="kicker">🌸 Cycle-aware training</div><span class="pill '+(cy.injuryCaution?'a':'g')+'">'+cy.label+'</span></div>'
+    +'<div style="margin-top:6px;font-size:14px;line-height:1.5">'+cy.guidance+'</div>'
+    +'<div class="sub" style="margin-top:8px;font-size:12px">Cycle day <b>'+cy.day+'</b> · next period ~'+daysToNext+' day'+(daysToNext===1?'':'s')+' · <a href="#" onclick="editAboutYou();return false;" style="color:var(--accent)">update</a></div>';
+}
 function buildPlan(){
   const swim=(window._mode==='swim');
   const goal=$('#o-goal').value;
@@ -905,7 +977,8 @@ function buildPlan(){
     const sessions=makeSessions(vol,days,goal,w,weeks,mode);
     plan.push({w,vol,isDeload,isTaper,startISO:wkStart.toISOString(),sessions,days:assignDays(sessions)});
   }
-  const heightCm=+$('#o-height').value||(S&&S.heightCm)||null, weightKg=+$('#o-weight').value||(S&&S.weightKg)||null;
+  const _pn=getPerson()||{};
+  const heightCm=+$('#o-height').value||(S&&S.heightCm)||_pn.heightCm||null, weightKg=+$('#o-weight').value||(S&&S.weightKg)||_pn.weightKg||null;
   const p={goal,goalName,mode,base,days,exp,pref,weeks,plan,planId:uuid(),created:start.toISOString(),curWeek:1};
   if(S&&S.plan&&S._addPlan){                                    // Pro: adding an extra race plan — keep account data + existing plans
     saveActiveToPlans();
@@ -1457,6 +1530,7 @@ function renderToday(){
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
   if(typeof renderMission==='function')renderMission();
+  if(typeof renderCycle==='function')renderCycle();
   if(typeof renderProjection==='function')renderProjection();
   const rfDet=$('#routefinder-details');if(rfDet)rfDet.style.display=(S&&S.mode==='swim')?'none':'';   // no route finder for swimming
   if(S&&S.mode!=='swim'&&typeof renderRouteFinder==='function')renderRouteFinder();
@@ -1519,6 +1593,29 @@ function renderProjection(){
 }
 
 // ---- readiness ----
+// ---- account-level 'About you' (name/gender/DOB/height/weight) + menstrual-cycle awareness ----
+function getPerson(){try{return store.getPerson()||null;}catch(e){return null;}}
+function savePerson(p){try{store.setPerson(p);}catch(e){}}
+function personAge(dob){if(!dob)return null;const d=new Date(dob);if(isNaN(d))return null;const t=new Date();let a=t.getFullYear()-d.getFullYear();const m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))a--;return (a>=0&&a<120)?a:null;}
+function maxHR(){const p=getPerson(),age=p?personAge(p.dob):null;return age?Math.round(208-0.7*age):190;}
+// Cycle phase from last period. Luteal ≈ 14d fixed → ovulation ≈ cycleLen−14. Symptom-aware, MODEST modifiers (guidance, not rigid prescription).
+function cyclePhase(person,now){
+  person=(person===undefined)?getPerson():person; now=now||Date.now();
+  const c=person&&person.cycle;
+  if(!c||!c.track||!c.lastPeriod)return {tracking:false};
+  const len=Math.min(45,Math.max(21,+c.cycleLen||28)), plen=Math.min(10,Math.max(2,+c.periodLen||5));
+  const start=new Date(c.lastPeriod); if(isNaN(start))return {tracking:false};
+  const dayRaw=Math.floor((now-start.getTime())/86400000);
+  if(dayRaw<0)return {tracking:true,phase:'unknown',day:0,label:'Cycle',guidance:'Log your last period start to tailor training.',effortMod:1,injuryCaution:false};
+  const day=(dayRaw%len)+1, ovu=len-14;
+  let phase,label,guidance,effortMod=1,injuryCaution=false;
+  if(day<=plen){phase='menstruation';label='Menstruation';guidance='Energy may dip — keep efforts easy and go by feel. Gentle movement often helps cramps.';effortMod=0.9;}
+  else if(day<ovu-1){phase='follicular';label='Follicular';guidance='Strong phase — a good time for a harder effort if you feel up to it. Recovery is on your side.';effortMod=1.05;}
+  else if(day<=ovu+1){phase='ovulation';label='Ovulation window';guidance='You may feel powerful — but ligaments are laxer now, so warm up well and take care on turns, hills and sprints.';effortMod=1;injuryCaution=true;}
+  else if(day<len-4){phase='luteal';label='Luteal';guidance='Steady phase — you may run a little warmer, so hydrate and pace by feel.';effortMod=0.98;}
+  else{phase='late-luteal';label='Late luteal (PMS)';guidance='Higher effort and fatigue are common before your period — ease the intensity, protect your sleep, and don’t judge a tough day.';effortMod=0.88;}
+  return {tracking:true,phase,label,day,cycleLen:len,ovu,guidance,effortMod,injuryCaution};
+}
 function computeReadiness(){
   const v=k=>+$(`.rd[data-k="${k}"] .on`).dataset.v;
   const score=v('sleep')+v('sore')+v('energy');
@@ -1526,8 +1623,14 @@ function computeReadiness(){
   if(score<=1){level='red';cls='r';msg='Low readiness — today becomes rest. Pushing now is how injuries happen.';}
   else if(score<=3){level='amber';cls='a';msg="Moderate — we'll trim today ~20%. Smart, not soft.";}
   else msg='Green light — full session ahead. 🟢';
-  S.readiness={level,score,at:Date.now()};store.set(S);
-  $('#readiness-out').innerHTML=`<div class="banner ${cls}">${msg}</div>`;renderToday();
+  const cy=cyclePhase();
+  if(cy.tracking&&cy.phase!=='unknown'&&cy.effortMod<=0.9&&level==='green'){   // ease intensity in the lower-effort phases even on a good day
+    level='amber';cls='a';msg='Full energy — but you’re in your '+cy.label.toLowerCase()+' phase, so we’ll keep intensity sensible.';
+  }
+  S.readiness={level,score,at:Date.now(),phase:cy.tracking?cy.phase:null};store.set(S);
+  let html=`<div class="banner ${cls}">${msg}</div>`;
+  if(cy.tracking&&cy.phase!=='unknown')html+=`<div class="banner ${cy.injuryCaution?'a':'g'}" style="margin-top:8px">🌸 <b>${cy.label}</b> · cycle day ${cy.day} — ${cy.guidance}</div>`;
+  $('#readiness-out').innerHTML=html;renderToday();
 }
 
 // ---- training reminders (local notifications, on-device — no backend) ----
@@ -2845,7 +2948,11 @@ function tintSplash(){
   }catch(e){}
 }
 // ---- boot (welcome splash → app) ----
-function runBoot(){if(S&&S.plan)enterApp();else{$('#ob1').classList.add('hide');$('#ob0').classList.remove('hide');playStep($('#ob0'));}}
+function runBoot(){
+  if(S&&S.plan){enterApp();return;}
+  if(!getPerson()){showPersonStep();return;}                 // first run → capture 'About you' once
+  $('#ob-person').classList.add('hide');$('#ob1').classList.add('hide');$('#ob0').classList.remove('hide');playStep($('#ob0'));
+}
 function dismissSplash(){const s=$('#splash');if(!s||s.dataset.done)return;s.dataset.done='1';runBoot();s.classList.add('gone');setTimeout(()=>{s.style.display='none';},650);}
 // first-launch video intro (plays once, muted, skippable) → then normal boot
 function endIntro(){
