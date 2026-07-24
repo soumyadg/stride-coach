@@ -2048,18 +2048,19 @@ function lastAct(){return (S.activities||[]).filter(a=>a.km>0)[0]||null;}
 function routeStart(){const a=lastAct();if(a&&a.pts&&a.pts.length)return[a.pts[0][0],a.pts[0][1]];return null;}
 function fetchT(url,ms){return new Promise((res,rej)=>{const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||4500);fetch(url,{signal:c.signal}).then(r=>{clearTimeout(t);res(r);},e=>{clearTimeout(t);rej(e);});});}
 async function osrmLoop(start,targetKm,seed){
-  const base=(seed*47)%360;let r=targetKm/6.2,last=null;
-  for(let i=0;i<3;i++){
+  const base=(seed*47)%360;let r=targetKm/6.2,best=null;
+  for(let i=0;i<6;i++){                                             // more iterations → converge on a road-snapped loop within tolerance
     const wps=[start,destPoint(start[0],start[1],base,r),destPoint(start[0],start[1],base+125,r),destPoint(start[0],start[1],base+245,r*0.92),start];
     const coords=wps.map(p=>p[1].toFixed(5)+','+p[0].toFixed(5)).join(';');
     try{const resp=await fetchT(`https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`,4500);
       if(!resp.ok)break;const j=await resp.json();
-      if(j.routes&&j.routes[0]){const rt=j.routes[0],dist=rt.distance/1000;last={km:dist,geo:rt.geometry.coordinates.map(c=>[c[1],c[0]])};
-        if(Math.abs(dist-targetKm)/targetKm<0.10)return last; r*=Math.max(.5,Math.min(1.6,targetKm/dist));}
+      if(j.routes&&j.routes[0]){const rt=j.routes[0],dist=rt.distance/1000,cand={km:dist,geo:rt.geometry.coordinates.map(c=>[c[1],c[0]])};
+        if(!best||Math.abs(dist-targetKm)<Math.abs(best.km-targetKm))best=cand;   // keep the CLOSEST attempt, not just the last
+        if(Math.abs(dist-targetKm)/targetKm<0.08)return best; r*=Math.max(.45,Math.min(1.8,targetKm/dist));}
       else break;
     }catch(e){break;}
   }
-  return last;
+  return best;
 }
 // Keyless fallback when the routing service is unreachable: a distance-accurate
 // circular loop through the start point. Doesn't snap to roads, but always works.
