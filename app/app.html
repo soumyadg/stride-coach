@@ -190,7 +190,8 @@
   .bt-n{font-size:10.5px;font-weight:700;margin-top:6px;line-height:1.15;color:var(--ink)}
   /* Run ⇄ Walk profile switcher */
   #profile-switch{margin:12px 0 2px}
-  .prof-switch{display:inline-flex;background:var(--surface2,rgba(255,255,255,.05));border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+  #profile-switch{text-align:center}   /* centre the mode switcher instead of left-aligning it */
+  .prof-switch{display:inline-flex;background:var(--surface2,rgba(255,255,255,.05));border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;max-width:100%}
   .ps-btn{background:none;border:none;color:var(--muted);font:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap}
   .ps-btn.on{background:var(--accent,#2ee6c6);color:#04121f}
   .ps-btn .ps-add{opacity:.6;font-weight:800;margin-left:1px}
@@ -485,12 +486,6 @@
         <div class="ptile on" data-v="balanced"><div class="ic b">⚖️</div><div class="t">Balanced</div><div class="d">Recommended</div></div>
         <div class="ptile" data-v="ambitious"><div class="ic o">🔥</div><div class="t">Ambitious</div><div class="d">Faster build, still capped</div></div>
         <div class="ptile" data-v="auto"><div class="ic v">🤖</div><div class="t">Auto-adapt</div><div class="d">We tune it weekly</div></div>
-      </div>
-      <div class="card" style="margin-top:18px">
-        <div style="display:flex;justify-content:space-between">
-          <div><div class="kicker">Training volume</div><div style="font-weight:800;margin-top:4px" id="sum-vol">Progressive 📈</div></div>
-          <div style="text-align:right"><div class="kicker">Safety</div><div style="font-weight:800;margin-top:4px" class="tick">≤10% / wk ✓</div></div>
-        </div>
       </div>
       <div id="ob-injury" style="margin-top:18px"></div>
       <div class="cta"><div class="row"><button class="btn ghost" style="flex:.5" onclick="obStep(2)">Back</button><button class="btn p" onclick="buildPlan()">Build my safe plan →</button></div></div>
@@ -2150,7 +2145,7 @@ function drawDogMap(){
   } else { getLoc().then(l=>done([l.lat,l.lon])); }
 }
 // ===================== INJURY HISTORY → injury-aware plan (run-only) =====================
-const INJURY_TYPES=["Runner's knee (patellofemoral)","IT band syndrome","Shin splints","Plantar fasciitis","Achilles tendinopathy","Stress fracture","Hamstring strain","Calf strain","Ankle sprain","Hip / glute pain","ACL tear — left leg","ACL tear — right leg","Medial meniscus (horn) tear — left leg","Medial meniscus (horn) tear — right leg"];
+const INJURY_TYPES=["Runner's knee (patellofemoral)","IT band syndrome","Shin splints","Plantar fasciitis","Achilles tendinopathy","Stress fracture","Hamstring strain","Calf strain","Ankle sprain","Hip / glute pain","ACL tear — left leg","ACL tear — right leg","Medial meniscus (horn) tear — left leg","Medial meniscus (horn) tear — right leg","Swimmer's shoulder / impingement — left","Swimmer's shoulder / impingement — right","Rotator cuff strain — left","Rotator cuff strain — right","Frozen shoulder — left","Frozen shoulder — right","AC joint sprain — left","AC joint sprain — right","Bicep tendinopathy — left","Bicep tendinopathy — right"];
 const INJURY_WHEN=[["recent","In the last month"],["recovering","1–3 months ago"],["past","Over 3 months ago"],["recurring","Keeps coming back"]];
 function ensureInj(){if(!S)return;if(!Array.isArray(S.injuries))S.injuries=[];}
 function injuryAdjust(list){
