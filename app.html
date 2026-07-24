@@ -1742,17 +1742,20 @@ async function loadWeather(){
   }catch(e){logErr('weather',e);$('#weather-card').innerHTML=`<div class="kicker">Weather · when to run</div><div class="sub" style="margin-top:4px">Couldn’t load weather right now.</div>`;}
 }
 function bestWindow(h){
-  const now=Date.now();let best=null;
+  // Recommend the EARLIEST comfortable dry hour (so you can go soon) — only fall back to the
+  // absolute coolest window when the day is genuinely hot. Otherwise the coolest hour is always
+  // the last evening one, which made it read "best 21:00" every day.
+  const now=Date.now();let coolest=null,earliestGood=null;
   for(let i=0;i<h.time.length;i++){
     const t=new Date(h.time[i]),hr=t.getHours();
     if(t.getTime()<=now||hr<5||hr>21)continue; // today, daylight, future
     const T=h.temperature_2m[i],RH=h.relative_humidity_2m[i],pop=h.precipitation_probability?h.precipitation_probability[i]:0,code=h.weather_code[i];
-    const wb=wetBulb(T,RH);
-    // lower wet-bulb = less heat stress = better; penalise rain; small penalty if freezing
-    const score=-wb*4-pop*1.1-(code>=61?25:0)-(wb<2?(2-wb)*2:0);
-    if(!best||score>best.score)best={i,t,T,RH,wb,pop,code,score};
+    const wb=wetBulb(T,RH), rec={i,t,T,RH,wb,pop,code};
+    if(!coolest||wb<coolest.wb)coolest=rec;                       // absolute coolest (used only if it's hot)
+    const dry=code<61&&pop<=50;
+    if(dry&&wb>=2&&wb<18&&!earliestGood)earliestGood=rec;         // earliest comfortable, dry, not-freezing hour
   }
-  return best;
+  return earliestGood||coolest;
 }
 function aqiInfo(aq){
   if(!aq||!aq.current)return null;
@@ -2052,7 +2055,7 @@ async function osrmLoop(start,targetKm,seed){
     try{const resp=await fetchT(`https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`,4500);
       if(!resp.ok)break;const j=await resp.json();
       if(j.routes&&j.routes[0]){const rt=j.routes[0],dist=rt.distance/1000;last={km:dist,geo:rt.geometry.coordinates.map(c=>[c[1],c[0]])};
-        if(Math.abs(dist-targetKm)/targetKm<0.14)return last; r*=Math.max(.5,Math.min(1.6,targetKm/dist));}
+        if(Math.abs(dist-targetKm)/targetKm<0.10)return last; r*=Math.max(.5,Math.min(1.6,targetKm/dist));}
       else break;
     }catch(e){break;}
   }
@@ -2213,8 +2216,9 @@ async function findRoute(){
   if(!start){try{const l=await getLoc();start=[l.lat,l.lon];}catch(e){start=[51.5074,-0.1278];}}
   const seed=Math.floor((Date.now()/1000)%997);
   let loop=await osrmLoop(start,target,seed);
+  if(loop&&Math.abs(loop.km-target)/target>0.10)loop=null;   // >10% off today's session → use the exact synthetic loop instead
   const approx=!loop;
-  if(!loop)loop=syntheticLoop(start,target,seed);   // never leave the user empty-handed
+  if(!loop)loop=syntheticLoop(start,target,seed);   // distance-accurate fallback — never leave the user empty-handed
   _rfBusy=false;window._rfLoop=loop;
   const walk=S&&S.mode==='walk';const pace=walk?PACES.walk:PACES.easy;const mins=Math.round(loop.km*pace);
   el.innerHTML=`<div class="kicker">🧭 Route finder <span class="pill g">${loop.km.toFixed(1)} km</span></div>
