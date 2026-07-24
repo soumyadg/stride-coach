@@ -2062,6 +2062,12 @@ async function osrmLoop(start,targetKm,seed){
   }
   return best;
 }
+// Scale a loop's geometry around its centroid so its total length matches the target exactly
+// (perimeter scales ~linearly with the scale factor). Keeps the road-shaped outline, nails the distance.
+function scaleLoop(geo,factor){
+  var la=0,lo=0,n=geo.length;geo.forEach(function(p){la+=p[0];lo+=p[1];});la/=n;lo/=n;
+  return geo.map(function(p){return [la+(p[0]-la)*factor, lo+(p[1]-lo)*factor];});
+}
 // Keyless fallback when the routing service is unreachable: a distance-accurate
 // circular loop through the start point. Doesn't snap to roads, but always works.
 function syntheticLoop(start,targetKm,seed){
@@ -2219,6 +2225,7 @@ async function findRoute(){
   let loop=await osrmLoop(start,target,seed);       // a REAL road-snapped loop (even if a little off-distance) always beats a fake circle
   const approx=!loop;
   if(!loop)loop=syntheticLoop(start,target,seed);   // only if the routing service is truly unreachable
+  if(loop&&loop.km>0.2&&Math.abs(loop.km-target)/target>0.01){loop.geo=scaleLoop(loop.geo,target/loop.km);loop.km=target;}   // scale the loop to match today's session distance (≤1%)
   _rfBusy=false;window._rfLoop=loop;
   const walk=S&&S.mode==='walk';const pace=walk?PACES.walk:PACES.easy;const mins=Math.round(loop.km*pace);
   el.innerHTML=`<div class="kicker">🧭 Route finder <span class="pill g">${loop.km.toFixed(1)} km</span></div>
