@@ -2049,7 +2049,7 @@ function routeStart(){const a=lastAct();if(a&&a.pts&&a.pts.length)return[a.pts[0
 function fetchT(url,ms){return new Promise((res,rej)=>{const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||4500);fetch(url,{signal:c.signal}).then(r=>{clearTimeout(t);res(r);},e=>{clearTimeout(t);rej(e);});});}
 async function osrmLoop(start,targetKm,seed){
   const base=(seed*47)%360;let r=targetKm/6.2,best=null;
-  for(let i=0;i<6;i++){                                             // more iterations → converge on a road-snapped loop within tolerance
+  for(let i=0;i<4;i++){                                             // a few tries to converge — but not so many the free OSRM server rate-limits us into the fake-circle fallback
     const wps=[start,destPoint(start[0],start[1],base,r),destPoint(start[0],start[1],base+125,r),destPoint(start[0],start[1],base+245,r*0.92),start];
     const coords=wps.map(p=>p[1].toFixed(5)+','+p[0].toFixed(5)).join(';');
     try{const resp=await fetchT(`https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson`,4500);
@@ -2216,10 +2216,9 @@ async function findRoute(){
   let start=routeStart();
   if(!start){try{const l=await getLoc();start=[l.lat,l.lon];}catch(e){start=[51.5074,-0.1278];}}
   const seed=Math.floor((Date.now()/1000)%997);
-  let loop=await osrmLoop(start,target,seed);
-  if(loop&&Math.abs(loop.km-target)/target>0.10)loop=null;   // >10% off today's session → use the exact synthetic loop instead
+  let loop=await osrmLoop(start,target,seed);       // a REAL road-snapped loop (even if a little off-distance) always beats a fake circle
   const approx=!loop;
-  if(!loop)loop=syntheticLoop(start,target,seed);   // distance-accurate fallback — never leave the user empty-handed
+  if(!loop)loop=syntheticLoop(start,target,seed);   // only if the routing service is truly unreachable
   _rfBusy=false;window._rfLoop=loop;
   const walk=S&&S.mode==='walk';const pace=walk?PACES.walk:PACES.easy;const mins=Math.round(loop.km*pace);
   el.innerHTML=`<div class="kicker">🧭 Route finder <span class="pill g">${loop.km.toFixed(1)} km</span></div>
