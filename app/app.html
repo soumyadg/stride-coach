@@ -418,7 +418,7 @@
     <div id="ob0">
       <div class="brand">Strivon</div>
       <h2 style="margin-top:22px">How do you like to move?</h2>
-      <div class="sub">Strivon adapts to you — walking or running.</div>
+      <div class="sub">Strivon adapts to you — walk, run, swim, dog walks &amp; more. Pick one to start; switch anytime.</div>
       <div class="rows">
         <div class="opt modeopt" onclick="setMode('walk')"><div class="tile">🚶</div><div><div class="t">Walking</div><div class="d">Explore, wander &amp; de-stress. For casual walkers, hikers, families &amp; explorers.</div></div><div class="chev">›</div></div>
         <div class="opt modeopt" onclick="setMode('dog')"><div class="tile">🐕</div><div><div class="t">Dog walking</div><div class="d">Walks built around your dog — mark poop &amp; bin spots so anyone can take them out.</div></div><div class="chev">›</div></div>
@@ -455,8 +455,9 @@
       <div class="row">
         <div><label id="lbl-dist">Race distance</label>
           <select id="o-goal">
-            <option value="5k">5K</option><option value="10k">10K</option>
-            <option value="half" selected>Half marathon</option><option value="marathon">Marathon</option>
+            <option value="1k">1K — just starting</option><option value="2k">2K</option><option value="3k">3K</option>
+            <option value="5k" selected>5K</option><option value="10k">10K</option>
+            <option value="half">Half marathon</option><option value="marathon">Marathon</option>
           </select></div>
         <div><label id="lbl-weeks">Weeks to race</label><input id="o-weeks" type="number" value="12" min="4" max="24"></div>
       </div>
@@ -963,7 +964,7 @@ function buildPlan(){
   const goalName=$('#goal-rows .on .t').textContent;
   const mode=window._mode||(($('#goal-rows .on')&&$('#goal-rows .on').dataset.v==='walk')?'walk':'run');
   const peak=swim?(exp==='new'?3:exp==='return'?4.5:6)   // weekly swim volume ceiling (km) — swimming volumes are lower
-    :(mode==='walk'?{'5k':25,'10k':40,'half':60,'marathon':80}:{'5k':30,'10k':45,'half':65,'marathon':90})[goal];
+    :(mode==='walk'?{'1k':8,'2k':12,'3k':18,'5k':25,'10k':40,'half':60,'marathon':80}:{'1k':12,'2k':16,'3k':22,'5k':30,'10k':45,'half':65,'marathon':90})[goal];
   let rampCap=exp==='new'?1.08:exp==='return'?1.09:1.10;
   if(pref==='gentle')rampCap-=0.02; if(pref==='ambitious')rampCap=Math.min(1.10,rampCap+0.01);
   if(window._stroller)rampCap=Math.min(rampCap,1.07);   // pushing a pram + postnatal recovery → extra-gentle ramp
@@ -972,7 +973,8 @@ function buildPlan(){
   const _ia=(mode==='run'&&window._obInjuries&&window._obInjuries.length)?injuryAdjust(window._obInjuries):{rampCap:1.10,baseMul:1,tag:null};
   rampCap=Math.min(rampCap,_ia.rampCap);
   const start=new Date(); start.setHours(0,0,0,0);
-  const startBase=Math.max(3,+(base*_ia.baseMul*(window._stroller?0.9:1)).toFixed(1));
+  const beginnerMul=exp==='new'?0.5:exp==='return'?0.8:1;   // beginners start gentle — a first walk should feel easy (~2km), not 4.8km
+  const startBase=Math.max(walkLike(mode)?2:3,+(base*_ia.baseMul*(window._stroller?0.9:1)*beginnerMul).toFixed(1));
   let vol=startBase, plan=[], recent=[startBase];
   for(let w=1;w<=weeks;w++){
     const isDeload=(w%4===0)&&w<weeks-1, isTaper=w>weeks-2;
