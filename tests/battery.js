@@ -83,6 +83,28 @@ window.runStrideTests = async function () {
       const wrapped = cyclePhase(mk2(daysAgo(40)));
       ok('cycle wraps (day within 1..len)', wrapped.day >= 1 && wrapped.day <= 28);
     } else ok('cyclePhase present', false);
+
+    // nutrition: profile + mode-aware calorie & macro targets
+    if (typeof nutrition === 'function' && typeof savePerson === 'function') {
+      savePerson({ gender: 'male', dob: '1994-01-01', heightCm: 178, weightKg: 75, nutritionGoal: 'maintain' });
+      const n = nutrition();
+      ok('nutrition returns targets', !!n && n.target > 1400 && n.target < 4500);
+      ok('bmr sane (Mifflin)', !!n && n.bmr > 1400 && n.bmr < 2200);
+      ok('target > bmr (training added)', !!n && n.target > n.bmr);
+      // macros roughly reconstruct the calorie target
+      const kcalFromMacros = n.proteinG * 4 + n.carbsG * 4 + n.fatG * 9;
+      ok('macros ≈ target (±12%)', Math.abs(kcalFromMacros - n.target) / n.target < 0.12);
+      ok('protein ~1.6–2.0 g/kg', n.proteinG >= 1.5 * n.w && n.proteinG <= 2.1 * n.w);
+      // goal shifts: lose < maintain < gain
+      const maint = n.maint;
+      savePerson(Object.assign(getPerson(), { nutritionGoal: 'lose' }));  const lose = nutrition().target;
+      savePerson(Object.assign(getPerson(), { nutritionGoal: 'gain' }));  const gain = nutrition().target;
+      ok('lose < maintain < gain', lose < maint && maint < gain);
+      ok('lose never below ~BMR', lose >= Math.round(n.bmr * 1.05));
+      // no profile → null (needs height/weight/dob)
+      savePerson({});
+      ok('no profile → null', nutrition() === null);
+    } else ok('nutrition present', false);
     sections.push(s);
   }
 

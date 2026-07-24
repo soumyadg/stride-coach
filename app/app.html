@@ -508,6 +508,9 @@
     <div class="card hide" id="safety-card"></div>
     <div class="card hide" id="cycle-card"></div>
     <div class="card" id="risk-card"></div>
+    <details class="card" id="nutrition-details" style="display:none"><summary>🍎 Nutrition <span class="cx-sum" id="nutri-sum">fuel for your training</span> <span class="cx-chev">⌄</span></summary>
+      <div class="cx-body"><div id="nutrition-card"></div></div>
+    </details>
     <div class="card" id="mission-card"></div>
     <!-- secondary: tucked into taps so Today stays one-glance -->
     <details class="card"><summary>🩺 Daily readiness check <span class="cx-sum">tune today to how you feel</span> <span class="cx-chev">⌄</span></summary>
@@ -979,6 +982,49 @@ function shareLocation(){
     else{window.open(link,'_blank','noopener');}
   };
   getLoc().then(function(l){send(l.lat,l.lon);}).catch(function(){if(typeof coach==='function')coach('Couldn’t get your location — check location permission.');});
+}
+// ---- Nutrition: profile + mode-aware calorie & macro targets (on-device, estimates only) ----
+function nutrition(){
+  var p=getPerson()||{}, w=p.weightKg||(S&&S.heightCm?S.weightKg:null)||(S&&S.weightKg), h=p.heightCm||(S&&S.heightCm), age=personAge(p.dob), sex=p.gender||'';
+  if(!w||!h||!age)return null;                                            // needs height/weight/DOB from 'About you'
+  var bmr=Math.round(sex==='female'?(10*w+6.25*h-5*age-161):(10*w+6.25*h-5*age+5));   // Mifflin–St Jeor
+  var baseTDEE=bmr*1.35;                                                  // light daily activity; training added on top
+  var mode=(S&&S.mode)||'run', swim=(mode==='swim'), walk=walkLike(mode);
+  var avgKm=(S&&S.plan)?S.plan.reduce(function(a,x){return a+(x.vol||0);},0)/S.plan.length:0;
+  var perKm = swim?4.0*w : walk?0.53*w : 1.036*w;                         // kcal/km: swim≈4× run per km; walk≈half
+  if(S&&S.stroller)perKm*=1.15;                                          // pushing a pram adds effort
+  var trainWeek=Math.round(avgKm*perKm), maint=Math.round(baseTDEE+trainWeek/7);
+  var goal=p.nutritionGoal||'maintain', target=maint;
+  if(goal==='lose')target=Math.max(Math.round(bmr*1.1),Math.round(maint*0.85));   // gentle deficit, never below ~BMR
+  if(goal==='gain')target=Math.round(maint*1.10);
+  var proteinG=Math.round((swim||mode==='run'?1.9:1.6)*w);               // more for higher-intensity modes
+  var fatG=Math.round(target*0.27/9);
+  var carbsG=Math.max(40,Math.round((target-proteinG*4-fatG*9)/4));      // carbs fuel endurance — get the remainder
+  return {w:w,bmr:bmr,maint:maint,target:target,goal:goal,proteinG:proteinG,fatG:fatG,carbsG:carbsG,trainWeek:trainWeek,mode:mode,swim:swim,walk:walk,stroller:!!(S&&S.stroller)};
+}
+function setNutritionGoal(g){var p=getPerson()||{};p.nutritionGoal=g;savePerson(p);renderNutrition();}
+function renderNutrition(){
+  var det=$('#nutrition-details');if(!det)return;
+  var n=nutrition();
+  if(!n){det.style.display='';$('#nutrition-card').innerHTML='<div class="sub">Add your height, weight &amp; date of birth in <a href="#" onclick="editAboutYou();return false;" style="color:var(--accent)">About you</a> and we\'ll set your daily calorie &amp; protein targets.</div>';return;}
+  det.style.display='';
+  var sum=$('#nutri-sum');if(sum)sum.textContent='~'+n.target+' kcal/day';
+  var tip = n.swim?'Swimming burns a lot — don’t under-fuel. A carb + protein snack within an hour of the pool speeds recovery.'
+    : n.stroller?'If you’re breastfeeding, add ~400–500 kcal and extra fluids — your needs are higher right now.'
+    : n.walk?'Steady energy — build meals around protein and whole foods; a piece of fruit before a long walk helps.'
+    : 'Carbs before longer runs for fuel; protein within an hour after to rebuild. Hydrate through the day.';
+  var goalBtn=function(g,lab){return '<button class="ps-btn'+(n.goal===g?' on':'')+'" onclick="setNutritionGoal(\''+g+'\')">'+lab+'</button>';};
+  $('#nutrition-card').innerHTML=
+    '<div class="sub">Based on your profile + your <b>'+(n.swim?'swim':n.walk?'walk':'run')+'</b> training (~'+n.trainWeek+' kcal/week burned).</div>'
+    +'<div style="display:flex;align-items:baseline;gap:8px;margin-top:8px"><div class="tick" style="font-size:30px;font-weight:800;letter-spacing:-1px">'+n.target+'</div><div class="sub">kcal / day</div></div>'
+    +'<div class="prof-switch" style="margin-top:8px">'+goalBtn('lose','Lose')+goalBtn('maintain','Maintain')+goalBtn('gain','Gain')+'</div>'
+    +'<div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin-top:12px">'
+      +'<div class="stat"><div class="v mono" style="font-size:18px">'+n.proteinG+'g</div><div class="k">Protein</div></div>'
+      +'<div class="stat"><div class="v mono" style="font-size:18px">'+n.carbsG+'g</div><div class="k">Carbs</div></div>'
+      +'<div class="stat"><div class="v mono" style="font-size:18px">'+n.fatG+'g</div><div class="k">Fat</div></div></div>'
+    +'<div class="sub" style="margin-top:10px;font-size:13px">🍽️ <b>'+n.proteinG+'g protein</b> ≈ e.g. 2 chicken breasts, or 3 eggs + 200g Greek yogurt + a scoop of whey. Spread it across your meals.</div>'
+    +'<div class="banner g" style="margin-top:10px">'+tip+'</div>'
+    +'<div class="sub" style="margin-top:8px;font-size:11px;opacity:.6">A realistic guide from your profile &amp; training — not medical or dietary advice. <a href="#" onclick="editAboutYou();return false;" style="color:var(--accent)">Update your details</a></div>';
 }
 function buildPlan(){
   const swim=(window._mode==='swim');
@@ -1575,6 +1621,7 @@ function renderToday(){
   reflectReminders();
   if(typeof renderMission==='function')renderMission();
   if(typeof renderSafety==='function')renderSafety();
+  if(typeof renderNutrition==='function')renderNutrition();
   if(typeof renderCycle==='function')renderCycle();
   if(typeof renderProjection==='function')renderProjection();
   const rfDet=$('#routefinder-details');if(rfDet)rfDet.style.display=(S&&S.mode==='swim')?'none':'';   // no route finder for swimming
