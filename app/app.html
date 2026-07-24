@@ -697,9 +697,8 @@
           <li class="lock">Everything in Tempo (imports · voice coaching · HR zones · multiple plans · analytics)</li>
           <li class="lock">Personal form &amp; injury check-ins with your coach</li>
         </ul>
-        <button class="btn p" id="max-btn" style="margin-top:14px" onclick="goMax()">🔜 Coming soon</button>
+        <button class="btn p" id="max-btn" disabled style="margin-top:14px;opacity:.55;cursor:not-allowed" onclick="goMax()">🔜 Coming soon</button>
         <div class="sub center" style="margin-top:7px">Live 1:1 coaching is rolling out — coming soon.</div>
-        <div id="max-note" class="banner a hide" style="margin-top:10px">Live coaching is rolling out — add your Summit Stripe link in <b>config.js</b> to enable checkout.</div>
       </div>
 
       <div class="banner g" style="margin-top:14px"><span class="tick">✓</span> The safety promise is <b>always free</b> — no paid tier ever paywalls what keeps you injury-free.</div>
@@ -2838,7 +2837,7 @@ function goPro(){
 }
 function reflectPro(){
   const b=$('#pro-btn');if(b){if(isPro()){b.textContent=isMax()?'✓ Tempo — included in Summit':'✓ Tempo active';b.disabled=true;b.style.opacity='.7';}else{b.textContent='Get Tempo — £6.99/mo';b.disabled=false;b.style.opacity='';}}
-  const mb=$('#max-btn');if(mb){if(isMax()){mb.textContent='📞 Talk to your coach';}else{mb.textContent='🔜 Coming soon';}mb.disabled=false;mb.style.opacity='';}
+  const mb=$('#max-btn');if(mb){if(isMax()){mb.textContent='📞 Talk to your coach';mb.disabled=false;mb.style.opacity='';mb.style.cursor='';}else{mb.textContent='🔜 Coming soon';mb.disabled=true;mb.style.opacity='.55';mb.style.cursor='not-allowed';}}
 }
 function proInit(){
   try{const p=new URLSearchParams(location.search);const pr=p.get('pro')==='success',mx=p.get('max')==='success';if(pr||mx){
