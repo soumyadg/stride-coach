@@ -1449,7 +1449,7 @@ function renderPlans(){
   const items=plans.map(p=>{const active=p.planId===S.planId,d=distLabel(p.goal);
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)">
       <div style="min-width:0"><div style="font-weight:800;display:flex;align-items:center;gap:8px">${p.goalName||d||'Plan'} ${active?'<span class="pill g">active</span>':''}</div>
-        <div class="sub">${d} · ${p.weeks}wk · ${p.mode==='walk'?'walk':'run'} · Wk ${p.curWeek}/${p.weeks}</div></div>
+        <div class="sub">${d} · ${p.weeks}wk · ${p.mode==='walk'?'🚶 walk':p.mode==='swim'?'🏊 swim':p.mode==='dog'?'🐕 dog':'🏃 run'} · Wk ${p.curWeek}/${p.weeks}</div></div>
       <div class="row" style="flex:0 0 auto;gap:6px;width:auto">${active?'':`<button class="btn ghost" style="padding:8px 12px;flex:0 0 auto" onclick="switchPlan('${p.planId}')">Switch</button>`}${plans.length>1?`<button class="btn ghost" style="padding:8px 10px;flex:0 0 auto" title="Delete" onclick="deletePlan('${p.planId}')">✕</button>`:''}</div>
     </div>`;}).join('');
   el.innerHTML=`<div class="kicker">🏁 Your training plans ${!canAdd?'<span class="pill">PRO</span>':''}</div>
@@ -1556,7 +1556,12 @@ function renderToday(){
   renderRisk();
   $('#today-date').textContent=`${DOW[now.getDay()]} ${now.getDate()} ${MON[now.getMonth()]}`;
   const tp=$('#today-plan');if(tp){const n=(S.plans&&S.plans.length)||1;
-    tp.innerHTML=`<div onclick="go('why');setTimeout(()=>{const c=document.querySelector('#plans-card');c&&c.scrollIntoView({behavior:'smooth'})},80)" style="display:inline-flex;align-items:center;gap:8px;margin:2px 0 2px;padding:7px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:999px;cursor:pointer;font-size:13px">🏁 <b>${S.goalName||distLabel(S.goal)||'Plan'}</b><span class="sub">· Wk ${S.curWeek}/${S.weeks}</span>${n>1?` <span class="pill">${n} plans</span>`:''}<span class="sub">⌄</span></div>`;}
+    const label=`🏁 <b>${S.goalName||distLabel(S.goal)||'Plan'}</b><span class="sub">· Wk ${S.curWeek}/${S.weeks}</span>`;
+    const box='display:inline-flex;align-items:center;gap:8px;margin:2px 0 2px;padding:7px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:999px;font-size:13px';
+    tp.innerHTML = n>1
+      ? `<div onclick="go('why');setTimeout(()=>{const c=document.querySelector('#plans-card');c&&c.scrollIntoView({behavior:'smooth'})},80)" style="${box};cursor:pointer">${label} <span class="pill">${n} plans</span><span class="sub">· tap to switch ⌄</span></div>`
+      : `<div style="${box}">${label}</div>`;   // single plan → static label (nothing to switch)
+  }
   const wk=S.plan[(S.curWeek-1)%S.plan.length], sesh=wk.sessions[0], adj=S.readiness;
   let s=sesh;
   if(adj&&adj.level==='amber')s={...sesh,km:+(sesh.km*0.8).toFixed(1),note:'Trimmed 20% — you flagged fatigue.'};
