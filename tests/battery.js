@@ -46,6 +46,46 @@ window.runStrideTests = async function () {
     sections.push(s);
   }
 
+  // ---------------- UNIT · person profile + menstrual cycle ----------------
+  {
+    const s = mk('UNIT · person + cycle'); const ok = s.ok;
+    // person store round-trip (shared across modes)
+    if (typeof getPerson === 'function' && typeof savePerson === 'function' && typeof store !== 'undefined' && store) {
+      const prev = getPerson();
+      savePerson({ name: 'Test', gender: 'female', dob: '1990-06-15', heightCm: 170, weightKg: 65 });
+      const p = getPerson();
+      ok('person round-trips', !!p && p.heightCm === 170 && p.weightKg === 65 && p.gender === 'female');
+      // age from DOB
+      if (typeof personAge === 'function') {
+        const a = personAge('2000-01-01');
+        ok('personAge plausible', a !== null && a >= 20 && a < 60);
+        ok('personAge null on empty', personAge('') === null);
+      }
+      // maxHR from age
+      if (typeof maxHR === 'function') ok('maxHR in range', maxHR() > 150 && maxHR() < 210);
+      // restore
+      if (prev) savePerson(prev); else savePerson({});
+    } else ok('person store present', false);
+
+    // cycle phase from a known last-period date (28-day cycle, 5-day period)
+    if (typeof cyclePhase === 'function') {
+      const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+      const mk2 = (last) => ({ cycle: { track: true, lastPeriod: last, cycleLen: 28, periodLen: 5 } });
+      ok('not tracking → tracking:false', cyclePhase({}).tracking === false);
+      ok('day 2 = menstruation', cyclePhase(mk2(daysAgo(1))).phase === 'menstruation');
+      ok('day 9 = follicular', cyclePhase(mk2(daysAgo(8))).phase === 'follicular');
+      ok('day 14 = ovulation', cyclePhase(mk2(daysAgo(13))).phase === 'ovulation');
+      ok('ovulation flags injury caution', cyclePhase(mk2(daysAgo(13))).injuryCaution === true);
+      ok('day 26 = late-luteal', cyclePhase(mk2(daysAgo(25))).phase === 'late-luteal');
+      ok('late-luteal eases effort', cyclePhase(mk2(daysAgo(25))).effortMod < 0.95);
+      ok('follicular allows harder effort', cyclePhase(mk2(daysAgo(8))).effortMod >= 1);
+      // wraps across cycles (40 days ago on a 28-day cycle = day 13 = menstruation-ish/follicular, stays valid)
+      const wrapped = cyclePhase(mk2(daysAgo(40)));
+      ok('cycle wraps (day within 1..len)', wrapped.day >= 1 && wrapped.day <= 28);
+    } else ok('cyclePhase present', false);
+    sections.push(s);
+  }
+
   // ---------------- STRESS · SafeRamp (400 random plans) ----------------
   {
     const s = mk('STRESS · SafeRamp (400 plans)'); const ok = s.ok;
