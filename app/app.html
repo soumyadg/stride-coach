@@ -507,6 +507,7 @@
     <div id="today-welcome"></div>
     <!-- HERO: today's workout — the one thing you came for, first -->
     <div class="card" id="today-sesh"></div>
+    <div class="card hide" id="safety-card"></div>
     <div class="card hide" id="cycle-card"></div>
     <div class="card" id="risk-card"></div>
     <div class="card" id="mission-card"></div>
@@ -951,6 +952,39 @@ function renderCycle(){
   el.innerHTML='<div class="risk-hd"><div class="kicker">🌸 Cycle-aware training</div><span class="pill '+(cy.injuryCaution?'a':'g')+'">'+cy.label+'</span></div>'
     +'<div style="margin-top:6px;font-size:14px;line-height:1.5">'+cy.guidance+'</div>'
     +'<div class="sub" style="margin-top:8px;font-size:12px">Cycle day <b>'+cy.day+'</b> · next period ~'+daysToNext+' day'+(daysToNext===1?'':'s')+' · <a href="#" onclick="editAboutYou();return false;" style="color:var(--accent)">update</a></div>';
+}
+// ---- Pram-walk safety: nudge + one-tap 'share my location with a loved one' (mum & baby first) ----
+function renderSafety(){
+  var el=$('#safety-card');if(!el)return;
+  if(!(S&&S.stroller)){el.classList.add('hide');el.innerHTML='';return;}   // Mommy-runner / pram walks only
+  el.classList.remove('hide');
+  var p=getPerson()||{},c=p.safetyContact,hike=(S.goal==='hike'||/hik|long walk/i.test(S.goalName||''));
+  var html='<div class="risk-hd"><div class="kicker">🍼 You &amp; baby first</div><span class="pill a">Safety</span></div>'
+    +'<div style="margin-top:6px;font-size:14px;line-height:1.5">Not all long walks are pram-safe. Stick to <b>smooth, signed paths</b>, follow the signs along the way, and turn back if a trail gets rough — your safety and your little one’s come first.</div>';
+  if(hike)html+='<div class="banner a" style="margin-top:8px">⛰️ Hiking with a pram — choose stroller-friendly trails only, and tell someone your route before you set off.</div>';
+  if(c&&c.name){
+    html+='<button class="btn p" style="margin-top:12px" onclick="shareLocation()">📍 Share my location with '+xesc(c.name)+'</button>'
+      +'<div class="sub" style="margin-top:6px;font-size:12px"><a href="#" onclick="clearSafetyContact();return false;" style="color:var(--accent)">change trusted contact</a></div>';
+  }else{
+    html+='<div class="sub" style="margin-top:10px">Add one person you trust — then it’s one tap to send them your live location.</div>'
+      +'<div class="row" style="gap:8px;margin-top:8px"><input id="sc-name" placeholder="Name" style="flex:1"><input id="sc-phone" type="tel" placeholder="Phone" style="flex:1.2"></div>'
+      +'<button class="btn p" style="margin-top:8px" onclick="saveSafetyContact()">Save trusted contact</button>';
+  }
+  el.innerHTML=html;
+}
+function saveSafetyContact(){var n=(($('#sc-name')||{}).value||'').trim(),ph=(($('#sc-phone')||{}).value||'').trim();if(!n||!ph){if(typeof coach==='function')coach('Add both a name and a phone number.');return;}var p=getPerson()||{};p.safetyContact={name:n,phone:ph};savePerson(p);renderSafety();if(typeof coach==='function')coach('Trusted contact saved — one tap now shares your location.');}
+function clearSafetyContact(){var p=getPerson()||{};delete p.safetyContact;savePerson(p);renderSafety();}
+function shareLocation(){
+  var p=getPerson()||{},c=p.safetyContact;
+  var send=function(lat,lon){
+    var link='https://maps.google.com/?q='+lat.toFixed(5)+','+lon.toFixed(5);
+    var msg='I’m out on a walk'+((S&&S.stroller)?' with the little one':'')+'. Here’s my location: '+link;
+    var iOS=/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+    if(c&&c.phone){location.href='sms:'+c.phone.replace(/[^0-9+]/g,'')+(iOS?'&':'?')+'body='+encodeURIComponent(msg);}
+    else if(navigator.share){navigator.share({title:'My location',text:msg,url:link}).catch(function(){});}
+    else{window.open(link,'_blank','noopener');}
+  };
+  getLoc().then(function(l){send(l.lat,l.lon);}).catch(function(){if(typeof coach==='function')coach('Couldn’t get your location — check location permission.');});
 }
 function buildPlan(){
   const swim=(window._mode==='swim');
@@ -1541,6 +1575,7 @@ function renderToday(){
     <button class="btn p" style="margin-top:14px" onclick="go('run')">Start this ${actWord()} →</button>`;
   reflectReminders();
   if(typeof renderMission==='function')renderMission();
+  if(typeof renderSafety==='function')renderSafety();
   if(typeof renderCycle==='function')renderCycle();
   if(typeof renderProjection==='function')renderProjection();
   const rfDet=$('#routefinder-details');if(rfDet)rfDet.style.display=(S&&S.mode==='swim')?'none':'';   // no route finder for swimming
